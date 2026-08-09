@@ -55,7 +55,7 @@ Las pruebas unitarias y de integración se ejecutarán mediante GitHub Actions e
 
 ## URLs Productivas
 * **API Health Check (AWS):** [https://iqe7v3bpy4.execute-api.us-east-1.amazonaws.com/dev/health](https://iqe7v3bpy4.execute-api.us-east-1.amazonaws.com/dev/health)
-* **Aplicación Web:** *(URL pendiente de publicación)*
+* **Aplicación Web:** *(http://truequi-web-2026-dm.s3-website-us-east-1.amazonaws.com)*
 
 ## Enlaces y Documentación
 * **[Tablero Scrum (GitHub Projects)](https://github.com/users/DiegoMillaan/projects/1)**: Gestión del Product Backlog, Sprints y tareas.
