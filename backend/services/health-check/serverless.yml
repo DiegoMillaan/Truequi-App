@@ -1,0 +1,15 @@
+service: intercambios-api
+
+provider:
+  name: aws
+  runtime: python3.9
+  region: us-east-1
+
+functions:
+  healthCheck:
+    handler: handler.check
+    events:
+      - http:
+          path: /health
+          method: get
+          cors: true
