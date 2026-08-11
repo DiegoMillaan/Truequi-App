@@ -36,7 +36,7 @@ class _EstadoBackendScreenState extends State<EstadoBackendScreen> {
     });
 
     try {
-      // Reemplazar con la URL real que te dé AWS API Gateway
+      // URL de api gateway
       final url = Uri.parse('https://iqe7v3bpy4.execute-api.us-east-1.amazonaws.com/dev/health');
       final response = await http.get(url);
 
