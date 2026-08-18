@@ -2,13 +2,13 @@ import json
 
 def check(event, context):
     return {
-        "statusCode": 200,
+        "statusCode": 500,
         "headers": {
             "Access-Control-Allow-Origin": "*",
             "Content-Type": "application/json"
         },
         "body": json.dumps({
-            "status": "success",
-            "message": "¡Conexión exitosa a AWS! El backend de Intercambios está en línea."
+            "status": "error",
+            "message": "Error 500: El servidor de Truequi está apagado temporalmente."
         })
     }

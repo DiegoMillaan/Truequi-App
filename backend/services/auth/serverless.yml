@@ -1,0 +1,22 @@
+service: truequi-auth
+
+provider:
+  name: aws
+  runtime: python3.9
+  region: us-east-1
+  iamRoleStatements:
+    # Función para consultar DynamoDB
+    - Effect: Allow
+      Action:
+        - dynamodb:GetItem
+        - dynamodb:Query
+      Resource: "arn:aws:dynamodb:us-east-1:*:table/Usuarios"
+
+functions:
+  login:
+    handler: handler.login
+    events:
+      - http:
+          path: /login
+          method: post
+          cors: true
