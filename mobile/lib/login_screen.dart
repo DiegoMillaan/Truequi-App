@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'dart:ui'; // Para el efecto de cristal (BackdropFilter)
-import 'dart:math' as math; // Para la animación fluida
+import 'dart:ui'; 
+import 'dart:math' as math; 
 import 'home_page.dart';
 
 // ==========================================
@@ -22,7 +22,6 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-// Agregamos SingleTickerProviderStateMixin para poder usar animaciones a 60fps
 class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStateMixin {
   final _correoController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -34,7 +33,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   @override
   void initState() {
     super.initState();
-    // Controlador de la animación de fondo (dura 10 segundos y se repite infinito)
+    // El controlador ahora maneja tanto el fondo como el nuevo logo vivo
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 10),
@@ -47,7 +46,6 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     super.dispose();
   }
 
-  // --- LÓGICA DE BACKEND INTACTA ---
   Future<void> _iniciarSesion() async {
     final esValido = _formKey.currentState!.validate();
     if (!esValido) return;
@@ -72,24 +70,19 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         Navigator.pushReplacement(
           context,
           PageRouteBuilder(
-            transitionDuration: const Duration(milliseconds: 800), // Lenta y fluida
+            transitionDuration: const Duration(milliseconds: 800),
             pageBuilder: (context, animation, secondaryAnimation) => HomePage(correo: correo),
             transitionsBuilder: (context, animation, secondaryAnimation, child) {
-              // Animación de Zoom in
               var scaleAnimation = Tween<double>(begin: 0.9, end: 1.0).animate(
                 CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
               );
-              // Animación de desvanecimiento cruzado
               var fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
                 CurvedAnimation(parent: animation, curve: Curves.easeInOut),
               );
 
               return FadeTransition(
                 opacity: fadeAnimation,
-                child: ScaleTransition(
-                  scale: scaleAnimation,
-                  child: child,
-                ),
+                child: ScaleTransition(scale: scaleAnimation, child: child),
               );
             },
           ),
@@ -119,60 +112,154 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   bool _validarEmail(String email) => RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
   String? _validarPassword(String? value) => (value == null || value.trim().isEmpty) ? 'Ingresa tu contraseña' : null;
 
-  // --- INTERFAZ PREMIUM (GLASSMORPHISM) ---
+
+
+  // NUEVO LOGO ANIMADO
+  Widget _buildLogoBiologico() {
+    return AnimatedBuilder(
+      animation: _animationController,
+      builder: (context, child) {
+        // Base de tiempo (0 a 360 grados exactos)
+        final avance = _animationController.value * 2 * math.pi; 
+        
+        // 1. ÓRBITAS MATEMÁTICAMENTE PERFECTAS (Números enteros)
+        final anguloBase = avance; // 1 vuelta exacta por ciclo
+        final anguloCliente = avance * 2.0; // 2 vueltas exactas (Bucle perfecto)
+        final anguloLimpiador = avance * -3.0; // 3 vueltas en reversa (Bucle perfecto)
+        
+        // 2. EFECTOS ORGÁNICOS
+        final latido = 1.0 + (math.sin(avance * 6) * 0.04); 
+        final levitacion = math.sin(avance) * 8.0; 
+
+        return Transform.translate(
+          offset: Offset(0, levitacion),
+          child: Transform.scale(
+            scale: latido,
+            child: SizedBox(
+              width: 150,
+              height: 150,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // --- CAPA 1: RESPLANDOR 3D ---
+                  Container(
+                    width: 90,
+                    height: 90,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: TruequiColors.purpura.withOpacity(0.5),
+                          blurRadius: 35,
+                          spreadRadius: 5,
+                          offset: const Offset(0, 15), 
+                        ),
+                        BoxShadow(
+                          color: TruequiColors.amarillo.withOpacity(0.3),
+                          blurRadius: 25,
+                          spreadRadius: -5,
+                          offset: const Offset(0, -5), 
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // --- CAPA 2: PEDESTAL DE CRISTAL ---
+                  Transform.rotate(
+                    angle: anguloBase,
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withOpacity(0.15), 
+                        border: Border.all(color: Colors.white.withOpacity(0.4), width: 1.5),
+                      ),
+                      child: Icon(Icons.sync_rounded, size: 75, color: TruequiColors.purpura.withOpacity(0.95)),
+                    ),
+                  ),
+
+                  // --- CAPA 3: EL "CLIENTE" (Punto Amarillo) ---
+                  Transform.rotate(
+                    angle: anguloCliente,
+                    child: Transform.translate(
+                      offset: const Offset(0, -50),
+                      child: Container(
+                        width: 20,
+                        height: 20,
+                        decoration: BoxDecoration(
+                          color: TruequiColors.amarillo, 
+                          shape: BoxShape.circle,
+                          boxShadow: [BoxShadow(color: TruequiColors.amarillo.withOpacity(0.8), blurRadius: 10)],
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // --- CAPA 4: EL "LIMPIADOR" (Punto Morado) ---
+                  Transform.rotate(
+                    angle: anguloLimpiador,
+                    child: Transform.translate(
+                      offset: const Offset(0, 35),
+                      child: Container(
+                        width: 14,
+                        height: 14,
+                        decoration: BoxDecoration(
+                          color: TruequiColors.purpura, 
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 1.5), 
+                          boxShadow: [BoxShadow(color: TruequiColors.purpura, blurRadius: 8)],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
       backgroundColor: TruequiColors.fondoClaro,
-      // Usamos un Stack para poner capas una sobre otra
       body: Stack(
         children: [
-          // CAPA 1: Fondo dinámico animado
           AnimatedBuilder(
             animation: _animationController,
             builder: (context, child) {
               return Stack(
                 children: [
-                  // Orbe Morado
                   Positioned(
                     top: size.height * 0.1 + (math.sin(_animationController.value * 2 * math.pi) * 80),
                     left: size.width * 0.1 + (math.cos(_animationController.value * 2 * math.pi) * 50),
                     child: Container(
                       width: 300,
                       height: 300,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: TruequiColors.purpura.withOpacity(0.5),
-                      ),
+                      decoration: BoxDecoration(shape: BoxShape.circle, color: TruequiColors.purpura.withOpacity(0.5)),
                     ),
                   ),
-                  // Orbe Amarillo
                   Positioned(
                     bottom: size.height * 0.1 + (math.cos(_animationController.value * 2 * math.pi) * 60),
                     right: size.width * 0.1 + (math.sin(_animationController.value * 2 * math.pi) * 70),
                     child: Container(
                       width: 250,
                       height: 250,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: TruequiColors.amarillo.withOpacity(0.4),
-                      ),
+                      decoration: BoxDecoration(shape: BoxShape.circle, color: TruequiColors.amarillo.withOpacity(0.4)),
                     ),
                   ),
                 ],
               );
             },
           ),
-
-          // CAPA 2: Desenfoque de cristal (Magia pura)
           BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 60.0, sigmaY: 60.0),
             child: Container(color: Colors.white.withOpacity(0.1)),
           ),
-
-          // CAPA 3: Interfaz de Usuario
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
@@ -182,9 +269,11 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Logo
-                      const Icon(Icons.swap_horizontal_circle_rounded, size: 80, color: TruequiColors.purpura),
+                      
+                      // Inyectamos el nuevo logo orgánico aquí
+                      _buildLogoBiologico(),
                       const SizedBox(height: 16),
+                      
                       const Text(
                         'truequi',
                         textAlign: TextAlign.center,
@@ -198,11 +287,10 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                       ),
                       const SizedBox(height: 40),
 
-                      // Tarjeta de Formulario (Efecto Vidrio)
                       Container(
                         padding: const EdgeInsets.all(24),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.6), // Semitransparente
+                          color: Colors.white.withOpacity(0.6), 
                           borderRadius: BorderRadius.circular(24),
                           border: Border.all(color: Colors.white.withOpacity(0.8), width: 1.5),
                           boxShadow: [
@@ -211,7 +299,6 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                         ),
                         child: Column(
                           children: [
-                            // Input Correo
                             TextFormField(
                               controller: _correoController,
                               keyboardType: TextInputType.emailAddress,
@@ -226,7 +313,6 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                               validator: (value) => _validarEmail(value ?? '') ? null : 'Ingresa un correo válido',
                             ),
                             const SizedBox(height: 16),
-                            // Input Contraseña
                             TextFormField(
                               controller: _passwordController,
                               obscureText: true,
@@ -241,7 +327,6 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                               validator: _validarPassword,
                             ),
                             const SizedBox(height: 30),
-                            // Botón Ingresar
                             SizedBox(
                               width: double.infinity,
                               height: 56,
