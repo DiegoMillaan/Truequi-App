@@ -6,8 +6,8 @@ import 'package:flutter_application_1/main.dart';
 
 void main() {
   testWidgets('Smoke test de la pantalla de conexión AWS', (WidgetTester tester) async {
-    // Construye la aplicación llamando a MiApp (con "i")
-    await tester.pumpWidget(const MiApp());
+    // Construye la aplicación llamando a TruequiApp (con "i")
+    await tester.pumpWidget(const TruequiApp());
 
     // Verifica que el título de la pantalla exista
     expect(find.text('Test de conexión'), findsOneWidget);
