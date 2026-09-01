@@ -1,0 +1,39 @@
+openapi: 3.0.0
+info:
+  title: API Catálogo Truequi
+  version: 1.0.0
+paths:
+  /productos:
+    get:
+      summary: Obtener lista completa de productos
+      responses:
+        '200':
+          description: Lista obtenida exitosamente
+    post:
+      summary: Registrar un nuevo producto
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                titulo: { type: string }
+                descripcion: { type: string }
+                precio: { type: number }
+                categoria: { type: string }
+                vendedorId: { type: string }
+      responses:
+        '201':
+          description: Producto registrado en DynamoDB
+  /productos/upload-url:
+    get:
+      summary: Obtener URL prefirmada de AWS S3
+      parameters:
+        - in: query
+          name: filename
+          schema:
+            type: string
+      responses:
+        '200':
+          description: URL generada para subir la fotografía

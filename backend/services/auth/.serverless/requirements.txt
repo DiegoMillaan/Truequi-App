@@ -1,0 +1,3 @@
+PyMySQL
+google-auth
+requests

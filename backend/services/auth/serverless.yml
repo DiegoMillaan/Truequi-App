@@ -1,11 +1,18 @@
 service: truequi-auth
 
+useDotenv: true
+
 provider:
   name: aws
-  runtime: python3.9
+  runtime: python3.12
   region: us-east-1
+  environment:
+    DB_HOST: ${env:DB_HOST}
+    DB_USER: ${env:DB_USER}
+    DB_PASS: ${env:DB_PASS}
+    DB_NAME: ${env:DB_NAME}
+    GOOGLE_CLIENT_ID: ${env:GOOGLE_CLIENT_ID}
   iamRoleStatements:
-    # Función para consultar DynamoDB
     - Effect: Allow
       Action:
         - dynamodb:GetItem
@@ -13,10 +20,28 @@ provider:
       Resource: "arn:aws:dynamodb:us-east-1:*:table/Usuarios"
 
 functions:
-  login:
-    handler: handler.login
+  registroTradicional:
+    handler: handler.registro_tradicional
     events:
       - http:
-          path: /login
+          path: /registro
           method: post
           cors: true
+  loginGoogle:
+    handler: handler.login_google
+    events:
+      - http:
+          path: /login/google
+          method: post
+          cors: true
+
+plugins:
+  - serverless-offline
+
+custom:
+  pythonRequirements: {}
+
+package:
+  patterns:
+    - '!venv/**'
+    - '!.serverless/**'

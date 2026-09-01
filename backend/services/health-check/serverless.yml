@@ -13,3 +13,6 @@ functions:
           path: /health
           method: get
           cors: true
+
+custom:
+  pythonRequirements: {}

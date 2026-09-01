@@ -1,14 +1,22 @@
 {
   "C:\\Users\\YouTu\\Downloads\\Truequi\\backend\\services\\auth\\serverless.yml": {
-    "versionFramework": "4.41.0",
+    "versionFramework": "4.41.1",
     "servicePath": "C:\\Users\\YouTu\\Downloads\\Truequi\\backend\\services\\auth\\serverless.yml",
     "serviceConfigFileName": "serverless.yml",
     "service": {
       "service": "truequi-auth",
+      "useDotenv": true,
       "provider": {
         "name": "aws",
-        "runtime": "python3.9",
+        "runtime": "python3.12",
         "region": "us-east-1",
+        "environment": {
+          "DB_HOST": "truequi-db.c0rqa2akcsq3.us-east-1.rds.amazonaws.com",
+          "DB_USER": "admin",
+          "DB_PASS": "Tonycar411010",
+          "DB_NAME": "truequi_bd",
+          "GOOGLE_CLIENT_ID": "765285641470-jh7if1qr7a9hvfmofs6ume22vgu8v64m.apps.googleusercontent.com"
+        },
         "iamRoleStatements": [
           {
             "Effect": "Allow",
@@ -25,10 +33,16 @@
           "AWSTemplateFormatVersion": "2010-09-09",
           "Description": "The AWS CloudFormation template for this Serverless application",
           "Resources": {
-            "LoginLogGroup": {
+            "RegistroTradicionalLogGroup": {
               "Type": "AWS::Logs::LogGroup",
               "Properties": {
-                "LogGroupName": "/aws/lambda/truequi-auth-dev-login"
+                "LogGroupName": "/aws/lambda/truequi-auth-dev-registroTradicional"
+              }
+            },
+            "LoginGoogleLogGroup": {
+              "Type": "AWS::Logs::LogGroup",
+              "Properties": {
+                "LogGroupName": "/aws/lambda/truequi-auth-dev-loginGoogle"
               }
             },
             "IamRoleLambdaExecution": {
@@ -117,18 +131,27 @@
                 }
               }
             },
-            "LoginLambdaFunction": {
+            "RegistroTradicionalLambdaFunction": {
               "Type": "AWS::Lambda::Function",
               "Properties": {
                 "Code": {
                   "S3Bucket": "serverless-framework-deployments-us-east-1-1b29d215-8306",
-                  "S3Key": "serverless/truequi-auth/dev/1787027067786-2026-08-18T04:24:27.786Z/truequi-auth.zip"
+                  "S3Key": "serverless/truequi-auth/dev/1788298226552-2026-09-01T21:30:26.552Z/truequi-auth.zip"
                 },
-                "Handler": "handler.login",
-                "Runtime": "python3.9",
-                "FunctionName": "truequi-auth-dev-login",
+                "Handler": "handler.registro_tradicional",
+                "Runtime": "python3.12",
+                "FunctionName": "truequi-auth-dev-registroTradicional",
                 "MemorySize": 1024,
                 "Timeout": 6,
+                "Environment": {
+                  "Variables": {
+                    "DB_HOST": "truequi-db.c0rqa2akcsq3.us-east-1.rds.amazonaws.com",
+                    "DB_USER": "admin",
+                    "DB_PASS": "Tonycar411010",
+                    "DB_NAME": "truequi_bd",
+                    "GOOGLE_CLIENT_ID": "765285641470-jh7if1qr7a9hvfmofs6ume22vgu8v64m.apps.googleusercontent.com"
+                  }
+                },
                 "Role": {
                   "Fn::GetAtt": [
                     "IamRoleLambdaExecution",
@@ -137,17 +160,59 @@
                 }
               },
               "DependsOn": [
-                "LoginLogGroup"
+                "RegistroTradicionalLogGroup"
               ]
             },
-            "LoginLambdaVersionIHK7SwCQqDt6ckXb3gUlXp0smTHcPmGfQ7jaQMh7A4": {
+            "LoginGoogleLambdaFunction": {
+              "Type": "AWS::Lambda::Function",
+              "Properties": {
+                "Code": {
+                  "S3Bucket": "serverless-framework-deployments-us-east-1-1b29d215-8306",
+                  "S3Key": "serverless/truequi-auth/dev/1788298226552-2026-09-01T21:30:26.552Z/truequi-auth.zip"
+                },
+                "Handler": "handler.login_google",
+                "Runtime": "python3.12",
+                "FunctionName": "truequi-auth-dev-loginGoogle",
+                "MemorySize": 1024,
+                "Timeout": 6,
+                "Environment": {
+                  "Variables": {
+                    "DB_HOST": "truequi-db.c0rqa2akcsq3.us-east-1.rds.amazonaws.com",
+                    "DB_USER": "admin",
+                    "DB_PASS": "Tonycar411010",
+                    "DB_NAME": "truequi_bd",
+                    "GOOGLE_CLIENT_ID": "765285641470-jh7if1qr7a9hvfmofs6ume22vgu8v64m.apps.googleusercontent.com"
+                  }
+                },
+                "Role": {
+                  "Fn::GetAtt": [
+                    "IamRoleLambdaExecution",
+                    "Arn"
+                  ]
+                }
+              },
+              "DependsOn": [
+                "LoginGoogleLogGroup"
+              ]
+            },
+            "LoginGoogleLambdaVersionA5mZLIU6IOOqXg4nG78LCCz7ppsixD5hc9U6TpiAs": {
               "Type": "AWS::Lambda::Version",
               "DeletionPolicy": "Retain",
               "Properties": {
                 "FunctionName": {
-                  "Ref": "LoginLambdaFunction"
+                  "Ref": "LoginGoogleLambdaFunction"
                 },
-                "CodeSha256": "NYbUCFq3jlOlR8jHNBAhbIKwyEH7rPnHe1FBnwFDm2k="
+                "CodeSha256": "5vfwGOlx2wrGGWlytx9CCwFmADg3vP9rAqDckdY6zRI="
+              }
+            },
+            "RegistroTradicionalLambdaVersionsucd11kfuZXzkTR8XfkYQ3yY0mvy24xohrAJPKwfcZM": {
+              "Type": "AWS::Lambda::Version",
+              "DeletionPolicy": "Retain",
+              "Properties": {
+                "FunctionName": {
+                  "Ref": "RegistroTradicionalLambdaFunction"
+                },
+                "CodeSha256": "5vfwGOlx2wrGGWlytx9CCwFmADg3vP9rAqDckdY6zRI="
               }
             },
             "ApiGatewayRestApi": {
@@ -160,6 +225,21 @@
                   ]
                 },
                 "Policy": ""
+              }
+            },
+            "ApiGatewayResourceRegistro": {
+              "Type": "AWS::ApiGateway::Resource",
+              "Properties": {
+                "ParentId": {
+                  "Fn::GetAtt": [
+                    "ApiGatewayRestApi",
+                    "RootResourceId"
+                  ]
+                },
+                "PathPart": "registro",
+                "RestApiId": {
+                  "Ref": "ApiGatewayRestApi"
+                }
               }
             },
             "ApiGatewayResourceLogin": {
@@ -177,7 +257,19 @@
                 }
               }
             },
-            "ApiGatewayMethodLoginOptions": {
+            "ApiGatewayResourceLoginGoogle": {
+              "Type": "AWS::ApiGateway::Resource",
+              "Properties": {
+                "ParentId": {
+                  "Ref": "ApiGatewayResourceLogin"
+                },
+                "PathPart": "google",
+                "RestApiId": {
+                  "Ref": "ApiGatewayRestApi"
+                }
+              }
+            },
+            "ApiGatewayMethodRegistroOptions": {
               "Type": "AWS::ApiGateway::Method",
               "Properties": {
                 "AuthorizationType": "NONE",
@@ -215,20 +307,65 @@
                   ]
                 },
                 "ResourceId": {
-                  "Ref": "ApiGatewayResourceLogin"
+                  "Ref": "ApiGatewayResourceRegistro"
                 },
                 "RestApiId": {
                   "Ref": "ApiGatewayRestApi"
                 }
               }
             },
-            "ApiGatewayMethodLoginPost": {
+            "ApiGatewayMethodLoginGoogleOptions": {
+              "Type": "AWS::ApiGateway::Method",
+              "Properties": {
+                "AuthorizationType": "NONE",
+                "HttpMethod": "OPTIONS",
+                "MethodResponses": [
+                  {
+                    "StatusCode": "200",
+                    "ResponseParameters": {
+                      "method.response.header.Access-Control-Allow-Origin": true,
+                      "method.response.header.Access-Control-Allow-Headers": true,
+                      "method.response.header.Access-Control-Allow-Methods": true
+                    },
+                    "ResponseModels": {}
+                  }
+                ],
+                "RequestParameters": {},
+                "Integration": {
+                  "Type": "MOCK",
+                  "RequestTemplates": {
+                    "application/json": "{statusCode:200}"
+                  },
+                  "ContentHandling": "CONVERT_TO_TEXT",
+                  "IntegrationResponses": [
+                    {
+                      "StatusCode": "200",
+                      "ResponseParameters": {
+                        "method.response.header.Access-Control-Allow-Origin": "'*'",
+                        "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent,X-Amzn-Trace-Id'",
+                        "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,POST'"
+                      },
+                      "ResponseTemplates": {
+                        "application/json": ""
+                      }
+                    }
+                  ]
+                },
+                "ResourceId": {
+                  "Ref": "ApiGatewayResourceLoginGoogle"
+                },
+                "RestApiId": {
+                  "Ref": "ApiGatewayRestApi"
+                }
+              }
+            },
+            "ApiGatewayMethodRegistroPost": {
               "Type": "AWS::ApiGateway::Method",
               "Properties": {
                 "HttpMethod": "POST",
                 "RequestParameters": {},
                 "ResourceId": {
-                  "Ref": "ApiGatewayResourceLogin"
+                  "Ref": "ApiGatewayResourceRegistro"
                 },
                 "RestApiId": {
                   "Ref": "ApiGatewayRestApi"
@@ -253,7 +390,7 @@
                         ":lambda:path/2015-03-31/functions/",
                         {
                           "Fn::GetAtt": [
-                            "LoginLambdaFunction",
+                            "RegistroTradicionalLambdaFunction",
                             "Arn"
                           ]
                         },
@@ -265,10 +402,56 @@
                 "MethodResponses": []
               },
               "DependsOn": [
-                "LoginLambdaPermissionApiGateway"
+                "RegistroTradicionalLambdaPermissionApiGateway"
               ]
             },
-            "ApiGatewayDeployment1787027059474": {
+            "ApiGatewayMethodLoginGooglePost": {
+              "Type": "AWS::ApiGateway::Method",
+              "Properties": {
+                "HttpMethod": "POST",
+                "RequestParameters": {},
+                "ResourceId": {
+                  "Ref": "ApiGatewayResourceLoginGoogle"
+                },
+                "RestApiId": {
+                  "Ref": "ApiGatewayRestApi"
+                },
+                "ApiKeyRequired": "<REDACTED>",
+                "AuthorizationType": "NONE",
+                "Integration": {
+                  "IntegrationHttpMethod": "POST",
+                  "Type": "AWS_PROXY",
+                  "Uri": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition"
+                        },
+                        ":apigateway:",
+                        {
+                          "Ref": "AWS::Region"
+                        },
+                        ":lambda:path/2015-03-31/functions/",
+                        {
+                          "Fn::GetAtt": [
+                            "LoginGoogleLambdaFunction",
+                            "Arn"
+                          ]
+                        },
+                        "/invocations"
+                      ]
+                    ]
+                  }
+                },
+                "MethodResponses": []
+              },
+              "DependsOn": [
+                "LoginGoogleLambdaPermissionApiGateway"
+              ]
+            },
+            "ApiGatewayDeployment1788298200194": {
               "Type": "AWS::ApiGateway::Deployment",
               "Properties": {
                 "RestApiId": {
@@ -277,16 +460,55 @@
                 "StageName": "dev"
               },
               "DependsOn": [
-                "ApiGatewayMethodLoginOptions",
-                "ApiGatewayMethodLoginPost"
+                "ApiGatewayMethodRegistroOptions",
+                "ApiGatewayMethodLoginGoogleOptions",
+                "ApiGatewayMethodRegistroPost",
+                "ApiGatewayMethodLoginGooglePost"
               ]
             },
-            "LoginLambdaPermissionApiGateway": {
+            "RegistroTradicionalLambdaPermissionApiGateway": {
               "Type": "AWS::Lambda::Permission",
               "Properties": {
                 "FunctionName": {
                   "Fn::GetAtt": [
-                    "LoginLambdaFunction",
+                    "RegistroTradicionalLambdaFunction",
+                    "Arn"
+                  ]
+                },
+                "Action": "lambda:InvokeFunction",
+                "Principal": "apigateway.amazonaws.com",
+                "SourceArn": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":execute-api:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":",
+                      {
+                        "Ref": "AWS::AccountId"
+                      },
+                      ":",
+                      {
+                        "Ref": "ApiGatewayRestApi"
+                      },
+                      "/*/*"
+                    ]
+                  ]
+                }
+              }
+            },
+            "LoginGoogleLambdaPermissionApiGateway": {
+              "Type": "AWS::Lambda::Permission",
+              "Properties": {
+                "FunctionName": {
+                  "Fn::GetAtt": [
+                    "LoginGoogleLambdaFunction",
                     "Arn"
                   ]
                 },
@@ -326,13 +548,22 @@
                 "Name": "sls-truequi-auth-dev-ServerlessDeploymentBucketName"
               }
             },
-            "LoginLambdaFunctionQualifiedArn": {
+            "LoginGoogleLambdaFunctionQualifiedArn": {
               "Description": "Current Lambda function version",
               "Value": {
-                "Ref": "LoginLambdaVersionIHK7SwCQqDt6ckXb3gUlXp0smTHcPmGfQ7jaQMh7A4"
+                "Ref": "LoginGoogleLambdaVersionA5mZLIU6IOOqXg4nG78LCCz7ppsixD5hc9U6TpiAs"
               },
               "Export": {
-                "Name": "sls-truequi-auth-dev-LoginLambdaFunctionQualifiedArn"
+                "Name": "sls-truequi-auth-dev-LoginGoogleLambdaFunctionQualifiedArn"
+              }
+            },
+            "RegistroTradicionalLambdaFunctionQualifiedArn": {
+              "Description": "Current Lambda function version",
+              "Value": {
+                "Ref": "RegistroTradicionalLambdaVersionsucd11kfuZXzkTR8XfkYQ3yY0mvy24xohrAJPKwfcZM"
+              },
+              "Export": {
+                "Name": "sls-truequi-auth-dev-RegistroTradicionalLambdaFunctionQualifiedArn"
               }
             },
             "ServiceEndpoint": {
@@ -366,12 +597,12 @@
         "vpc": {}
       },
       "functions": {
-        "login": {
-          "handler": "handler.login",
+        "registroTradicional": {
+          "handler": "handler.registro_tradicional",
           "events": [
             {
               "http": {
-                "path": "login",
+                "path": "registro",
                 "method": "post",
                 "cors": {
                   "origin": "*",
@@ -394,20 +625,81 @@
               }
             }
           ],
-          "name": "truequi-auth-dev-login",
+          "name": "truequi-auth-dev-registroTradicional",
+          "module": ".",
           "package": {},
           "memory": 1024,
           "timeout": 6,
-          "runtime": "python3.9",
+          "runtime": "python3.12",
           "vpc": {},
-          "versionLogicalId": "LoginLambdaVersionIHK7SwCQqDt6ckXb3gUlXp0smTHcPmGfQ7jaQMh7A4"
+          "versionLogicalId": "RegistroTradicionalLambdaVersionsucd11kfuZXzkTR8XfkYQ3yY0mvy24xohrAJPKwfcZM"
+        },
+        "loginGoogle": {
+          "handler": "handler.login_google",
+          "events": [
+            {
+              "http": {
+                "path": "login/google",
+                "method": "post",
+                "cors": {
+                  "origin": "*",
+                  "methods": [
+                    "OPTIONS",
+                    "POST"
+                  ],
+                  "headers": [
+                    "Content-Type",
+                    "X-Amz-Date",
+                    "Authorization",
+                    "X-Api-Key",
+                    "X-Amz-Security-Token",
+                    "X-Amz-User-Agent",
+                    "X-Amzn-Trace-Id"
+                  ],
+                  "allowCredentials": "<REDACTED>"
+                },
+                "integration": "AWS_PROXY"
+              }
+            }
+          ],
+          "name": "truequi-auth-dev-loginGoogle",
+          "module": ".",
+          "package": {},
+          "memory": 1024,
+          "timeout": 6,
+          "runtime": "python3.12",
+          "vpc": {},
+          "versionLogicalId": "LoginGoogleLambdaVersionA5mZLIU6IOOqXg4nG78LCCz7ppsixD5hc9U6TpiAs"
         }
+      },
+      "plugins": [
+        "serverless-offline"
+      ],
+      "custom": {
+        "pythonRequirements": {}
+      },
+      "package": {
+        "patterns": [
+          "!venv/**",
+          "!.serverless/**"
+        ],
+        "artifactsS3KeyDirname": "serverless/truequi-auth/dev/code-artifacts",
+        "deploymentBucket": "serverless-framework-deployments-us-east-1-1b29d215-8306",
+        "artifact": "C:\\Users\\YouTu\\Downloads\\Truequi\\backend\\services\\auth\\.serverless\\truequi-auth.zip",
+        "artifactDirectoryName": "serverless/truequi-auth/dev/1788298226552-2026-09-01T21:30:26.552Z"
       }
     },
     "provider": {
       "name": "aws",
-      "runtime": "python3.9",
+      "runtime": "python3.12",
       "region": "us-east-1",
+      "environment": {
+        "DB_HOST": "truequi-db.c0rqa2akcsq3.us-east-1.rds.amazonaws.com",
+        "DB_USER": "admin",
+        "DB_PASS": "Tonycar411010",
+        "DB_NAME": "truequi_bd",
+        "GOOGLE_CLIENT_ID": "765285641470-jh7if1qr7a9hvfmofs6ume22vgu8v64m.apps.googleusercontent.com"
+      },
       "iamRoleStatements": [
         {
           "Effect": "Allow",
@@ -424,10 +716,16 @@
         "AWSTemplateFormatVersion": "2010-09-09",
         "Description": "The AWS CloudFormation template for this Serverless application",
         "Resources": {
-          "LoginLogGroup": {
+          "RegistroTradicionalLogGroup": {
             "Type": "AWS::Logs::LogGroup",
             "Properties": {
-              "LogGroupName": "/aws/lambda/truequi-auth-dev-login"
+              "LogGroupName": "/aws/lambda/truequi-auth-dev-registroTradicional"
+            }
+          },
+          "LoginGoogleLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/truequi-auth-dev-loginGoogle"
             }
           },
           "IamRoleLambdaExecution": {
@@ -516,18 +814,27 @@
               }
             }
           },
-          "LoginLambdaFunction": {
+          "RegistroTradicionalLambdaFunction": {
             "Type": "AWS::Lambda::Function",
             "Properties": {
               "Code": {
                 "S3Bucket": "serverless-framework-deployments-us-east-1-1b29d215-8306",
-                "S3Key": "serverless/truequi-auth/dev/1787027067786-2026-08-18T04:24:27.786Z/truequi-auth.zip"
+                "S3Key": "serverless/truequi-auth/dev/1788298226552-2026-09-01T21:30:26.552Z/truequi-auth.zip"
               },
-              "Handler": "handler.login",
-              "Runtime": "python3.9",
-              "FunctionName": "truequi-auth-dev-login",
+              "Handler": "handler.registro_tradicional",
+              "Runtime": "python3.12",
+              "FunctionName": "truequi-auth-dev-registroTradicional",
               "MemorySize": 1024,
               "Timeout": 6,
+              "Environment": {
+                "Variables": {
+                  "DB_HOST": "truequi-db.c0rqa2akcsq3.us-east-1.rds.amazonaws.com",
+                  "DB_USER": "admin",
+                  "DB_PASS": "Tonycar411010",
+                  "DB_NAME": "truequi_bd",
+                  "GOOGLE_CLIENT_ID": "765285641470-jh7if1qr7a9hvfmofs6ume22vgu8v64m.apps.googleusercontent.com"
+                }
+              },
               "Role": {
                 "Fn::GetAtt": [
                   "IamRoleLambdaExecution",
@@ -536,17 +843,59 @@
               }
             },
             "DependsOn": [
-              "LoginLogGroup"
+              "RegistroTradicionalLogGroup"
             ]
           },
-          "LoginLambdaVersionIHK7SwCQqDt6ckXb3gUlXp0smTHcPmGfQ7jaQMh7A4": {
+          "LoginGoogleLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": "serverless-framework-deployments-us-east-1-1b29d215-8306",
+                "S3Key": "serverless/truequi-auth/dev/1788298226552-2026-09-01T21:30:26.552Z/truequi-auth.zip"
+              },
+              "Handler": "handler.login_google",
+              "Runtime": "python3.12",
+              "FunctionName": "truequi-auth-dev-loginGoogle",
+              "MemorySize": 1024,
+              "Timeout": 6,
+              "Environment": {
+                "Variables": {
+                  "DB_HOST": "truequi-db.c0rqa2akcsq3.us-east-1.rds.amazonaws.com",
+                  "DB_USER": "admin",
+                  "DB_PASS": "Tonycar411010",
+                  "DB_NAME": "truequi_bd",
+                  "GOOGLE_CLIENT_ID": "765285641470-jh7if1qr7a9hvfmofs6ume22vgu8v64m.apps.googleusercontent.com"
+                }
+              },
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              }
+            },
+            "DependsOn": [
+              "LoginGoogleLogGroup"
+            ]
+          },
+          "LoginGoogleLambdaVersionA5mZLIU6IOOqXg4nG78LCCz7ppsixD5hc9U6TpiAs": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
-                "Ref": "LoginLambdaFunction"
+                "Ref": "LoginGoogleLambdaFunction"
               },
-              "CodeSha256": "NYbUCFq3jlOlR8jHNBAhbIKwyEH7rPnHe1FBnwFDm2k="
+              "CodeSha256": "5vfwGOlx2wrGGWlytx9CCwFmADg3vP9rAqDckdY6zRI="
+            }
+          },
+          "RegistroTradicionalLambdaVersionsucd11kfuZXzkTR8XfkYQ3yY0mvy24xohrAJPKwfcZM": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "RegistroTradicionalLambdaFunction"
+              },
+              "CodeSha256": "5vfwGOlx2wrGGWlytx9CCwFmADg3vP9rAqDckdY6zRI="
             }
           },
           "ApiGatewayRestApi": {
@@ -559,6 +908,21 @@
                 ]
               },
               "Policy": ""
+            }
+          },
+          "ApiGatewayResourceRegistro": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Fn::GetAtt": [
+                  "ApiGatewayRestApi",
+                  "RootResourceId"
+                ]
+              },
+              "PathPart": "registro",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
             }
           },
           "ApiGatewayResourceLogin": {
@@ -576,7 +940,19 @@
               }
             }
           },
-          "ApiGatewayMethodLoginOptions": {
+          "ApiGatewayResourceLoginGoogle": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Ref": "ApiGatewayResourceLogin"
+              },
+              "PathPart": "google",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayMethodRegistroOptions": {
             "Type": "AWS::ApiGateway::Method",
             "Properties": {
               "AuthorizationType": "NONE",
@@ -614,20 +990,65 @@
                 ]
               },
               "ResourceId": {
-                "Ref": "ApiGatewayResourceLogin"
+                "Ref": "ApiGatewayResourceRegistro"
               },
               "RestApiId": {
                 "Ref": "ApiGatewayRestApi"
               }
             }
           },
-          "ApiGatewayMethodLoginPost": {
+          "ApiGatewayMethodLoginGoogleOptions": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "AuthorizationType": "NONE",
+              "HttpMethod": "OPTIONS",
+              "MethodResponses": [
+                {
+                  "StatusCode": "200",
+                  "ResponseParameters": {
+                    "method.response.header.Access-Control-Allow-Origin": true,
+                    "method.response.header.Access-Control-Allow-Headers": true,
+                    "method.response.header.Access-Control-Allow-Methods": true
+                  },
+                  "ResponseModels": {}
+                }
+              ],
+              "RequestParameters": {},
+              "Integration": {
+                "Type": "MOCK",
+                "RequestTemplates": {
+                  "application/json": "{statusCode:200}"
+                },
+                "ContentHandling": "CONVERT_TO_TEXT",
+                "IntegrationResponses": [
+                  {
+                    "StatusCode": "200",
+                    "ResponseParameters": {
+                      "method.response.header.Access-Control-Allow-Origin": "'*'",
+                      "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent,X-Amzn-Trace-Id'",
+                      "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,POST'"
+                    },
+                    "ResponseTemplates": {
+                      "application/json": ""
+                    }
+                  }
+                ]
+              },
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceLoginGoogle"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayMethodRegistroPost": {
             "Type": "AWS::ApiGateway::Method",
             "Properties": {
               "HttpMethod": "POST",
               "RequestParameters": {},
               "ResourceId": {
-                "Ref": "ApiGatewayResourceLogin"
+                "Ref": "ApiGatewayResourceRegistro"
               },
               "RestApiId": {
                 "Ref": "ApiGatewayRestApi"
@@ -652,7 +1073,7 @@
                       ":lambda:path/2015-03-31/functions/",
                       {
                         "Fn::GetAtt": [
-                          "LoginLambdaFunction",
+                          "RegistroTradicionalLambdaFunction",
                           "Arn"
                         ]
                       },
@@ -664,10 +1085,56 @@
               "MethodResponses": []
             },
             "DependsOn": [
-              "LoginLambdaPermissionApiGateway"
+              "RegistroTradicionalLambdaPermissionApiGateway"
             ]
           },
-          "ApiGatewayDeployment1787027059474": {
+          "ApiGatewayMethodLoginGooglePost": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "POST",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceLoginGoogle"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": "<REDACTED>",
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": [
+                          "LoginGoogleLambdaFunction",
+                          "Arn"
+                        ]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            },
+            "DependsOn": [
+              "LoginGoogleLambdaPermissionApiGateway"
+            ]
+          },
+          "ApiGatewayDeployment1788298200194": {
             "Type": "AWS::ApiGateway::Deployment",
             "Properties": {
               "RestApiId": {
@@ -676,16 +1143,55 @@
               "StageName": "dev"
             },
             "DependsOn": [
-              "ApiGatewayMethodLoginOptions",
-              "ApiGatewayMethodLoginPost"
+              "ApiGatewayMethodRegistroOptions",
+              "ApiGatewayMethodLoginGoogleOptions",
+              "ApiGatewayMethodRegistroPost",
+              "ApiGatewayMethodLoginGooglePost"
             ]
           },
-          "LoginLambdaPermissionApiGateway": {
+          "RegistroTradicionalLambdaPermissionApiGateway": {
             "Type": "AWS::Lambda::Permission",
             "Properties": {
               "FunctionName": {
                 "Fn::GetAtt": [
-                  "LoginLambdaFunction",
+                  "RegistroTradicionalLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "apigateway.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Ref": "ApiGatewayRestApi"
+                    },
+                    "/*/*"
+                  ]
+                ]
+              }
+            }
+          },
+          "LoginGoogleLambdaPermissionApiGateway": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "LoginGoogleLambdaFunction",
                   "Arn"
                 ]
               },
@@ -725,13 +1231,22 @@
               "Name": "sls-truequi-auth-dev-ServerlessDeploymentBucketName"
             }
           },
-          "LoginLambdaFunctionQualifiedArn": {
+          "LoginGoogleLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "LoginLambdaVersionIHK7SwCQqDt6ckXb3gUlXp0smTHcPmGfQ7jaQMh7A4"
+              "Ref": "LoginGoogleLambdaVersionA5mZLIU6IOOqXg4nG78LCCz7ppsixD5hc9U6TpiAs"
             },
             "Export": {
-              "Name": "sls-truequi-auth-dev-LoginLambdaFunctionQualifiedArn"
+              "Name": "sls-truequi-auth-dev-LoginGoogleLambdaFunctionQualifiedArn"
+            }
+          },
+          "RegistroTradicionalLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "RegistroTradicionalLambdaVersionsucd11kfuZXzkTR8XfkYQ3yY0mvy24xohrAJPKwfcZM"
+            },
+            "Export": {
+              "Name": "sls-truequi-auth-dev-RegistroTradicionalLambdaFunctionQualifiedArn"
             }
           },
           "ServiceEndpoint": {
@@ -773,7 +1288,7 @@
       "serviceProvider": null,
       "instanceParameters": null
     },
-    "serviceRawFile": "service: truequi-auth\r\n\r\nprovider:\r\n  name: aws\r\n  runtime: python3.9\r\n  region: us-east-1\r\n  iamRoleStatements:\r\n    # Función para consultar DynamoDB\r\n    - Effect: Allow\r\n      Action:\r\n        - dynamodb:GetItem\r\n        - dynamodb:Query\r\n      Resource: \"arn:aws:dynamodb:us-east-1:*:table/Usuarios\"\r\n\r\nfunctions:\r\n  login:\r\n    handler: handler.login\r\n    events:\r\n      - http:\r\n          path: /login\r\n          method: post\r\n          cors: true",
+    "serviceRawFile": "service: truequi-auth\r\n\r\nuseDotenv: true\r\n\r\nprovider:\r\n  name: aws\r\n  runtime: python3.12\r\n  region: us-east-1\r\n  environment:\r\n    DB_HOST: ${env:DB_HOST}\r\n    DB_USER: ${env:DB_USER}\r\n    DB_PASS: ${env:DB_PASS}\r\n    DB_NAME: ${env:DB_NAME}\r\n    GOOGLE_CLIENT_ID: ${env:GOOGLE_CLIENT_ID}\r\n  iamRoleStatements:\r\n    - Effect: Allow\r\n      Action:\r\n        - dynamodb:GetItem\r\n        - dynamodb:Query\r\n      Resource: \"arn:aws:dynamodb:us-east-1:*:table/Usuarios\"\r\n\r\nfunctions:\r\n  registroTradicional:\r\n    handler: handler.registro_tradicional\r\n    events:\r\n      - http:\r\n          path: /registro\r\n          method: post\r\n          cors: true\r\n  loginGoogle:\r\n    handler: handler.login_google\r\n    events:\r\n      - http:\r\n          path: /login/google\r\n          method: post\r\n          cors: true\r\n\r\nplugins:\r\n  - serverless-offline\r\n\r\ncustom:\r\n  pythonRequirements: {}\r\n\r\npackage:\r\n  patterns:\r\n    - '!venv/**'\r\n    - '!.serverless/**'",
     "command": [
       "deploy"
     ],
@@ -786,14 +1301,20 @@
     "serviceProviderAwsCfStackName": "truequi-auth-dev",
     "serviceProviderAwsCfStackId": "arn:aws:cloudformation:us-east-1:317380567068:stack/truequi-auth-dev/b4b9ca40-9abc-11f1-8e5a-0edb1358607b",
     "serviceProviderAwsCfStackCreated": "2026-08-18T04:24:30.302Z",
-    "serviceProviderAwsCfStackUpdated": null,
-    "serviceProviderAwsCfStackStatus": "CREATE_COMPLETE",
+    "serviceProviderAwsCfStackUpdated": "2026-09-01T06:02:36.413Z",
+    "serviceProviderAwsCfStackStatus": "UPDATE_COMPLETE",
     "serviceProviderAwsCfStackOutputs": [
       {
-        "OutputKey": "LoginLambdaFunctionQualifiedArn",
-        "OutputValue": "arn:aws:lambda:us-east-1:317380567068:function:truequi-auth-dev-login:1",
+        "OutputKey": "LoginGoogleLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:us-east-1:317380567068:function:truequi-auth-dev-loginGoogle:7",
         "Description": "Current Lambda function version",
-        "ExportName": "sls-truequi-auth-dev-LoginLambdaFunctionQualifiedArn"
+        "ExportName": "sls-truequi-auth-dev-LoginGoogleLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "RegistroTradicionalLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:us-east-1:317380567068:function:truequi-auth-dev-registroTradicional:7",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-truequi-auth-dev-RegistroTradicionalLambdaFunctionQualifiedArn"
       },
       {
         "OutputKey": "ServiceEndpoint",
@@ -811,10 +1332,16 @@
       "AWSTemplateFormatVersion": "2010-09-09",
       "Description": "The AWS CloudFormation template for this Serverless application",
       "Resources": {
-        "LoginLogGroup": {
+        "RegistroTradicionalLogGroup": {
           "Type": "AWS::Logs::LogGroup",
           "Properties": {
-            "LogGroupName": "/aws/lambda/truequi-auth-dev-login"
+            "LogGroupName": "/aws/lambda/truequi-auth-dev-registroTradicional"
+          }
+        },
+        "LoginGoogleLogGroup": {
+          "Type": "AWS::Logs::LogGroup",
+          "Properties": {
+            "LogGroupName": "/aws/lambda/truequi-auth-dev-loginGoogle"
           }
         },
         "IamRoleLambdaExecution": {
@@ -903,18 +1430,27 @@
             }
           }
         },
-        "LoginLambdaFunction": {
+        "RegistroTradicionalLambdaFunction": {
           "Type": "AWS::Lambda::Function",
           "Properties": {
             "Code": {
               "S3Bucket": "serverless-framework-deployments-us-east-1-1b29d215-8306",
-              "S3Key": "serverless/truequi-auth/dev/1787027067786-2026-08-18T04:24:27.786Z/truequi-auth.zip"
+              "S3Key": "serverless/truequi-auth/dev/1788298226552-2026-09-01T21:30:26.552Z/truequi-auth.zip"
             },
-            "Handler": "handler.login",
-            "Runtime": "python3.9",
-            "FunctionName": "truequi-auth-dev-login",
+            "Handler": "handler.registro_tradicional",
+            "Runtime": "python3.12",
+            "FunctionName": "truequi-auth-dev-registroTradicional",
             "MemorySize": 1024,
             "Timeout": 6,
+            "Environment": {
+              "Variables": {
+                "DB_HOST": "truequi-db.c0rqa2akcsq3.us-east-1.rds.amazonaws.com",
+                "DB_USER": "admin",
+                "DB_PASS": "Tonycar411010",
+                "DB_NAME": "truequi_bd",
+                "GOOGLE_CLIENT_ID": "765285641470-jh7if1qr7a9hvfmofs6ume22vgu8v64m.apps.googleusercontent.com"
+              }
+            },
             "Role": {
               "Fn::GetAtt": [
                 "IamRoleLambdaExecution",
@@ -923,17 +1459,59 @@
             }
           },
           "DependsOn": [
-            "LoginLogGroup"
+            "RegistroTradicionalLogGroup"
           ]
         },
-        "LoginLambdaVersionIHK7SwCQqDt6ckXb3gUlXp0smTHcPmGfQ7jaQMh7A4": {
+        "LoginGoogleLambdaFunction": {
+          "Type": "AWS::Lambda::Function",
+          "Properties": {
+            "Code": {
+              "S3Bucket": "serverless-framework-deployments-us-east-1-1b29d215-8306",
+              "S3Key": "serverless/truequi-auth/dev/1788298226552-2026-09-01T21:30:26.552Z/truequi-auth.zip"
+            },
+            "Handler": "handler.login_google",
+            "Runtime": "python3.12",
+            "FunctionName": "truequi-auth-dev-loginGoogle",
+            "MemorySize": 1024,
+            "Timeout": 6,
+            "Environment": {
+              "Variables": {
+                "DB_HOST": "truequi-db.c0rqa2akcsq3.us-east-1.rds.amazonaws.com",
+                "DB_USER": "admin",
+                "DB_PASS": "Tonycar411010",
+                "DB_NAME": "truequi_bd",
+                "GOOGLE_CLIENT_ID": "765285641470-jh7if1qr7a9hvfmofs6ume22vgu8v64m.apps.googleusercontent.com"
+              }
+            },
+            "Role": {
+              "Fn::GetAtt": [
+                "IamRoleLambdaExecution",
+                "Arn"
+              ]
+            }
+          },
+          "DependsOn": [
+            "LoginGoogleLogGroup"
+          ]
+        },
+        "LoginGoogleLambdaVersionA5mZLIU6IOOqXg4nG78LCCz7ppsixD5hc9U6TpiAs": {
           "Type": "AWS::Lambda::Version",
           "DeletionPolicy": "Retain",
           "Properties": {
             "FunctionName": {
-              "Ref": "LoginLambdaFunction"
+              "Ref": "LoginGoogleLambdaFunction"
             },
-            "CodeSha256": "NYbUCFq3jlOlR8jHNBAhbIKwyEH7rPnHe1FBnwFDm2k="
+            "CodeSha256": "5vfwGOlx2wrGGWlytx9CCwFmADg3vP9rAqDckdY6zRI="
+          }
+        },
+        "RegistroTradicionalLambdaVersionsucd11kfuZXzkTR8XfkYQ3yY0mvy24xohrAJPKwfcZM": {
+          "Type": "AWS::Lambda::Version",
+          "DeletionPolicy": "Retain",
+          "Properties": {
+            "FunctionName": {
+              "Ref": "RegistroTradicionalLambdaFunction"
+            },
+            "CodeSha256": "5vfwGOlx2wrGGWlytx9CCwFmADg3vP9rAqDckdY6zRI="
           }
         },
         "ApiGatewayRestApi": {
@@ -946,6 +1524,21 @@
               ]
             },
             "Policy": ""
+          }
+        },
+        "ApiGatewayResourceRegistro": {
+          "Type": "AWS::ApiGateway::Resource",
+          "Properties": {
+            "ParentId": {
+              "Fn::GetAtt": [
+                "ApiGatewayRestApi",
+                "RootResourceId"
+              ]
+            },
+            "PathPart": "registro",
+            "RestApiId": {
+              "Ref": "ApiGatewayRestApi"
+            }
           }
         },
         "ApiGatewayResourceLogin": {
@@ -963,7 +1556,19 @@
             }
           }
         },
-        "ApiGatewayMethodLoginOptions": {
+        "ApiGatewayResourceLoginGoogle": {
+          "Type": "AWS::ApiGateway::Resource",
+          "Properties": {
+            "ParentId": {
+              "Ref": "ApiGatewayResourceLogin"
+            },
+            "PathPart": "google",
+            "RestApiId": {
+              "Ref": "ApiGatewayRestApi"
+            }
+          }
+        },
+        "ApiGatewayMethodRegistroOptions": {
           "Type": "AWS::ApiGateway::Method",
           "Properties": {
             "AuthorizationType": "NONE",
@@ -1001,20 +1606,65 @@
               ]
             },
             "ResourceId": {
-              "Ref": "ApiGatewayResourceLogin"
+              "Ref": "ApiGatewayResourceRegistro"
             },
             "RestApiId": {
               "Ref": "ApiGatewayRestApi"
             }
           }
         },
-        "ApiGatewayMethodLoginPost": {
+        "ApiGatewayMethodLoginGoogleOptions": {
+          "Type": "AWS::ApiGateway::Method",
+          "Properties": {
+            "AuthorizationType": "NONE",
+            "HttpMethod": "OPTIONS",
+            "MethodResponses": [
+              {
+                "StatusCode": "200",
+                "ResponseParameters": {
+                  "method.response.header.Access-Control-Allow-Origin": true,
+                  "method.response.header.Access-Control-Allow-Headers": true,
+                  "method.response.header.Access-Control-Allow-Methods": true
+                },
+                "ResponseModels": {}
+              }
+            ],
+            "RequestParameters": {},
+            "Integration": {
+              "Type": "MOCK",
+              "RequestTemplates": {
+                "application/json": "{statusCode:200}"
+              },
+              "ContentHandling": "CONVERT_TO_TEXT",
+              "IntegrationResponses": [
+                {
+                  "StatusCode": "200",
+                  "ResponseParameters": {
+                    "method.response.header.Access-Control-Allow-Origin": "'*'",
+                    "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent,X-Amzn-Trace-Id'",
+                    "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,POST'"
+                  },
+                  "ResponseTemplates": {
+                    "application/json": ""
+                  }
+                }
+              ]
+            },
+            "ResourceId": {
+              "Ref": "ApiGatewayResourceLoginGoogle"
+            },
+            "RestApiId": {
+              "Ref": "ApiGatewayRestApi"
+            }
+          }
+        },
+        "ApiGatewayMethodRegistroPost": {
           "Type": "AWS::ApiGateway::Method",
           "Properties": {
             "HttpMethod": "POST",
             "RequestParameters": {},
             "ResourceId": {
-              "Ref": "ApiGatewayResourceLogin"
+              "Ref": "ApiGatewayResourceRegistro"
             },
             "RestApiId": {
               "Ref": "ApiGatewayRestApi"
@@ -1039,7 +1689,7 @@
                     ":lambda:path/2015-03-31/functions/",
                     {
                       "Fn::GetAtt": [
-                        "LoginLambdaFunction",
+                        "RegistroTradicionalLambdaFunction",
                         "Arn"
                       ]
                     },
@@ -1051,10 +1701,56 @@
             "MethodResponses": []
           },
           "DependsOn": [
-            "LoginLambdaPermissionApiGateway"
+            "RegistroTradicionalLambdaPermissionApiGateway"
           ]
         },
-        "ApiGatewayDeployment1787027059474": {
+        "ApiGatewayMethodLoginGooglePost": {
+          "Type": "AWS::ApiGateway::Method",
+          "Properties": {
+            "HttpMethod": "POST",
+            "RequestParameters": {},
+            "ResourceId": {
+              "Ref": "ApiGatewayResourceLoginGoogle"
+            },
+            "RestApiId": {
+              "Ref": "ApiGatewayRestApi"
+            },
+            "ApiKeyRequired": "<REDACTED>",
+            "AuthorizationType": "NONE",
+            "Integration": {
+              "IntegrationHttpMethod": "POST",
+              "Type": "AWS_PROXY",
+              "Uri": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":apigateway:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":lambda:path/2015-03-31/functions/",
+                    {
+                      "Fn::GetAtt": [
+                        "LoginGoogleLambdaFunction",
+                        "Arn"
+                      ]
+                    },
+                    "/invocations"
+                  ]
+                ]
+              }
+            },
+            "MethodResponses": []
+          },
+          "DependsOn": [
+            "LoginGoogleLambdaPermissionApiGateway"
+          ]
+        },
+        "ApiGatewayDeployment1788298200194": {
           "Type": "AWS::ApiGateway::Deployment",
           "Properties": {
             "RestApiId": {
@@ -1063,16 +1759,55 @@
             "StageName": "dev"
           },
           "DependsOn": [
-            "ApiGatewayMethodLoginOptions",
-            "ApiGatewayMethodLoginPost"
+            "ApiGatewayMethodRegistroOptions",
+            "ApiGatewayMethodLoginGoogleOptions",
+            "ApiGatewayMethodRegistroPost",
+            "ApiGatewayMethodLoginGooglePost"
           ]
         },
-        "LoginLambdaPermissionApiGateway": {
+        "RegistroTradicionalLambdaPermissionApiGateway": {
           "Type": "AWS::Lambda::Permission",
           "Properties": {
             "FunctionName": {
               "Fn::GetAtt": [
-                "LoginLambdaFunction",
+                "RegistroTradicionalLambdaFunction",
+                "Arn"
+              ]
+            },
+            "Action": "lambda:InvokeFunction",
+            "Principal": "apigateway.amazonaws.com",
+            "SourceArn": {
+              "Fn::Join": [
+                "",
+                [
+                  "arn:",
+                  {
+                    "Ref": "AWS::Partition"
+                  },
+                  ":execute-api:",
+                  {
+                    "Ref": "AWS::Region"
+                  },
+                  ":",
+                  {
+                    "Ref": "AWS::AccountId"
+                  },
+                  ":",
+                  {
+                    "Ref": "ApiGatewayRestApi"
+                  },
+                  "/*/*"
+                ]
+              ]
+            }
+          }
+        },
+        "LoginGoogleLambdaPermissionApiGateway": {
+          "Type": "AWS::Lambda::Permission",
+          "Properties": {
+            "FunctionName": {
+              "Fn::GetAtt": [
+                "LoginGoogleLambdaFunction",
                 "Arn"
               ]
             },
@@ -1112,13 +1847,22 @@
             "Name": "sls-truequi-auth-dev-ServerlessDeploymentBucketName"
           }
         },
-        "LoginLambdaFunctionQualifiedArn": {
+        "LoginGoogleLambdaFunctionQualifiedArn": {
           "Description": "Current Lambda function version",
           "Value": {
-            "Ref": "LoginLambdaVersionIHK7SwCQqDt6ckXb3gUlXp0smTHcPmGfQ7jaQMh7A4"
+            "Ref": "LoginGoogleLambdaVersionA5mZLIU6IOOqXg4nG78LCCz7ppsixD5hc9U6TpiAs"
           },
           "Export": {
-            "Name": "sls-truequi-auth-dev-LoginLambdaFunctionQualifiedArn"
+            "Name": "sls-truequi-auth-dev-LoginGoogleLambdaFunctionQualifiedArn"
+          }
+        },
+        "RegistroTradicionalLambdaFunctionQualifiedArn": {
+          "Description": "Current Lambda function version",
+          "Value": {
+            "Ref": "RegistroTradicionalLambdaVersionsucd11kfuZXzkTR8XfkYQ3yY0mvy24xohrAJPKwfcZM"
+          },
+          "Export": {
+            "Name": "sls-truequi-auth-dev-RegistroTradicionalLambdaFunctionQualifiedArn"
           }
         },
         "ServiceEndpoint": {

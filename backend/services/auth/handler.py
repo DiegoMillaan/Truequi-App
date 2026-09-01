@@ -1,52 +1,67 @@
 import json
-import boto3
+import pymysql
+import os
+from google.oauth2 import id_token
+from google.auth.transport import requests
 
-# Inicializar el cliente de AWS DynamoDB
-dynamodb = boto3.resource('dynamodb')
+# Configuración segura usando variables de entorno
+DB_HOST = os.environ['DB_HOST']
+DB_USER = os.environ['DB_USER']
+DB_PASS = os.environ['DB_PASS']
+DB_NAME = os.environ['DB_NAME']
+GOOGLE_CLIENT_ID = os.environ['GOOGLE_CLIENT_ID']
 
-# IMPORTANTE: Este nombre de tabla debe coincidir con el que Josue o Ximena cree.
-tabla_usuarios = dynamodb.Table('Usuarios')
+def get_connection():
+    return pymysql.connect(host=DB_HOST, user=DB_USER, password=DB_PASS, database=DB_NAME, cursorclass=pymysql.cursors.DictCursor)
 
-def login(event, context):
+# ==========================================
+# 1. ALTA DE USUARIO (Usando Stored Procedure)
+# ==========================================
+def registro_tradicional(event, context):
     try:
-        # 1. Extraer el body del POST que manda el Frontend
-        if not event.get('body'):
-            return respuesta(400, {"error": "El cuerpo de la petición está vacío"})
-            
-        body = json.loads(event['body'])
+        body = json.loads(event.get('body', '{}'))
         correo = body.get('correo')
         password = body.get('password')
+        rol = body.get('rol', 'Usuario') # Implementación de Sistema de Roles
 
-        # 2. Validar que no manden campos vacíos
         if not correo or not password:
-            return respuesta(400, {"error": "Falta correo o contraseña"})
+            return respuesta(400, {"error": "Faltan datos"})
 
-        # 3. Consultar la Base de Datos (Asumimos que 'correo' es la Primary Key)
-        response = tabla_usuarios.get_item(Key={'correo': correo})
-        usuario = response.get('Item')
+        conexion = get_connection()
+        with conexion.cursor() as cursor:
+            # RÚBRICA: Llamada estricta al Procedure. El Trigger hará la auditoría en automático.
+            cursor.execute("CALL SP_A(%s, %s, %s)", (correo, password, rol))
+        
+        conexion.commit()
+        conexion.close()
 
-        # 4. Validar si el usuario existe y la contraseña es correcta
-        # En el Sprint 6 validaremos hashes. Para el Sprint 2 comparamos directo.
-        if not usuario or usuario.get('password') != password:
-            return respuesta(401, {"error": "Credenciales inválidas"})
-
-        # 5. Éxito: Devolvemos código 200 y los datos (sin la contraseña)
-        return respuesta(200, {
-            "status": "success",
-            "message": "Inicio de sesión exitoso",
-            "token": "fake-jwt-token-sprint-2",
-            "usuario": {
-                "nombre": usuario.get('nombre', 'Usuario'),
-                "correo": usuario.get('correo')
-            }
-        })
-
+        return respuesta(201, {"message": "Usuario registrado exitosamente. Auditoría generada."})
     except Exception as e:
-        # Si algo falla en el servidor o en la conexión a DB, devolvemos error 500
-        print(f"Error interno: {str(e)}")
-        return respuesta(500, {"error": "Error interno del servidor"})
+        return respuesta(500, {"error": f"Error interno: {str(e)}"})
 
-# Función auxiliar para generar las respuestas HTTP con los headers de CORS
+# ==========================================
+# 2. LOGIN CON OAUTH 2.0 (Google)
+# ==========================================
+def login_google(event, context):
+    try:
+        body = json.loads(event.get('body', '{}'))
+        token = body.get('token')
+
+        # Validación oficial de OAuth 2.0
+        idinfo = id_token.verify_oauth2_token(token, requests.Request(), GOOGLE_CLIENT_ID)
+        correo = idinfo['email']
+
+        # Aquí usaríamos CALL SP_CONSULTA para verificar si el usuario ya existe
+        return respuesta(200, {
+            "status": "success", 
+            "message": "Login con Google exitoso", 
+            "usuario": {"correo": correo, "rol": "Usuario"}
+        })
+    except ValueError:
+        return respuesta(401, {"error": "Token de Google inválido o expirado"})
+    except Exception as e:
+        return respuesta(500, {"error": str(e)})
+
 def respuesta(status_code, body):
     return {
         "statusCode": status_code,

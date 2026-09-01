@@ -1,7 +1,7 @@
 {
-  "C:\\Users\\YouTu\\Downloads\\Inter-Cambios\\backend\\health-check\\serverless.yml": {
-    "versionFramework": "4.40.0",
-    "servicePath": "C:\\Users\\YouTu\\Downloads\\Inter-Cambios\\backend\\health-check\\serverless.yml",
+  "C:\\Users\\YouTu\\Downloads\\Truequi\\backend\\services\\health-check\\serverless.yml": {
+    "versionFramework": "4.41.1",
+    "servicePath": "C:\\Users\\YouTu\\Downloads\\Truequi\\backend\\services\\health-check\\serverless.yml",
     "serviceConfigFileName": "serverless.yml",
     "service": {
       "service": "intercambios-api",
@@ -104,7 +104,7 @@
               "Properties": {
                 "Code": {
                   "S3Bucket": "serverless-framework-deployments-us-east-1-1b29d215-8306",
-                  "S3Key": "serverless/intercambios-api/dev/1786236629129-2026-08-09T00:50:29.129Z/intercambios-api.zip"
+                  "S3Key": "serverless/intercambios-api/dev/1788236532573-2026-09-01T04:22:12.573Z/intercambios-api.zip"
                 },
                 "Handler": "handler.check",
                 "Runtime": "python3.9",
@@ -122,14 +122,14 @@
                 "HealthCheckLogGroup"
               ]
             },
-            "HealthCheckLambdaVersion7WP1fqhNRb3XqKuz61x1hBv5Jpl8KboVTtI6al9uhc": {
+            "HealthCheckLambdaVersionLCJFTYZV6gqEEmwAeV11d1C7oO7MVp5GL3ID1RecQ": {
               "Type": "AWS::Lambda::Version",
               "DeletionPolicy": "Retain",
               "Properties": {
                 "FunctionName": {
                   "Ref": "HealthCheckLambdaFunction"
                 },
-                "CodeSha256": "cK2+VEr6HTjU6BvsePUVULj/MkBv7/GGLqT8bnlXYHU="
+                "CodeSha256": "TDwGuqsz2RqncKYXrVZ2U8yIUI7p4pNAwfEdtiizlco="
               }
             },
             "ApiGatewayRestApi": {
@@ -250,7 +250,7 @@
                 "HealthCheckLambdaPermissionApiGateway"
               ]
             },
-            "ApiGatewayDeployment1786236541260": {
+            "ApiGatewayDeployment1788236523934": {
               "Type": "AWS::ApiGateway::Deployment",
               "Properties": {
                 "RestApiId": {
@@ -311,7 +311,7 @@
             "HealthCheckLambdaFunctionQualifiedArn": {
               "Description": "Current Lambda function version",
               "Value": {
-                "Ref": "HealthCheckLambdaVersion7WP1fqhNRb3XqKuz61x1hBv5Jpl8KboVTtI6al9uhc"
+                "Ref": "HealthCheckLambdaVersionLCJFTYZV6gqEEmwAeV11d1C7oO7MVp5GL3ID1RecQ"
               },
               "Export": {
                 "Name": "sls-intercambios-api-dev-HealthCheckLambdaFunctionQualifiedArn"
@@ -377,13 +377,17 @@
             }
           ],
           "name": "intercambios-api-dev-healthCheck",
+          "module": ".",
           "package": {},
           "memory": 1024,
           "timeout": 6,
           "runtime": "python3.9",
           "vpc": {},
-          "versionLogicalId": "HealthCheckLambdaVersion7WP1fqhNRb3XqKuz61x1hBv5Jpl8KboVTtI6al9uhc"
+          "versionLogicalId": "HealthCheckLambdaVersionLCJFTYZV6gqEEmwAeV11d1C7oO7MVp5GL3ID1RecQ"
         }
+      },
+      "custom": {
+        "pythonRequirements": {}
       }
     },
     "provider": {
@@ -485,7 +489,7 @@
             "Properties": {
               "Code": {
                 "S3Bucket": "serverless-framework-deployments-us-east-1-1b29d215-8306",
-                "S3Key": "serverless/intercambios-api/dev/1786236629129-2026-08-09T00:50:29.129Z/intercambios-api.zip"
+                "S3Key": "serverless/intercambios-api/dev/1788236532573-2026-09-01T04:22:12.573Z/intercambios-api.zip"
               },
               "Handler": "handler.check",
               "Runtime": "python3.9",
@@ -503,14 +507,14 @@
               "HealthCheckLogGroup"
             ]
           },
-          "HealthCheckLambdaVersion7WP1fqhNRb3XqKuz61x1hBv5Jpl8KboVTtI6al9uhc": {
+          "HealthCheckLambdaVersionLCJFTYZV6gqEEmwAeV11d1C7oO7MVp5GL3ID1RecQ": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "HealthCheckLambdaFunction"
               },
-              "CodeSha256": "cK2+VEr6HTjU6BvsePUVULj/MkBv7/GGLqT8bnlXYHU="
+              "CodeSha256": "TDwGuqsz2RqncKYXrVZ2U8yIUI7p4pNAwfEdtiizlco="
             }
           },
           "ApiGatewayRestApi": {
@@ -631,7 +635,7 @@
               "HealthCheckLambdaPermissionApiGateway"
             ]
           },
-          "ApiGatewayDeployment1786236541260": {
+          "ApiGatewayDeployment1788236523934": {
             "Type": "AWS::ApiGateway::Deployment",
             "Properties": {
               "RestApiId": {
@@ -692,7 +696,7 @@
           "HealthCheckLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "HealthCheckLambdaVersion7WP1fqhNRb3XqKuz61x1hBv5Jpl8KboVTtI6al9uhc"
+              "Ref": "HealthCheckLambdaVersionLCJFTYZV6gqEEmwAeV11d1C7oO7MVp5GL3ID1RecQ"
             },
             "Export": {
               "Name": "sls-intercambios-api-dev-HealthCheckLambdaFunctionQualifiedArn"
@@ -730,14 +734,14 @@
     },
     "dashboard": {
       "isEnabledForService": false,
-      "requiredAuthentication": true,
+      "requiredAuthentication": false,
       "orgFeaturesInUse": null,
       "orgObservabilityIntegrations": null,
       "serviceAppId": null,
       "serviceProvider": null,
       "instanceParameters": null
     },
-    "serviceRawFile": "service: intercambios-api\r\n\r\nprovider:\r\n  name: aws\r\n  runtime: python3.9\r\n  region: us-east-1\r\n\r\nfunctions:\r\n  healthCheck:\r\n    handler: handler.check\r\n    events:\r\n      - http:\r\n          path: /health\r\n          method: get\r\n          cors: true",
+    "serviceRawFile": "service: intercambios-api\r\n\r\nprovider:\r\n  name: aws\r\n  runtime: python3.9\r\n  region: us-east-1\r\n\r\nfunctions:\r\n  healthCheck:\r\n    handler: handler.check\r\n    events:\r\n      - http:\r\n          path: /health\r\n          method: get\r\n          cors: true\r\n\r\ncustom:\r\n  pythonRequirements: {}",
     "command": [
       "deploy"
     ],
@@ -864,7 +868,7 @@
           "Properties": {
             "Code": {
               "S3Bucket": "serverless-framework-deployments-us-east-1-1b29d215-8306",
-              "S3Key": "serverless/intercambios-api/dev/1786236629129-2026-08-09T00:50:29.129Z/intercambios-api.zip"
+              "S3Key": "serverless/intercambios-api/dev/1788236532573-2026-09-01T04:22:12.573Z/intercambios-api.zip"
             },
             "Handler": "handler.check",
             "Runtime": "python3.9",
@@ -882,14 +886,14 @@
             "HealthCheckLogGroup"
           ]
         },
-        "HealthCheckLambdaVersion7WP1fqhNRb3XqKuz61x1hBv5Jpl8KboVTtI6al9uhc": {
+        "HealthCheckLambdaVersionLCJFTYZV6gqEEmwAeV11d1C7oO7MVp5GL3ID1RecQ": {
           "Type": "AWS::Lambda::Version",
           "DeletionPolicy": "Retain",
           "Properties": {
             "FunctionName": {
               "Ref": "HealthCheckLambdaFunction"
             },
-            "CodeSha256": "cK2+VEr6HTjU6BvsePUVULj/MkBv7/GGLqT8bnlXYHU="
+            "CodeSha256": "TDwGuqsz2RqncKYXrVZ2U8yIUI7p4pNAwfEdtiizlco="
           }
         },
         "ApiGatewayRestApi": {
@@ -1010,7 +1014,7 @@
             "HealthCheckLambdaPermissionApiGateway"
           ]
         },
-        "ApiGatewayDeployment1786236541260": {
+        "ApiGatewayDeployment1788236523934": {
           "Type": "AWS::ApiGateway::Deployment",
           "Properties": {
             "RestApiId": {
@@ -1071,7 +1075,7 @@
         "HealthCheckLambdaFunctionQualifiedArn": {
           "Description": "Current Lambda function version",
           "Value": {
-            "Ref": "HealthCheckLambdaVersion7WP1fqhNRb3XqKuz61x1hBv5Jpl8KboVTtI6al9uhc"
+            "Ref": "HealthCheckLambdaVersionLCJFTYZV6gqEEmwAeV11d1C7oO7MVp5GL3ID1RecQ"
           },
           "Export": {
             "Name": "sls-intercambios-api-dev-HealthCheckLambdaFunctionQualifiedArn"
