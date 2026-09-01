@@ -1,1 +1,8 @@
+# Credenciales
 .env
+
+# Entornos y temporales de Serverless
+**/.serverless/
+**/node_modules/
+**/venv/
+**/__pycache__/
