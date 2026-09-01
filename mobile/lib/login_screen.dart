@@ -149,13 +149,13 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: TruequiColors.purpura.withOpacity(0.5),
+                          color: TruequiColors.purpura.withValues(alpha: 0.5),
                           blurRadius: 35,
                           spreadRadius: 5,
                           offset: const Offset(0, 15), 
                         ),
                         BoxShadow(
-                          color: TruequiColors.amarillo.withOpacity(0.3),
+                          color: TruequiColors.amarillo.withValues(alpha: 0.3),
                           blurRadius: 25,
                           spreadRadius: -5,
                           offset: const Offset(0, -5), 
@@ -171,10 +171,10 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: Colors.white.withOpacity(0.15), 
-                        border: Border.all(color: Colors.white.withOpacity(0.4), width: 1.5),
+                        color: Colors.white.withValues(alpha: 0.15), 
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.4), width: 1.5),
                       ),
-                      child: Icon(Icons.sync_rounded, size: 75, color: TruequiColors.purpura.withOpacity(0.95)),
+                      child: Icon(Icons.sync_rounded, size: 75, color: TruequiColors.purpura.withValues(alpha: 0.95)),
                     ),
                   ),
 
@@ -189,7 +189,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                         decoration: BoxDecoration(
                           color: TruequiColors.amarillo, 
                           shape: BoxShape.circle,
-                          boxShadow: [BoxShadow(color: TruequiColors.amarillo.withOpacity(0.8), blurRadius: 10)],
+                          boxShadow: [BoxShadow(color: TruequiColors.amarillo.withValues(alpha: 0.8), blurRadius: 10)],
                         ),
                       ),
                     ),
@@ -240,7 +240,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                     child: Container(
                       width: 300,
                       height: 300,
-                      decoration: BoxDecoration(shape: BoxShape.circle, color: TruequiColors.purpura.withOpacity(0.5)),
+                      decoration: BoxDecoration(shape: BoxShape.circle, color: TruequiColors.purpura.withValues(alpha: 0.5)),
                     ),
                   ),
                   Positioned(
@@ -249,7 +249,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                     child: Container(
                       width: 250,
                       height: 250,
-                      decoration: BoxDecoration(shape: BoxShape.circle, color: TruequiColors.amarillo.withOpacity(0.4)),
+                      decoration: BoxDecoration(shape: BoxShape.circle, color: TruequiColors.amarillo.withValues(alpha: 0.4)),
                     ),
                   ),
                 ],
@@ -258,7 +258,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
           ),
           BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 60.0, sigmaY: 60.0),
-            child: Container(color: Colors.white.withOpacity(0.1)),
+            child: Container(color: Colors.white.withValues(alpha: 0.1)),
           ),
           SafeArea(
             child: Center(
@@ -290,11 +290,11 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                       Container(
                         padding: const EdgeInsets.all(24),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.6), 
+                          color: Colors.white.withValues(alpha: 0.6), 
                           borderRadius: BorderRadius.circular(24),
-                          border: Border.all(color: Colors.white.withOpacity(0.8), width: 1.5),
+                          border: Border.all(color: Colors.white.withValues(alpha: 0.8), width: 1.5),
                           boxShadow: [
-                            BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, 10)),
+                            BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 20, offset: const Offset(0, 10)),
                           ],
                         ),
                         child: Column(
@@ -306,7 +306,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                 labelText: 'Truequi Email',
                                 prefixIcon: const Icon(Icons.alternate_email_rounded, color: TruequiColors.purpura),
                                 filled: true,
-                                fillColor: Colors.white.withOpacity(0.5),
+                                fillColor: Colors.white.withValues(alpha: 0.5),
                                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
                                 focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: TruequiColors.purpura, width: 2)),
                               ),
@@ -320,7 +320,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                 labelText: 'Truequi Password',
                                 prefixIcon: const Icon(Icons.lock_outline_rounded, color: TruequiColors.purpura),
                                 filled: true,
-                                fillColor: Colors.white.withOpacity(0.5),
+                                fillColor: Colors.white.withValues(alpha: 0.5),
                                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
                                 focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: TruequiColors.purpura, width: 2)),
                               ),
@@ -335,7 +335,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: TruequiColors.amarillo,
                                   elevation: 5,
-                                  shadowColor: TruequiColors.amarillo.withOpacity(0.5),
+                                  shadowColor: TruequiColors.amarillo.withValues(alpha: 0.5),
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                                 ),
                                 child: _cargando

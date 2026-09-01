@@ -109,7 +109,7 @@ class _LoginWebState extends State<LoginWeb> with SingleTickerProviderStateMixin
                     child: Container(
                       width: size.width * 0.4,
                       height: size.width * 0.4,
-                      decoration: BoxDecoration(shape: BoxShape.circle, color: TruequiColors.purpura.withOpacity(0.4)),
+                      decoration: BoxDecoration(shape: BoxShape.circle, color: TruequiColors.purpura.withValues(alpha: 0.4)),
                     ),
                   ),
                   Positioned(
@@ -118,7 +118,7 @@ class _LoginWebState extends State<LoginWeb> with SingleTickerProviderStateMixin
                     child: Container(
                       width: size.width * 0.35,
                       height: size.width * 0.35,
-                      decoration: BoxDecoration(shape: BoxShape.circle, color: TruequiColors.amarillo.withOpacity(0.3)),
+                      decoration: BoxDecoration(shape: BoxShape.circle, color: TruequiColors.amarillo.withValues(alpha: 0.3)),
                     ),
                   ),
                 ],
@@ -129,7 +129,7 @@ class _LoginWebState extends State<LoginWeb> with SingleTickerProviderStateMixin
           // Desenfoque global extremo para la web
           BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 100.0, sigmaY: 100.0),
-            child: Container(color: Colors.white.withOpacity(0.2)),
+            child: Container(color: Colors.white.withValues(alpha: 0.2)),
           ),
 
           // 2. CONTENEDOR CENTRAL DE CRISTAL
@@ -138,11 +138,11 @@ class _LoginWebState extends State<LoginWeb> with SingleTickerProviderStateMixin
               width: 450, // Ancho fijo para web
               padding: const EdgeInsets.all(48),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.6),
+                color: Colors.white.withValues(alpha: 0.6),
                 borderRadius: BorderRadius.circular(32),
-                border: Border.all(color: Colors.white.withOpacity(0.8), width: 1.5),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.8), width: 1.5),
                 boxShadow: [
-                  BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 40, offset: const Offset(0, 20)),
+                  BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 40, offset: const Offset(0, 20)),
                 ],
               ),
               child: Form(
@@ -154,7 +154,7 @@ class _LoginWebState extends State<LoginWeb> with SingleTickerProviderStateMixin
                     const SizedBox(height: 16),
                     const Text('Bienvenido a truequi', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: TruequiColors.textoOscuro)),
                     const SizedBox(height: 8),
-                    Text('Cambia algo, gana mucho.', style: TextStyle(fontSize: 16, color: TruequiColors.textoOscuro.withOpacity(0.7))),
+                    Text('Cambia algo, gana mucho.', style: TextStyle(fontSize: 16, color: TruequiColors.textoOscuro.withValues(alpha: 0.7))),
                     const SizedBox(height: 40),
                     
                     TextFormField(
@@ -162,7 +162,7 @@ class _LoginWebState extends State<LoginWeb> with SingleTickerProviderStateMixin
                       decoration: InputDecoration(
                         labelText: 'Correo electrónico',
                         filled: true,
-                        fillColor: Colors.white.withOpacity(0.7),
+                        fillColor: Colors.white.withValues(alpha: 0.7),
                         prefixIcon: const Icon(Icons.email_outlined, color: TruequiColors.purpura),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
                       ),
@@ -174,7 +174,7 @@ class _LoginWebState extends State<LoginWeb> with SingleTickerProviderStateMixin
                       decoration: InputDecoration(
                         labelText: 'Contraseña',
                         filled: true,
-                        fillColor: Colors.white.withOpacity(0.7),
+                        fillColor: Colors.white.withValues(alpha: 0.7),
                         prefixIcon: const Icon(Icons.lock_outline, color: TruequiColors.purpura),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
                       ),

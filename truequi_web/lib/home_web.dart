@@ -59,7 +59,7 @@ class _HomeWebState extends State<HomeWeb> with SingleTickerProviderStateMixin {
                     child: Container(
                       width: size.width * 0.5,
                       height: size.width * 0.5,
-                      decoration: BoxDecoration(shape: BoxShape.circle, color: TruequiColors.purpura.withOpacity(0.15)),
+                      decoration: BoxDecoration(shape: BoxShape.circle, color: TruequiColors.purpura.withValues(alpha: 0.15)),
                     ),
                   ),
                   Positioned(
@@ -68,7 +68,7 @@ class _HomeWebState extends State<HomeWeb> with SingleTickerProviderStateMixin {
                     child: Container(
                       width: size.width * 0.6,
                       height: size.width * 0.6,
-                      decoration: BoxDecoration(shape: BoxShape.circle, color: TruequiColors.amarillo.withOpacity(0.10)),
+                      decoration: BoxDecoration(shape: BoxShape.circle, color: TruequiColors.amarillo.withValues(alpha: 0.10)),
                     ),
                   ),
                 ],
@@ -78,7 +78,7 @@ class _HomeWebState extends State<HomeWeb> with SingleTickerProviderStateMixin {
           
           BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 90.0, sigmaY: 90.0),
-            child: Container(color: Colors.white.withOpacity(0.3)),
+            child: Container(color: Colors.white.withValues(alpha: 0.3)),
           ),
 
           // ==========================================
@@ -93,13 +93,13 @@ class _HomeWebState extends State<HomeWeb> with SingleTickerProviderStateMixin {
                 floating: false,
                 expandedHeight: 80,
                 collapsedHeight: 80,
-                backgroundColor: Colors.white.withOpacity(0.7),
+                backgroundColor: Colors.white.withValues(alpha: 0.7),
                 flexibleSpace: ClipRRect(
                   child: BackdropFilter(
                     filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 40),
-                      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Colors.white.withOpacity(0.5), width: 1.5))),
+                      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Colors.white.withValues(alpha: 0.5), width: 1.5))),
                       child: Row(
                         children: [
                           // Logo
@@ -115,7 +115,7 @@ class _HomeWebState extends State<HomeWeb> with SingleTickerProviderStateMixin {
                               height: 48,
                               padding: const EdgeInsets.symmetric(horizontal: 20),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.8),
+                                color: Colors.white.withValues(alpha: 0.8),
                                 borderRadius: BorderRadius.circular(24),
                                 border: Border.all(color: Colors.white, width: 2),
                               ),
@@ -187,10 +187,10 @@ class _HomeWebState extends State<HomeWeb> with SingleTickerProviderStateMixin {
                   child: Container(
                     height: 350,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.4),
+                      color: Colors.white.withValues(alpha: 0.4),
                       borderRadius: BorderRadius.circular(32),
                       border: Border.all(color: Colors.white, width: 2),
-                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 30, offset: const Offset(0, 15))],
+                      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 30, offset: const Offset(0, 15))],
                     ),
                     child: Row(
                       children: [
@@ -204,7 +204,7 @@ class _HomeWebState extends State<HomeWeb> with SingleTickerProviderStateMixin {
                               children: [
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                  decoration: BoxDecoration(color: TruequiColors.amarillo.withOpacity(0.2), borderRadius: BorderRadius.circular(20)),
+                                  decoration: BoxDecoration(color: TruequiColors.amarillo.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(20)),
                                   child: const Text('Renueva tu ecosistema', style: TextStyle(color: Color(0xFFD48B00), fontWeight: FontWeight.bold)),
                                 ),
                                 const SizedBox(height: 24),
@@ -226,7 +226,7 @@ class _HomeWebState extends State<HomeWeb> with SingleTickerProviderStateMixin {
                             children: [
                               Positioned(
                                 right: -50, top: -50,
-                                child: Icon(Icons.change_circle_rounded, size: 400, color: TruequiColors.purpura.withOpacity(0.1)),
+                                child: Icon(Icons.change_circle_rounded, size: 400, color: TruequiColors.purpura.withValues(alpha: 0.1)),
                               ),
                             ],
                           ),
@@ -267,7 +267,7 @@ class _HomeWebState extends State<HomeWeb> with SingleTickerProviderStateMixin {
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: TextButton(
         onPressed: () {},
-        child: Text(texto, style: TextStyle(color: TruequiColors.textoOscuro.withOpacity(0.7), fontWeight: FontWeight.w600)),
+        child: Text(texto, style: TextStyle(color: TruequiColors.textoOscuro.withValues(alpha: 0.7), fontWeight: FontWeight.w600)),
       ),
     );
   }
@@ -296,12 +296,12 @@ class _TarjetaProductoWebState extends State<_TarjetaProductoWeb> {
         duration: const Duration(milliseconds: 200),
         transform: Matrix4.translationValues(0, _isHovered ? -10 : 0, 0), // Se eleva al pasar el mouse
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.7),
+          color: Colors.white.withValues(alpha: 0.7),
           borderRadius: BorderRadius.circular(24),
           border: Border.all(color: Colors.white, width: 2),
           boxShadow: [
             BoxShadow(
-              color: TruequiColors.purpura.withOpacity(_isHovered ? 0.15 : 0.03),
+              color: TruequiColors.purpura.withValues(alpha: _isHovered ? 0.15 : 0.03),
               blurRadius: _isHovered ? 30 : 15,
               offset: Offset(0, _isHovered ? 15 : 8),
             )
@@ -333,13 +333,13 @@ class _TarjetaProductoWebState extends State<_TarjetaProductoWeb> {
                     const SizedBox(height: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      decoration: BoxDecoration(color: TruequiColors.purpura.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                      decoration: BoxDecoration(color: TruequiColors.purpura.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
                       child: const Text('Busca: iPad o Tablet', style: TextStyle(color: TruequiColors.purpura, fontSize: 12, fontWeight: FontWeight.bold)),
                     ),
                     const Spacer(),
                     Row(
                       children: [
-                        CircleAvatar(radius: 12, backgroundColor: TruequiColors.amarillo.withOpacity(0.5), child: const Icon(Icons.person, size: 14, color: Colors.white)),
+                        CircleAvatar(radius: 12, backgroundColor: TruequiColors.amarillo.withValues(alpha: 0.5), child: const Icon(Icons.person, size: 14, color: Colors.white)),
                         const SizedBox(width: 8),
                         const Text('Usuario', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
                       ],

@@ -87,7 +87,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       height: size.width * 0.7,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: TruequiColors.purpura.withOpacity(0.25), // Más visible pero suave
+                        color: TruequiColors.purpura.withValues(alpha: 0.25), // Más visible pero suave
                       ),
                     ),
                   ),
@@ -99,7 +99,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       height: size.width * 0.85,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: TruequiColors.amarillo.withOpacity(0.15),
+                        color: TruequiColors.amarillo.withValues(alpha: 0.15),
                       ),
                     ),
                   ),
@@ -110,7 +110,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           
           BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 70.0, sigmaY: 70.0),
-            child: Container(color: Colors.white.withOpacity(0.4)), // Capa esmerilada base
+            child: Container(color: Colors.white.withValues(alpha: 0.4)), // Capa esmerilada base
           ),
 
           // ==========================================
@@ -137,7 +137,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                               children: [
                                 Text(
                                   'Descubre,',
-                                  style: TextStyle(fontSize: 16, color: TruequiColors.textoOscuro.withOpacity(0.6), fontWeight: FontWeight.w500),
+                                  style: TextStyle(fontSize: 16, color: TruequiColors.textoOscuro.withValues(alpha: 0.6), fontWeight: FontWeight.w500),
                                 ),
                                 Text(
                                   nombreUsuario,
@@ -149,7 +149,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             Container(
                               padding: const EdgeInsets.all(4),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.5),
+                                color: Colors.white.withValues(alpha: 0.5),
                                 shape: BoxShape.circle,
                                 border: Border.all(color: Colors.white, width: 2),
                               ),
@@ -171,9 +171,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.6),
+                            color: Colors.white.withValues(alpha: 0.6),
                             borderRadius: BorderRadius.circular(30),
-                            border: Border.all(color: Colors.white.withOpacity(0.8), width: 1),
+                            border: Border.all(color: Colors.white.withValues(alpha: 0.8), width: 1),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -182,7 +182,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                               const SizedBox(width: 8),
                               Text(
                                 'Cerca de UAQ - Querétaro', // Integración natural de la ubicación
-                                style: TextStyle(fontSize: 13, color: TruequiColors.textoOscuro.withOpacity(0.8), fontWeight: FontWeight.w600),
+                                style: TextStyle(fontSize: 13, color: TruequiColors.textoOscuro.withValues(alpha: 0.8), fontWeight: FontWeight.w600),
                               ),
                               const SizedBox(width: 8),
                               const Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: Colors.grey),
@@ -199,9 +199,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.7),
+                            color: Colors.white.withValues(alpha: 0.7),
                             borderRadius: BorderRadius.circular(24),
-                            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 20, offset: const Offset(0, 10))],
+                            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 20, offset: const Offset(0, 10))],
                           ),
                           child: const Row(
                             children: [
@@ -231,7 +231,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                   child: Container(
                                     height: 200,
                                     decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.6),
+                                      color: Colors.white.withValues(alpha: 0.6),
                                       borderRadius: BorderRadius.circular(32),
                                       border: Border.all(color: Colors.white, width: 2),
                                     ),
@@ -268,7 +268,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                       Container(
                                         height: 92,
                                         decoration: BoxDecoration(
-                                          color: TruequiColors.purpura.withOpacity(0.1),
+                                          color: TruequiColors.purpura.withValues(alpha: 0.1),
                                           borderRadius: BorderRadius.circular(24),
                                           border: Border.all(color: Colors.white, width: 1.5),
                                         ),
@@ -278,7 +278,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                       Container(
                                         height: 92,
                                         decoration: BoxDecoration(
-                                          color: TruequiColors.amarillo.withOpacity(0.15),
+                                          color: TruequiColors.amarillo.withValues(alpha: 0.15),
                                           borderRadius: BorderRadius.circular(24),
                                           border: Border.all(color: Colors.white, width: 1.5),
                                         ),
@@ -314,10 +314,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 child: Container(
                   height: 70,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.7),
+                    color: Colors.white.withValues(alpha: 0.7),
                     borderRadius: BorderRadius.circular(40),
-                    border: Border.all(color: Colors.white.withOpacity(0.5), width: 1.5),
-                    boxShadow: [BoxShadow(color: TruequiColors.purpura.withOpacity(0.1), blurRadius: 30, offset: const Offset(0, 10))],
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.5), width: 1.5),
+                    boxShadow: [BoxShadow(color: TruequiColors.purpura.withValues(alpha: 0.1), blurRadius: 30, offset: const Offset(0, 10))],
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -333,7 +333,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           decoration: BoxDecoration(
                             color: TruequiColors.purpura,
                             shape: BoxShape.circle,
-                            boxShadow: [BoxShadow(color: TruequiColors.purpura.withOpacity(0.4), blurRadius: 12, offset: const Offset(0, 4))],
+                            boxShadow: [BoxShadow(color: TruequiColors.purpura.withValues(alpha: 0.4), blurRadius: 12, offset: const Offset(0, 4))],
                           ),
                           child: const Icon(Icons.add_rounded, color: Colors.white, size: 28),
                         ),
@@ -360,7 +360,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         duration: const Duration(milliseconds: 300),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isSelected ? TruequiColors.amarillo.withOpacity(0.15) : Colors.transparent,
+          color: isSelected ? TruequiColors.amarillo.withValues(alpha: 0.15) : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Icon(
