@@ -34,6 +34,13 @@ functions:
           path: /login/google
           method: post
           cors: true
+  loginTradicional:
+    handler: handler.login_tradicional
+    events:
+      - http:
+          path: /login
+          method: post
+          cors: true
 
 plugins:
   - serverless-offline

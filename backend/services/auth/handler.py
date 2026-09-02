@@ -57,10 +57,53 @@ def login_google(event, context):
             "message": "Login con Google exitoso", 
             "usuario": {"correo": correo, "rol": "Usuario"}
         })
-    except ValueError:
+    except ValueError as e:
+        print(f"DEBUG OAUTH FAIL: {str(e)}") # Esto inyectará el error crudo en CloudWatch
         return respuesta(401, {"error": "Token de Google inválido o expirado"})
     except Exception as e:
         return respuesta(500, {"error": str(e)})
+
+# ==========================================
+# 3. LOGIN TRADICIONAL (Correo y Contraseña)
+# ==========================================
+def login_tradicional(event, context):
+    try:
+        body = json.loads(event.get('body', '{}'))
+        correo = body.get('correo')
+        password = body.get('password')
+
+        if not correo or not password:
+            return respuesta(400, {"error": "Faltan datos de acceso"})
+
+        conexion = get_connection()
+        usuario_valido = None
+        
+        with conexion.cursor() as cursor:
+            # Ejecutamos tu Stored Procedure de consulta general
+            cursor.execute("CALL SP_CONSULTA()")
+            usuarios = cursor.fetchall()
+            
+            # Filtramos el usuario que coincida exactamente con las credenciales
+            # Nota: Asegúrate de que las llaves ('USERNAME', 'PASSWORD') coincidan con los nombres de columna en tu VIEW_USUARIOS
+            for u in usuarios:
+                if u.get('USERNAME') == correo and u.get('PASSWORD') == password:
+                    usuario_valido = u
+                    break
+        
+        conexion.close()
+
+        if usuario_valido:
+            return respuesta(200, {
+                "status": "success",
+                "message": "Login tradicional exitoso",
+                "usuario": {"correo": correo}
+            })
+        else:
+            return respuesta(401, {"error": "Correo o contraseña incorrectos"})
+
+    except Exception as e:
+        return respuesta(500, {"error": f"Error interno: {str(e)}"})
+
 
 def respuesta(status_code, body):
     return {
