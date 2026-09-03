@@ -20,19 +20,20 @@ def get_connection():
 def registro_tradicional(event, context):
     try:
         body = json.loads(event.get('body', '{}'))
-        # 1. Extraemos el nombre que manda la app móvil
-        nombre = body.get('nombre')
+        
+        # El frontend manda 'nombre', pero la tabla T_USER (y SP_A) solo aceptan USERNAME, PASSWORD y ROL.
+        # Extraemos solo lo que la base de datos realmente necesita para no cruzar las columnas.
         correo = body.get('correo')
         password = body.get('password')
+        rol = body.get('rol', 'Usuario')
 
-        if not nombre or not correo or not password:
+        if not correo or not password:
             return respuesta(400, {"error": "Faltan datos"})
 
         conexion = get_connection()
         with conexion.cursor() as cursor:
-            # 2. Inyectamos los parámetros en el orden correcto
-            # Si tu SP_A maneja roles, puedes agregarlo como cuarto parámetro
-            cursor.execute("CALL SP_A(%s, %s, %s)", (nombre, correo, password))
+            # Mapeo estricto: p_username = correo, p_password = password, p_rol = rol
+            cursor.execute("CALL SP_A(%s, %s, %s)", (correo, password, rol))
         
         conexion.commit()
         conexion.close()
@@ -53,14 +54,13 @@ def login_google(event, context):
         idinfo = id_token.verify_oauth2_token(token, requests.Request(), GOOGLE_CLIENT_ID)
         correo = idinfo['email']
 
-        # Aquí usaríamos CALL SP_CONSULTA para verificar si el usuario ya existe
         return respuesta(200, {
-            "status": "success", 
-            "message": "Login con Google exitoso", 
+            "status": "success",
+            "message": "Login con Google exitoso",
             "usuario": {"correo": correo, "rol": "Usuario"}
         })
     except ValueError as e:
-        print(f"DEBUG OAUTH FAIL: {str(e)}") # Esto inyectará el error crudo en CloudWatch
+        print(f"DEBUG OAUTH FAIL: {str(e)}")
         return respuesta(401, {"error": "Token de Google inválido o expirado"})
     except Exception as e:
         return respuesta(500, {"error": str(e)})
@@ -91,20 +91,18 @@ def login_tradicional(event, context):
                 usuario_valido = usuario
         
         conexion.close()
-        
 
         if usuario_valido:
             return respuesta(200, {
                 "status": "success",
                 "message": "Login tradicional exitoso",
-                "usuario": {"correo": correo}
+                "usuario": {"correo": usuario_valido.get('USERNAME'), "rol": usuario_valido.get('ROL')}
             })
         else:
             return respuesta(401, {"error": "Correo o contraseña incorrectos"})
 
     except Exception as e:
         return respuesta(500, {"error": f"Error interno: {str(e)}"})
-
 
 def respuesta(status_code, body):
     return {
