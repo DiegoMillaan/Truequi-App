@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'dart:ui';
 import 'dart:math' as math;
-import 'home_web.dart'; // Crearemos este archivo en el siguiente paso
 
 class TruequiColors {
   static const Color purpura = Color(0xFF6B42E0);
@@ -11,28 +8,25 @@ class TruequiColors {
   static const Color textoOscuro = Color(0xFF101828);
 }
 
-class LoginWeb extends StatefulWidget {
-  const LoginWeb({super.key});
+class HomeWeb extends StatefulWidget {
+  const HomeWeb({super.key});
 
   @override
-  State<LoginWeb> createState() => _LoginWebState();
+  State<HomeWeb> createState() => _HomeWebState();
 }
 
-class _LoginWebState extends State<LoginWeb> with SingleTickerProviderStateMixin {
-  final _correoController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _formKey = GlobalKey<FormState>();
-
-  bool _cargando = false;
+class _HomeWebState extends State<HomeWeb>
+    with SingleTickerProviderStateMixin {
   late AnimationController _bgController;
 
   @override
   void initState() {
     super.initState();
-    // Animación de los orbes para pantallas grandes
+
+    // Animación de los orbes del fondo
     _bgController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 20),
+      duration: const Duration(seconds: 25),
     )..repeat();
   }
 
@@ -42,166 +36,821 @@ class _LoginWebState extends State<LoginWeb> with SingleTickerProviderStateMixin
     super.dispose();
   }
 
-  // --- LÓGICA DE BACKEND AWS (Intacta) ---
-  Future<void> _iniciarSesion() async {
-    if (!_formKey.currentState!.validate()) return;
-    setState(() => _cargando = true);
-
-    try {
-      final correo = _correoController.text.trim().toLowerCase();
-      final password = _passwordController.text.trim();
-      final url = Uri.parse('https://16663yaped.execute-api.us-east-1.amazonaws.com/dev/login');
-
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({'correo': correo, 'password': password}),
-      );
-
-      if (response.statusCode == 200) {
-        if (!mounted) return;
-        // Transición Hipnótica: El cristal se desvanece mientras la nueva pantalla hace zoom in
-        Navigator.pushReplacement(
-          context,
-          PageRouteBuilder(
-            transitionDuration: const Duration(milliseconds: 1200),
-            pageBuilder: (context, animation, secondaryAnimation) => HomeWeb(correo: correo),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) {
-              return FadeTransition(
-                opacity: animation,
-                child: ScaleTransition(
-                  scale: Tween<double>(begin: 0.95, end: 1.0).animate(
-                    CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
-                  ),
-                  child: child,
-                ),
-              );
-            },
-          ),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error de autenticación')));
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error de conexión: $e')));
-    } finally {
-      if (mounted) setState(() => _cargando = false);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F2F5),
+      backgroundColor: const Color(0xFFF8F9FA),
       body: Stack(
         children: [
-          // 1. FONDO VIVO PANORÁMICO
+          // =========================================================
+          // CAPA 1: FONDO LÍQUIDO ANIMADO
+          // =========================================================
+
           AnimatedBuilder(
             animation: _bgController,
             builder: (context, child) {
               return Stack(
                 children: [
+                  // Orbe morado
                   Positioned(
-                    top: size.height * 0.2 + (math.sin(_bgController.value * 2 * math.pi) * 150),
-                    left: size.width * 0.2 + (math.cos(_bgController.value * 2 * math.pi) * 100),
+                    top: size.height * 0.1 +
+                        (math.sin(
+                              _bgController.value * 2 * math.pi,
+                            ) *
+                            80),
+                    left: size.width * 0.1 +
+                        (math.cos(
+                              _bgController.value * 2 * math.pi,
+                            ) *
+                            80),
                     child: Container(
-                      width: size.width * 0.4,
-                      height: size.width * 0.4,
-                      decoration: BoxDecoration(shape: BoxShape.circle, color: TruequiColors.purpura.withValues(alpha: 0.4)),
+                      width: size.width * 0.5,
+                      height: size.width * 0.5,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: TruequiColors.purpura.withValues(
+                          alpha: 0.15,
+                        ),
+                      ),
                     ),
                   ),
+
+                  // Orbe amarillo
                   Positioned(
-                    bottom: size.height * 0.1 + (math.cos(_bgController.value * 2 * math.pi) * 100),
-                    right: size.width * 0.15 + (math.sin(_bgController.value * 2 * math.pi) * 150),
+                    bottom: size.height * 0.1 +
+                        (math.cos(
+                              _bgController.value * 2 * math.pi,
+                            ) *
+                            100),
+                    right: size.width * 0.05 +
+                        (math.sin(
+                              _bgController.value * 2 * math.pi,
+                            ) *
+                            120),
                     child: Container(
-                      width: size.width * 0.35,
-                      height: size.width * 0.35,
-                      decoration: BoxDecoration(shape: BoxShape.circle, color: TruequiColors.amarillo.withValues(alpha: 0.3)),
+                      width: size.width * 0.6,
+                      height: size.width * 0.6,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: TruequiColors.amarillo.withValues(
+                          alpha: 0.10,
+                        ),
+                      ),
                     ),
                   ),
                 ],
               );
             },
           ),
-          
-          // Desenfoque global extremo para la web
+
+          // Desenfoque del fondo
           BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 100.0, sigmaY: 100.0),
-            child: Container(color: Colors.white.withValues(alpha: 0.2)),
+            filter: ImageFilter.blur(
+              sigmaX: 90.0,
+              sigmaY: 90.0,
+            ),
+            child: Container(
+              color: Colors.white.withValues(alpha: 0.3),
+            ),
           ),
 
-          // 2. CONTENEDOR CENTRAL DE CRISTAL
-          Center(
-            child: Container(
-              width: 450, // Ancho fijo para web
-              padding: const EdgeInsets.all(48),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.6),
-                borderRadius: BorderRadius.circular(32),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.8), width: 1.5),
-                boxShadow: [
-                  BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 40, offset: const Offset(0, 20)),
-                ],
-              ),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.sync_rounded, size: 60, color: TruequiColors.purpura),
-                    const SizedBox(height: 16),
-                    const Text('Bienvenido a truequi', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: TruequiColors.textoOscuro)),
-                    const SizedBox(height: 8),
-                    Text('Cambia algo, gana mucho.', style: TextStyle(fontSize: 16, color: TruequiColors.textoOscuro.withValues(alpha: 0.7))),
-                    const SizedBox(height: 40),
-                    
-                    TextFormField(
-                      controller: _correoController,
-                      decoration: InputDecoration(
-                        labelText: 'Correo electrónico',
-                        filled: true,
-                        fillColor: Colors.white.withValues(alpha: 0.7),
-                        prefixIcon: const Icon(Icons.email_outlined, color: TruequiColors.purpura),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-                      ),
+          // =========================================================
+          // CAPA 2: CONTENIDO PRINCIPAL
+          // =========================================================
+
+          CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              // =====================================================
+              // NAVBAR
+              // =====================================================
+
+              SliverAppBar(
+                pinned: true,
+                floating: false,
+                expandedHeight: 80,
+                collapsedHeight: 80,
+                backgroundColor: Colors.white.withValues(
+                  alpha: 0.7,
+                ),
+                flexibleSpace: ClipRRect(
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(
+                      sigmaX: 20,
+                      sigmaY: 20,
                     ),
-                    const SizedBox(height: 20),
-                    TextFormField(
-                      controller: _passwordController,
-                      obscureText: true,
-                      decoration: InputDecoration(
-                        labelText: 'Contraseña',
-                        filled: true,
-                        fillColor: Colors.white.withValues(alpha: 0.7),
-                        prefixIcon: const Icon(Icons.lock_outline, color: TruequiColors.purpura),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 40,
                       ),
-                    ),
-                    const SizedBox(height: 40),
-                    
-                    SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: ElevatedButton(
-                        onPressed: _cargando ? null : _iniciarSesion,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: TruequiColors.purpura,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                          elevation: 0,
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(
+                            color: Colors.white.withValues(
+                              alpha: 0.5,
+                            ),
+                            width: 1.5,
+                          ),
                         ),
-                        child: _cargando
-                            ? const CircularProgressIndicator(color: Colors.white)
-                            : const Text('Iniciar Sesión', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
                       ),
+                      child: Row(
+                        children: [
+                          // =================================================
+                          // LOGO
+                          // =================================================
+
+                          const Icon(
+                            Icons.sync_rounded,
+                            color: TruequiColors.purpura,
+                            size: 36,
+                          ),
+
+                          const SizedBox(width: 12),
+
+                          const Text(
+                            'truequi',
+                            style: TextStyle(
+                              fontSize: 26,
+                              fontWeight: FontWeight.w900,
+                              color: TruequiColors.purpura,
+                              letterSpacing: -1,
+                            ),
+                          ),
+
+                          const SizedBox(width: 48),
+
+                          // =================================================
+                          // BUSCADOR
+                          // =================================================
+
+                          Expanded(
+                            child: Container(
+                              height: 48,
+                              padding:
+                                  const EdgeInsets.symmetric(
+                                horizontal: 20,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(
+                                  alpha: 0.8,
+                                ),
+                                borderRadius:
+                                    BorderRadius.circular(24),
+                                border: Border.all(
+                                  color: Colors.white,
+                                  width: 2,
+                                ),
+                              ),
+                              child: const Row(
+                                children: [
+                                  Icon(
+                                    Icons.search_rounded,
+                                    color: Colors.grey,
+                                  ),
+
+                                  SizedBox(width: 12),
+
+                                  Expanded(
+                                    child: TextField(
+                                      decoration:
+                                          InputDecoration(
+                                        hintText:
+                                            'Buscar artículos, libros, tecnología...',
+                                        border:
+                                            InputBorder.none,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(width: 48),
+
+                          // =================================================
+                          // ACCIONES DE USUARIO
+                          // =================================================
+
+                          Row(
+                            children: [
+                              // Explorar
+                              TextButton(
+                                onPressed: () {},
+                                child: const Text(
+                                  'Explorar',
+                                  style: TextStyle(
+                                    color:
+                                        TruequiColors
+                                            .textoOscuro,
+                                    fontWeight:
+                                        FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+
+                              const SizedBox(width: 16),
+
+                              // Subir artículo
+                              ElevatedButton(
+                                style:
+                                    ElevatedButton.styleFrom(
+                                  backgroundColor:
+                                      TruequiColors.purpura,
+                                  padding:
+                                      const EdgeInsets
+                                          .symmetric(
+                                    horizontal: 24,
+                                    vertical: 16,
+                                  ),
+                                ),
+                                onPressed: () {},
+                                child: const Text(
+                                  'Subir artículo',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight:
+                                        FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+
+                              const SizedBox(width: 24),
+
+                              // Iniciar sesión
+                              ElevatedButton(
+                                onPressed: () {
+                                  // Aquí conectaremos el
+                                  // modal de inicio de sesión.
+                                },
+                                style:
+                                    ElevatedButton.styleFrom(
+                                  backgroundColor:
+                                      TruequiColors.purpura,
+                                  foregroundColor:
+                                      Colors.white,
+                                  padding:
+                                      const EdgeInsets
+                                          .symmetric(
+                                    horizontal: 24,
+                                    vertical: 14,
+                                  ),
+                                  shape:
+                                      RoundedRectangleBorder(
+                                    borderRadius:
+                                        BorderRadius.circular(
+                                      14,
+                                    ),
+                                  ),
+                                  elevation: 0,
+                                ),
+                                child: const Text(
+                                  'Iniciar sesión',
+                                  style: TextStyle(
+                                    fontWeight:
+                                        FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+              // =========================================================
+              // SUBMENÚ DE CATEGORÍAS
+              // =========================================================
+
+              SliverToBoxAdapter(
+                child: Container(
+                  height: 50,
+                  padding:
+                      const EdgeInsets.symmetric(
+                    horizontal: 40,
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.location_on_rounded,
+                        size: 16,
+                        color: TruequiColors.purpura,
+                      ),
+
+                      const SizedBox(width: 8),
+
+                      const Text(
+                        'Campus UAQ',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color:
+                              TruequiColors.textoOscuro,
+                        ),
+                      ),
+
+                      const VerticalDivider(
+                        indent: 15,
+                        endIndent: 15,
+                        color: Colors.grey,
+                      ),
+
+                      _BotonCategoria(
+                        'Tecnología',
+                      ),
+
+                      _BotonCategoria(
+                        'Libros Universitarios',
+                      ),
+
+                      _BotonCategoria(
+                        'Videojuegos',
+                      ),
+
+                      _BotonCategoria(
+                        'Mobiliario',
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // =========================================================
+              // HERO BANNER
+              // =========================================================
+
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(
+                    horizontal: 40,
+                    vertical: 24,
+                  ),
+                  child: Container(
+                    height: 350,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(
+                        alpha: 0.4,
+                      ),
+                      borderRadius:
+                          BorderRadius.circular(32),
+                      border: Border.all(
+                        color: Colors.white,
+                        width: 2,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color:
+                              Colors.black.withValues(
+                            alpha: 0.02,
+                          ),
+                          blurRadius: 30,
+                          offset:
+                              const Offset(0, 15),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        // =================================================
+                        // TEXTO DEL HERO
+                        // =================================================
+
+                        Expanded(
+                          flex: 1,
+                          child: Padding(
+                            padding:
+                                const EdgeInsets.all(
+                              48.0,
+                            ),
+                            child: Column(
+                              crossAxisAlignment:
+                                  CrossAxisAlignment
+                                      .start,
+                              mainAxisAlignment:
+                                  MainAxisAlignment
+                                      .center,
+                              children: [
+                                // Etiqueta
+                                Container(
+                                  padding:
+                                      const EdgeInsets
+                                          .symmetric(
+                                    horizontal: 16,
+                                    vertical: 8,
+                                  ),
+                                  decoration:
+                                      BoxDecoration(
+                                    color:
+                                        TruequiColors
+                                            .amarillo
+                                            .withValues(
+                                      alpha: 0.2,
+                                    ),
+                                    borderRadius:
+                                        BorderRadius
+                                            .circular(
+                                      20,
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    'Renueva tu ecosistema',
+                                    style: TextStyle(
+                                      color:
+                                          Color(
+                                        0xFFD48B00,
+                                      ),
+                                      fontWeight:
+                                          FontWeight
+                                              .bold,
+                                    ),
+                                  ),
+                                ),
+
+                                const SizedBox(
+                                  height: 24,
+                                ),
+
+                                // Título
+                                const Text(
+                                  'Cambia lo que tienes.\nEncuentra lo que buscas.',
+                                  style: TextStyle(
+                                    fontSize: 48,
+                                    height: 1.1,
+                                    fontWeight:
+                                        FontWeight
+                                            .w900,
+                                    color:
+                                        TruequiColors
+                                            .textoOscuro,
+                                    letterSpacing:
+                                        -1.5,
+                                  ),
+                                ),
+
+                                const SizedBox(
+                                  height: 24,
+                                ),
+
+                                // Botón
+                                ElevatedButton(
+                                  style:
+                                      ElevatedButton
+                                          .styleFrom(
+                                    backgroundColor:
+                                        TruequiColors
+                                            .textoOscuro,
+                                    padding:
+                                        const EdgeInsets
+                                            .symmetric(
+                                      horizontal: 32,
+                                      vertical: 20,
+                                    ),
+                                  ),
+                                  onPressed: () {},
+                                  child:
+                                      const Text(
+                                    'Ver Top Matches',
+                                    style: TextStyle(
+                                      color:
+                                          Colors.white,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        // =================================================
+                        // ÁREA VISUAL DEL HERO
+                        // =================================================
+
+                        Expanded(
+                          flex: 1,
+                          child: Stack(
+                            children: [
+                              Positioned(
+                                right: -50,
+                                top: -50,
+                                child: Icon(
+                                  Icons
+                                      .change_circle_rounded,
+                                  size: 400,
+                                  color:
+                                      TruequiColors
+                                          .purpura
+                                          .withValues(
+                                    alpha: 0.1,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              // =========================================================
+              // GRID DE PRODUCTOS
+              // =========================================================
+
+              SliverPadding(
+                padding:
+                    const EdgeInsets.symmetric(
+                  horizontal: 40,
+                  vertical: 24,
+                ),
+                sliver: SliverGrid(
+                  gridDelegate:
+                      const SliverGridDelegateWithMaxCrossAxisExtent(
+                    maxCrossAxisExtent: 280,
+                    mainAxisSpacing: 24,
+                    crossAxisSpacing: 24,
+                    childAspectRatio: 0.70,
+                  ),
+                  delegate:
+                      SliverChildBuilderDelegate(
+                    (context, index) =>
+                        _TarjetaProductoWeb(
+                      index: index,
+                    ),
+                    childCount: 12,
+                  ),
+                ),
+              ),
+
+              // Espacio final
+              const SliverToBoxAdapter(
+                child: SizedBox(height: 100),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ===============================================================
+  // BOTÓN DE CATEGORÍA
+  // ===============================================================
+
+  Widget _BotonCategoria(String texto) {
+    return Padding(
+      padding:
+          const EdgeInsets.symmetric(
+        horizontal: 12,
+      ),
+      child: TextButton(
+        onPressed: () {},
+        child: Text(
+          texto,
+          style: TextStyle(
+            color:
+                TruequiColors.textoOscuro
+                    .withValues(alpha: 0.7),
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ===============================================================
+// TARJETA INTERACTIVA CON HOVER
+// ===============================================================
+
+class _TarjetaProductoWeb
+    extends StatefulWidget {
+  final int index;
+
+  const _TarjetaProductoWeb({
+    required this.index,
+  });
+
+  @override
+  State<_TarjetaProductoWeb> createState() =>
+      _TarjetaProductoWebState();
+}
+
+class _TarjetaProductoWebState
+    extends State<_TarjetaProductoWeb> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) {
+        setState(() {
+          _isHovered = true;
+        });
+      },
+      onExit: (_) {
+        setState(() {
+          _isHovered = false;
+        });
+      },
+      child: AnimatedContainer(
+        duration:
+            const Duration(milliseconds: 200),
+        transform:
+            Matrix4.translationValues(
+          0,
+          _isHovered ? -10 : 0,
+          0,
+        ),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(
+            alpha: 0.7,
+          ),
+          borderRadius:
+              BorderRadius.circular(24),
+          border: Border.all(
+            color: Colors.white,
+            width: 2,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color:
+                  TruequiColors.purpura
+                      .withValues(
+                alpha:
+                    _isHovered ? 0.15 : 0.03,
+              ),
+              blurRadius:
+                  _isHovered ? 30 : 15,
+              offset: Offset(
+                0,
+                _isHovered ? 15 : 8,
+              ),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment:
+              CrossAxisAlignment.start,
+          children: [
+            // =========================================================
+            // IMAGEN
+            // =========================================================
+
+            Expanded(
+              flex: 5,
+              child: Container(
+                width: double.infinity,
+                decoration:
+                    BoxDecoration(
+                  color:
+                      Colors.grey.shade100,
+                  borderRadius:
+                      const BorderRadius
+                          .vertical(
+                    top: Radius.circular(22),
+                  ),
+                ),
+                child: const Center(
+                  child: Icon(
+                    Icons
+                        .laptop_chromebook_rounded,
+                    size: 64,
+                    color: Colors.grey,
+                  ),
+                ),
+              ),
+            ),
+
+            // =========================================================
+            // DETALLES
+            // =========================================================
+
+            Expanded(
+              flex: 4,
+              child: Padding(
+                padding:
+                    const EdgeInsets.all(
+                  16.0,
+                ),
+                child: Column(
+                  crossAxisAlignment:
+                      CrossAxisAlignment
+                          .start,
+                  mainAxisAlignment:
+                      MainAxisAlignment
+                          .spaceBetween,
+                  children: [
+                    const Text(
+                      'Monitor Curvo 24"',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight:
+                            FontWeight.bold,
+                        color:
+                            TruequiColors
+                                .textoOscuro,
+                      ),
+                      maxLines: 1,
+                      overflow:
+                          TextOverflow.ellipsis,
+                    ),
+
+                    const Text(
+                      'Hace 2 horas',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey,
+                      ),
+                    ),
+
+                    const SizedBox(
+                      height: 8,
+                    ),
+
+                    // Lo que busca
+                    Container(
+                      padding:
+                          const EdgeInsets
+                              .symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration:
+                          BoxDecoration(
+                        color:
+                            TruequiColors
+                                .purpura
+                                .withValues(
+                          alpha: 0.1,
+                        ),
+                        borderRadius:
+                            BorderRadius
+                                .circular(8),
+                      ),
+                      child: const Text(
+                        'Busca: iPad o Tablet',
+                        style: TextStyle(
+                          color:
+                              TruequiColors
+                                  .purpura,
+                          fontSize: 12,
+                          fontWeight:
+                              FontWeight.bold,
+                        ),
+                      ),
+                    ),
+
+                    const Spacer(),
+
+                    // Usuario
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 12,
+                          backgroundColor:
+                              TruequiColors
+                                  .amarillo
+                                  .withValues(
+                            alpha: 0.5,
+                          ),
+                          child:
+                              const Icon(
+                            Icons.person,
+                            size: 14,
+                            color:
+                                Colors.white,
+                          ),
+                        ),
+
+                        const SizedBox(
+                          width: 8,
+                        ),
+
+                        const Text(
+                          'Usuario',
+                          style:
+                              TextStyle(
+                            fontSize: 12,
+                            fontWeight:
+                                FontWeight
+                                    .w600,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
