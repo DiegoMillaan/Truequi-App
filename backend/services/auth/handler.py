@@ -20,17 +20,19 @@ def get_connection():
 def registro_tradicional(event, context):
     try:
         body = json.loads(event.get('body', '{}'))
+        # 1. Extraemos el nombre que manda la app móvil
+        nombre = body.get('nombre')
         correo = body.get('correo')
         password = body.get('password')
-        rol = body.get('rol', 'Usuario') # Implementación de Sistema de Roles
 
-        if not correo or not password:
+        if not nombre or not correo or not password:
             return respuesta(400, {"error": "Faltan datos"})
 
         conexion = get_connection()
         with conexion.cursor() as cursor:
-            # RÚBRICA: Llamada estricta al Procedure. El Trigger hará la auditoría en automático.
-            cursor.execute("CALL SP_A(%s, %s, %s)", (correo, password, rol))
+            # 2. Inyectamos los parámetros en el orden correcto
+            # Si tu SP_A maneja roles, puedes agregarlo como cuarto parámetro
+            cursor.execute("CALL SP_A(%s, %s, %s)", (nombre, correo, password))
         
         conexion.commit()
         conexion.close()
@@ -79,18 +81,17 @@ def login_tradicional(event, context):
         usuario_valido = None
         
         with conexion.cursor() as cursor:
-            # Ejecutamos tu Stored Procedure de consulta general
-            cursor.execute("CALL SP_CONSULTA()")
-            usuarios = cursor.fetchall()
+            # Consultamos T_USER de forma directa para tener acceso a la columna PASSWORD, 
+            # ya que VIEW_USUARIOS oculta esta información por seguridad.
+            cursor.execute("SELECT USERNAME, PASSWORD, ROL FROM T_USER WHERE USERNAME = %s", (correo,))
+            usuario = cursor.fetchone()
             
-            # Filtramos el usuario que coincida exactamente con las credenciales
-            # Nota: Asegúrate de que las llaves ('USERNAME', 'PASSWORD') coincidan con los nombres de columna en tu VIEW_USUARIOS
-            for u in usuarios:
-                if u.get('USERNAME') == correo and u.get('PASSWORD') == password:
-                    usuario_valido = u
-                    break
+            # Verificamos si existe el registro y si la contraseña coincide
+            if usuario and usuario.get('PASSWORD') == password:
+                usuario_valido = usuario
         
         conexion.close()
+        
 
         if usuario_valido:
             return respuesta(200, {
