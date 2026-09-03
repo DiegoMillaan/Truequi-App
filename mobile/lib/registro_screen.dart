@@ -1,15 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'dart:ui'; 
-import 'dart:math' as math; 
-import 'home_page.dart';
-import 'services/google_auth_service.dart';
-import 'services/auth_service.dart'; // Importado para conectar con el backend de AWS
-import 'registro_screen.dart';
+import 'dart:ui';
+import 'dart:math' as math;
+import '../services/auth_service.dart'; 
 
 // ==========================================
-// PALETA TRUEQUI
+// PALETA TRUEQUI (Misma del Login)
 // ==========================================
 class TruequiColors {
   static const Color purpura = Color(0xFF6B42E0);
@@ -18,20 +13,20 @@ class TruequiColors {
   static const Color fondoClaro = Color(0xFFF8F9FA);
 }
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class RegistroScreen extends StatefulWidget {
+  const RegistroScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<RegistroScreen> createState() => _RegistroScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStateMixin {
+class _RegistroScreenState extends State<RegistroScreen> with SingleTickerProviderStateMixin {
+  final _nombreController = TextEditingController();
   final _correoController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  final GoogleAuthService _googleAuthService = GoogleAuthService();
-  final AuthService _authService = AuthService(); // Instancia del servicio AWS para autenticación
-
+  final AuthService _authService = AuthService();
+  
   bool _cargando = false;
   late AnimationController _animationController;
 
@@ -47,58 +42,33 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   @override
   void dispose() {
     _animationController.dispose();
+    _nombreController.dispose();
+    _correoController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
-  Future<void> _iniciarSesion() async {
+  Future<void> _registrar() async {
     final esValido = _formKey.currentState!.validate();
     if (!esValido) return;
 
     setState(() => _cargando = true);
 
-    try {
-      final correo = _correoController.text.trim().toLowerCase();
-      final password = _passwordController.text.trim();
-      final url = Uri.parse('https://16663yaped.execute-api.us-east-1.amazonaws.com/dev/login');
+    bool exito = await _authService.registrarUsuario(
+      _nombreController.text.trim(),
+      _correoController.text.trim().toLowerCase(),
+      _passwordController.text.trim(),
+    );
 
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({'correo': correo, 'password': password}),
-      );
+    setState(() => _cargando = false);
 
-      final data = json.decode(response.body);
+    if (!mounted) return;
 
-      if (response.statusCode == 200) {
-        if (!mounted) return;
-        Navigator.pushReplacement(
-          context,
-          PageRouteBuilder(
-            transitionDuration: const Duration(milliseconds: 800),
-            pageBuilder: (context, animation, secondaryAnimation) => HomePage(correo: correo),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) {
-              var scaleAnimation = Tween<double>(begin: 0.9, end: 1.0).animate(
-                CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
-              );
-              var fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-                CurvedAnimation(parent: animation, curve: Curves.easeInOut),
-              );
-
-              return FadeTransition(
-                opacity: fadeAnimation,
-                child: ScaleTransition(scale: scaleAnimation, child: child),
-              );
-            },
-          ),
-        );
-      } else {
-        final mensajeError = data['error'] ?? data['message'] ?? 'Error de autenticación';
-        _mostrarSnackBar(mensajeError, Colors.redAccent);
-      }
-    } catch (e) {
-      _mostrarSnackBar('Error de conexión: $e', TruequiColors.amarillo);
-    } finally {
-      if (mounted) setState(() => _cargando = false);
+    if (exito) {
+      _mostrarSnackBar('¡Cuenta creada con éxito!', TruequiColors.purpura);
+      Navigator.pop(context); // Regresa al Login
+    } else {
+      _mostrarSnackBar('Error al crear la cuenta. Intenta de nuevo.', Colors.redAccent);
     }
   }
 
@@ -114,9 +84,10 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   }
 
   bool _validarEmail(String email) => RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
-  String? _validarPassword(String? value) => (value == null || value.trim().isEmpty) ? 'Ingresa tu contraseña' : null;
+  String? _validarPassword(String? value) => (value == null || value.trim().length < 6) ? 'Mínimo 6 caracteres' : null;
+  String? _validarNombre(String? value) => (value == null || value.trim().isEmpty) ? 'Ingresa tu nombre' : null;
 
-  // NUEVO LOGO ANIMADO
+  // LOGO ANIMADO IDÉNTICO AL LOGIN
   Widget _buildLogoBiologico() {
     return AnimatedBuilder(
       animation: _animationController,
@@ -135,25 +106,25 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
           child: Transform.scale(
             scale: latido,
             child: SizedBox(
-              width: 150,
-              height: 150,
+              width: 130,
+              height: 130,
               child: Stack(
                 alignment: Alignment.center,
                 children: [
                   Container(
-                    width: 90,
-                    height: 90,
+                    width: 80,
+                    height: 80,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: TruequiColors.purpura.withValues(alpha: 0.5),
+                          color: TruequiColors.purpura.withOpacity(0.5),
                           blurRadius: 35,
                           spreadRadius: 5,
                           offset: const Offset(0, 15), 
                         ),
                         BoxShadow(
-                          color: TruequiColors.amarillo.withValues(alpha: 0.3),
+                          color: TruequiColors.amarillo.withOpacity(0.3),
                           blurRadius: 25,
                           spreadRadius: -5,
                           offset: const Offset(0, -5), 
@@ -164,26 +135,26 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                   Transform.rotate(
                     angle: anguloBase,
                     child: Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: Colors.white.withValues(alpha: 0.15), 
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.4), width: 1.5),
+                        color: Colors.white.withOpacity(0.15), 
+                        border: Border.all(color: Colors.white.withOpacity(0.4), width: 1.5),
                       ),
-                      child: Icon(Icons.sync_rounded, size: 75, color: TruequiColors.purpura.withValues(alpha: 0.95)),
+                      child: Icon(Icons.sync_rounded, size: 65, color: TruequiColors.purpura.withOpacity(0.95)),
                     ),
                   ),
                   Transform.rotate(
                     angle: anguloCliente,
                     child: Transform.translate(
-                      offset: const Offset(0, -50),
+                      offset: const Offset(0, -42),
                       child: Container(
-                        width: 20,
-                        height: 20,
+                        width: 16,
+                        height: 16,
                         decoration: BoxDecoration(
                           color: TruequiColors.amarillo, 
                           shape: BoxShape.circle,
-                          boxShadow: [BoxShadow(color: TruequiColors.amarillo.withValues(alpha: 0.8), blurRadius: 10)],
+                          boxShadow: [BoxShadow(color: TruequiColors.amarillo.withOpacity(0.8), blurRadius: 10)],
                         ),
                       ),
                     ),
@@ -191,10 +162,10 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                   Transform.rotate(
                     angle: anguloLimpiador,
                     child: Transform.translate(
-                      offset: const Offset(0, 35),
+                      offset: const Offset(0, 30),
                       child: Container(
-                        width: 14,
-                        height: 14,
+                        width: 12,
+                        height: 12,
                         decoration: BoxDecoration(
                           color: TruequiColors.purpura, 
                           shape: BoxShape.circle,
@@ -221,6 +192,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       backgroundColor: TruequiColors.fondoClaro,
       body: Stack(
         children: [
+          // Fondo dinámico con círculos animados difuminados
           AnimatedBuilder(
             animation: _animationController,
             builder: (context, child) {
@@ -232,7 +204,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                     child: Container(
                       width: 300,
                       height: 300,
-                      decoration: BoxDecoration(shape: BoxShape.circle, color: TruequiColors.purpura.withValues(alpha: 0.5)),
+                      decoration: BoxDecoration(shape: BoxShape.circle, color: TruequiColors.purpura.withOpacity(0.5)),
                     ),
                   ),
                   Positioned(
@@ -241,7 +213,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                     child: Container(
                       width: 250,
                       height: 250,
-                      decoration: BoxDecoration(shape: BoxShape.circle, color: TruequiColors.amarillo.withValues(alpha: 0.4)),
+                      decoration: BoxDecoration(shape: BoxShape.circle, color: TruequiColors.amarillo.withOpacity(0.4)),
                     ),
                   ),
                 ],
@@ -250,7 +222,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
           ),
           BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 60.0, sigmaY: 60.0),
-            child: Container(color: Colors.white.withValues(alpha: 0.1)),
+            child: Container(color: Colors.white.withOpacity(0.1)),
           ),
           SafeArea(
             child: Center(
@@ -262,39 +234,54 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       _buildLogoBiologico(),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 12),
                       const Text(
-                        'truequi',
+                        'Crea tu cuenta',
                         textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 46, fontWeight: FontWeight.w900, color: TruequiColors.purpura, letterSpacing: -1.5),
+                        style: TextStyle(fontSize: 36, fontWeight: FontWeight.w900, color: TruequiColors.purpura, letterSpacing: -1.0),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 6),
                       const Text(
-                        'Cambia algo, gana mucho.',
+                        'Únete a la comunidad de Truequi.',
                         textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 16, color: TruequiColors.textoOscuro, fontWeight: FontWeight.w600, height: 1.3),
+                        style: TextStyle(fontSize: 15, color: TruequiColors.textoOscuro, fontWeight: FontWeight.w600),
                       ),
-                      const SizedBox(height: 40),
+                      const SizedBox(height: 30),
+                      
+                      // Contenedor de cristal con los campos de texto
                       Container(
                         padding: const EdgeInsets.all(24),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.6), 
+                          color: Colors.white.withOpacity(0.6), 
                           borderRadius: BorderRadius.circular(24),
-                          border: Border.all(color: Colors.white.withValues(alpha: 0.8), width: 1.5),
+                          border: Border.all(color: Colors.white.withOpacity(0.8), width: 1.5),
                           boxShadow: [
-                            BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 20, offset: const Offset(0, 10)),
+                            BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, 10)),
                           ],
                         ),
                         child: Column(
                           children: [
                             TextFormField(
+                              controller: _nombreController,
+                              decoration: InputDecoration(
+                                labelText: 'Nombre Completo',
+                                prefixIcon: const Icon(Icons.person_outline_rounded, color: TruequiColors.purpura),
+                                filled: true,
+                                fillColor: Colors.white.withOpacity(0.5),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: TruequiColors.purpura, width: 2)),
+                              ),
+                              validator: _validarNombre,
+                            ),
+                            const SizedBox(height: 16),
+                            TextFormField(
                               controller: _correoController,
                               keyboardType: TextInputType.emailAddress,
                               decoration: InputDecoration(
-                                labelText: 'Truequi Email',
+                                labelText: 'Correo Electrónico',
                                 prefixIcon: const Icon(Icons.alternate_email_rounded, color: TruequiColors.purpura),
                                 filled: true,
-                                fillColor: Colors.white.withValues(alpha: 0.5),
+                                fillColor: Colors.white.withOpacity(0.5),
                                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
                                 focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: TruequiColors.purpura, width: 2)),
                               ),
@@ -305,10 +292,10 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                               controller: _passwordController,
                               obscureText: true,
                               decoration: InputDecoration(
-                                labelText: 'Truequi Password',
+                                labelText: 'Contraseña',
                                 prefixIcon: const Icon(Icons.lock_outline_rounded, color: TruequiColors.purpura),
                                 filled: true,
-                                fillColor: Colors.white.withValues(alpha: 0.5),
+                                fillColor: Colors.white.withOpacity(0.5),
                                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
                                 focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: TruequiColors.purpura, width: 2)),
                               ),
@@ -319,94 +306,31 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                               width: double.infinity,
                               height: 56,
                               child: ElevatedButton(
-                                onPressed: _cargando ? null : _iniciarSesion,
+                                onPressed: _cargando ? null : _registrar,
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: TruequiColors.amarillo,
                                   elevation: 5,
-                                  shadowColor: TruequiColors.amarillo.withValues(alpha: 0.5),
+                                  shadowColor: TruequiColors.amarillo.withOpacity(0.5),
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                                 ),
                                 child: _cargando
                                     ? const CircularProgressIndicator(color: TruequiColors.textoOscuro, strokeWidth: 3)
-                                    : const Text('Comenzar a truequiar', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: TruequiColors.textoOscuro)),
+                                    : const Text('Registrarme', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: TruequiColors.textoOscuro)),
                               ),
                             ),
                             const SizedBox(height: 16),
                             
-                            // Botón de Google Integrado con AWS
-                            SizedBox(
-                              width: double.infinity,
-                              height: 56,
-                              child: OutlinedButton.icon(
-                                style: OutlinedButton.styleFrom(
-                                  backgroundColor: Colors.white,
-                                  side: BorderSide(color: Colors.grey.shade300, width: 1.5),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                ),
-                                onPressed: () async {
-                                  // 1. Obtener usuario de Google
-                                  final user = await _googleAuthService.signInWithGoogle();
-                                  
-                                  if (user != null) {
-                                    // 2. Extraer el idToken y enviarlo a AWS
-                                    final googleAuth = await user.authentication;
-                                    final idToken = googleAuth.idToken;
-
-                                    if (idToken != null) {
-                                      bool backendExito = await _authService.loginConGoogle(idToken);
-
-                                      if (backendExito && mounted) {
-                                        Navigator.pushReplacement(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) => HomePage(correo: user.email),
-                                          ),
-                                        );
-                                        return;
-                                      }
-                                    }
-                                  }
-                                  
-                                  if (mounted) {
-                                    _mostrarSnackBar('No se pudo completar el acceso con Google o AWS', Colors.redAccent);
-                                  }
-                                },
-                                icon: const Icon(Icons.g_mobiledata, size: 32, color: TruequiColors.purpura),
-                                label: const Text(
-                                  'Continuar con Google',
-                                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: TruequiColors.textoOscuro),
+                            // Botón para regresar al login si ya tiene cuenta
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text(
+                                '¿Ya tienes cuenta? Inicia sesión',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: TruequiColors.purpura,
                                 ),
                               ),
                             ),
-
-                            const SizedBox(height: 20),
-
-                            // Enlace para ir a la Pantalla de Registro
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Text(
-                                  '¿No tienes una cuenta?',
-                                  style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w500),
-                                ),
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(builder: (context) => const RegistroScreen()),
-                                    );
-                                  },
-                                  child: const Text(
-                                    'Regístrate aquí',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: TruequiColors.purpura,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-
                           ],
                         ),
                       ),

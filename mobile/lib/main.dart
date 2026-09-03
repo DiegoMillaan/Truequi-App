@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'login_screen.dart';
+import 'splash_screen.dart';
 
 void main() {
   runApp(const TruequiApp());
@@ -10,24 +10,21 @@ class TruequiApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp( 
       debugShowCheckedModeBanner: false,
       title: 'Truequi',
       theme: ThemeData(
         useMaterial3: true,
-        // Inyectamos el ADN visual en toda la aplicación
-        colorSchemeSeed: const Color(0xFF6B42E0), // Truequi purpura
-        scaffoldBackgroundColor: const Color(0xFFF8F9FA), // Truequi fondoClaro
-        
-        // Estandarizamos la barra superior para todas las pantallas
+        colorSchemeSeed: const Color(0xFF6B42E0),
+        scaffoldBackgroundColor: const Color(0xFFF8F9FA),
         appBarTheme: const AppBarTheme(
           backgroundColor: Colors.white,
-          foregroundColor: Color(0xFF101828), // textoOscuro
+          foregroundColor: Color(0xFF101828),
           elevation: 0,
           centerTitle: false,
         ),
       ),
-      home: const LoginScreen(),
+      home: const SplashScreen(), 
     );
   }
 }

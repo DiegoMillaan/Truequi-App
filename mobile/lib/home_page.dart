@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'dart:math' as math;
+import 'login_screen.dart'; 
+import '../services/google_auth_service.dart';
 
 class TruequiColors {
   static const Color purpura = Color(0xFF6B42E0);
@@ -31,7 +33,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     // 1. Controlador del fondo líquido (Continuidad con el Login)
     _bgController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 15), // Un poco más dinámico
+      duration: const Duration(seconds: 15),
     )..repeat();
 
     // 2. Controlador de la entrada hipnótica del contenido
@@ -48,7 +50,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       CurvedAnimation(parent: _entranceController, curve: const Interval(0.2, 1.0, curve: Curves.easeOutCubic)),
     );
 
-    // Disparamos la animación al entrar a la pantalla
     _entranceController.forward();
   }
 
@@ -59,6 +60,24 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     super.dispose();
   }
 
+  // ==========================================
+  // FUNCIÓN DE CIERRE DE SESIÓN
+  // ==========================================
+  Future<void> _cerrarSesion() async {
+    // 1. Cerramos sesión de Google para que vuelva a pedir cuenta la próxima vez
+    final googleAuth = GoogleAuthService();
+    await googleAuth.signOut();
+
+    if (!mounted) return;
+
+    // 2. Navegamos al LoginScreen destruyendo todo el historial de navegación
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginScreen()),
+      (Route<dynamic> route) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     String nombreUsuario = widget.correo.split('@').first;
@@ -67,13 +86,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
     return Scaffold(
       backgroundColor: TruequiColors.fondoClaro,
-      extendBody: true, // Crucial para la barra flotante
+      extendBody: true,
       
       body: Stack(
         children: [
-          // ==========================================
-          // CAPA 1: FONDO LÍQUIDO (Continuidad con Login)
-          // ==========================================
+          // CAPA 1: FONDO LÍQUIDO
           AnimatedBuilder(
             animation: _bgController,
             builder: (context, child) {
@@ -113,11 +130,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             child: Container(color: Colors.white.withValues(alpha: 0.4)), // Capa esmerilada base
           ),
 
-          // ==========================================
-          // CAPA 2: CONTENIDO ANIMADO (Fade & Slide In)
-          // ==========================================
+          // CAPA 2: CONTENIDO ANIMADO
           SafeArea(
-            bottom: false, // Dejamos que el contenido baje hasta el fondo real
+            bottom: false,
             child: FadeTransition(
               opacity: _fadeAnimation,
               child: SlideTransition(
@@ -125,7 +140,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 child: CustomScrollView(
                   physics: const BouncingScrollPhysics(),
                   slivers: [
-                    // HEADER LIMPIO Y MINIMALISTA
+                    // HEADER ACTUALIZADO CON BOTÓN DE SALIDA
                     SliverToBoxAdapter(
                       child: Padding(
                         padding: const EdgeInsets.fromLTRB(24, 20, 24, 10),
@@ -293,16 +308,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         ),
                       ),
                     ),
-                    const SliverToBoxAdapter(child: SizedBox(height: 120)), // Espacio para la barra flotante
+                    const SliverToBoxAdapter(child: SizedBox(height: 120)),
                   ],
                 ),
               ),
             ),
           ),
           
-          // ==========================================
-          // CAPA 3: NAVEGACIÓN FLOTANTE (Glassmorphism Pill)
-          // ==========================================
+          // CAPA 3: NAVEGACIÓN FLOTANTE
           Positioned(
             bottom: 30,
             left: 30,
@@ -351,7 +364,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  // Widget de icono de navegación con animación implícita
   Widget _buildNavItem(IconData icon, int index) {
     final isSelected = _indiceNavegacion == index;
     return GestureDetector(
