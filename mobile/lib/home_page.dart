@@ -3,6 +3,10 @@ import 'dart:ui';
 import 'dart:math' as math;
 import 'login_screen.dart'; 
 import '../services/google_auth_service.dart';
+import 'explorar_page.dart';
+import 'publicar_page.dart';
+import 'chats_page.dart';
+import 'perfil_page.dart';
 
 class TruequiColors {
   static const Color purpura = Color(0xFF6B42E0);
@@ -30,13 +34,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     
-    // 1. Controlador del fondo líquido (Continuidad con el Login)
     _bgController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 15),
     )..repeat();
 
-    // 2. Controlador de la entrada hipnótica del contenido
     _entranceController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1200),
@@ -61,20 +63,172 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   // ==========================================
-  // FUNCIÓN DE CIERRE DE SESIÓN
+  // DISEÑO INTERNO: PESTAÑA INICIO (Bento)
   // ==========================================
-  Future<void> _cerrarSesion() async {
-    // 1. Cerramos sesión de Google para que vuelva a pedir cuenta la próxima vez
-    final googleAuth = GoogleAuthService();
-    await googleAuth.signOut();
-
-    if (!mounted) return;
-
-    // 2. Navegamos al LoginScreen destruyendo todo el historial de navegación
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (context) => const LoginScreen()),
-      (Route<dynamic> route) => false,
+  Widget _buildInicioTab(String nombreUsuario) {
+    return CustomScrollView(
+      physics: const BouncingScrollPhysics(),
+      slivers: [
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 20, 24, 10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Descubre,',
+                      style: TextStyle(fontSize: 16, color: TruequiColors.textoOscuro.withValues(alpha: 0.6), fontWeight: FontWeight.w500),
+                    ),
+                    Text(
+                      nombreUsuario,
+                      style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: TruequiColors.purpura, letterSpacing: -0.5),
+                    ),
+                  ],
+                ),
+                Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.5),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 2),
+                  ),
+                  child: const CircleAvatar(
+                    radius: 22,
+                    backgroundColor: TruequiColors.amarillo,
+                    child: Icon(Icons.person_rounded, color: Colors.white),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.6),
+                borderRadius: BorderRadius.circular(30),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.8), width: 1),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.location_on_rounded, size: 16, color: TruequiColors.purpura),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Cerca de UAQ - Querétaro',
+                    style: TextStyle(fontSize: 13, color: TruequiColors.textoOscuro.withValues(alpha: 0.8), fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(width: 8),
+                  const Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: Colors.grey),
+                ],
+              ),
+            ),
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 15, 24, 30),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.7),
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 20, offset: const Offset(0, 10))],
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.search_rounded, color: TruequiColors.purpura),
+                  SizedBox(width: 12),
+                  Text('¿Qué estás buscando hoy?', style: TextStyle(color: Colors.grey, fontSize: 15)),
+                ],
+              ),
+            ),
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Para ti', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: TruequiColors.textoOscuro)),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: Container(
+                        height: 200,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.6),
+                          borderRadius: BorderRadius.circular(32),
+                          border: Border.all(color: Colors.white, width: 2),
+                        ),
+                        child: Stack(
+                          children: [
+                            const Center(child: Icon(Icons.devices_rounded, size: 60, color: Colors.grey)),
+                            Positioned(
+                              bottom: 20,
+                              left: 20,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                    decoration: BoxDecoration(color: TruequiColors.purpura, borderRadius: BorderRadius.circular(10)),
+                                    child: const Text('Top Match', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  const Text('MacBook Air M1', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                  Text('Busca: iPad Pro', style: TextStyle(color: Colors.grey.shade700, fontSize: 12)),
+                                ],
+                              ),
+                            )
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      flex: 2,
+                      child: Column(
+                        children: [
+                          Container(
+                            height: 92,
+                            decoration: BoxDecoration(
+                              color: TruequiColors.purpura.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(24),
+                              border: Border.all(color: Colors.white, width: 1.5),
+                            ),
+                            child: const Center(child: Icon(Icons.menu_book_rounded, color: TruequiColors.purpura, size: 32)),
+                          ),
+                          const SizedBox(height: 16),
+                          Container(
+                            height: 92,
+                            decoration: BoxDecoration(
+                              color: TruequiColors.amarillo.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(24),
+                              border: Border.all(color: Colors.white, width: 1.5),
+                            ),
+                            child: const Center(child: Icon(Icons.gamepad_rounded, color: TruequiColors.amarillo, size: 32)),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SliverToBoxAdapter(child: SizedBox(height: 120)),
+      ],
     );
   }
 
@@ -83,6 +237,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     String nombreUsuario = widget.correo.split('@').first;
     nombreUsuario = nombreUsuario[0].toUpperCase() + nombreUsuario.substring(1);
     final size = MediaQuery.of(context).size;
+
+    // AHORA TIENES 5 PESTAÑAS ACTIVAS (0 a 4)
+    final List<Widget> pantallas = [
+      _buildInicioTab(nombreUsuario),           // Índice 0: Inicio
+      const ExplorarPage(),                     // Índice 1: Explorar
+      const PublicarPage(),                     // Índice 2: Publicar (+)
+      const ChatsPage(),                        // Índice 3: Chats
+      PerfilPage(correo: widget.correo),        // Índice 4: Perfil
+    ];
 
     return Scaffold(
       backgroundColor: TruequiColors.fondoClaro,
@@ -104,7 +267,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       height: size.width * 0.7,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: TruequiColors.purpura.withValues(alpha: 0.25), // Más visible pero suave
+                        color: TruequiColors.purpura.withValues(alpha: 0.25),
                       ),
                     ),
                   ),
@@ -127,189 +290,19 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           
           BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 70.0, sigmaY: 70.0),
-            child: Container(color: Colors.white.withValues(alpha: 0.4)), // Capa esmerilada base
+            child: Container(color: Colors.white.withValues(alpha: 0.4)), 
           ),
 
-          // CAPA 2: CONTENIDO ANIMADO
+          // CAPA 2: PANTALLAS CON INDEXEDSTACK
           SafeArea(
             bottom: false,
             child: FadeTransition(
               opacity: _fadeAnimation,
               child: SlideTransition(
                 position: _slideAnimation,
-                child: CustomScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  slivers: [
-                    // HEADER ACTUALIZADO CON BOTÓN DE SALIDA
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(24, 20, 24, 10),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Descubre,',
-                                  style: TextStyle(fontSize: 16, color: TruequiColors.textoOscuro.withValues(alpha: 0.6), fontWeight: FontWeight.w500),
-                                ),
-                                Text(
-                                  nombreUsuario,
-                                  style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: TruequiColors.purpura, letterSpacing: -0.5),
-                                ),
-                              ],
-                            ),
-                            // Avatar con Glassmorphism
-                            Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.5),
-                                shape: BoxShape.circle,
-                                border: Border.all(color: Colors.white, width: 2),
-                              ),
-                              child: const CircleAvatar(
-                                radius: 22,
-                                backgroundColor: TruequiColors.amarillo,
-                                child: Icon(Icons.person_rounded, color: Colors.white),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    // UBICACIÓN ESTILO "PÍLDORA"
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.6),
-                            borderRadius: BorderRadius.circular(30),
-                            border: Border.all(color: Colors.white.withValues(alpha: 0.8), width: 1),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.location_on_rounded, size: 16, color: TruequiColors.purpura),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Cerca de UAQ - Querétaro', // Integración natural de la ubicación
-                                style: TextStyle(fontSize: 13, color: TruequiColors.textoOscuro.withValues(alpha: 0.8), fontWeight: FontWeight.w600),
-                              ),
-                              const SizedBox(width: 8),
-                              const Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: Colors.grey),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    // BUSCADOR INTEGRADO
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(24, 15, 24, 30),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.7),
-                            borderRadius: BorderRadius.circular(24),
-                            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 20, offset: const Offset(0, 10))],
-                          ),
-                          child: const Row(
-                            children: [
-                              Icon(Icons.search_rounded, color: TruequiColors.purpura),
-                              SizedBox(width: 12),
-                              Text('¿Qué estás buscando hoy?', style: TextStyle(color: Colors.grey, fontSize: 15)),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    // SECCIÓN BENTO: DESTACADOS
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text('Para ti', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: TruequiColors.textoOscuro)),
-                            const SizedBox(height: 16),
-                            Row(
-                              children: [
-                                // Tarjeta Principal
-                                Expanded(
-                                  flex: 3,
-                                  child: Container(
-                                    height: 200,
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withValues(alpha: 0.6),
-                                      borderRadius: BorderRadius.circular(32),
-                                      border: Border.all(color: Colors.white, width: 2),
-                                    ),
-                                    child: Stack(
-                                      children: [
-                                        const Center(child: Icon(Icons.devices_rounded, size: 60, color: Colors.grey)),
-                                        Positioned(
-                                          bottom: 20,
-                                          left: 20,
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Container(
-                                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                                decoration: BoxDecoration(color: TruequiColors.purpura, borderRadius: BorderRadius.circular(10)),
-                                                child: const Text('Top Match', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
-                                              ),
-                                              const SizedBox(height: 8),
-                                              const Text('MacBook Air M1', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                                              Text('Busca: iPad Pro', style: TextStyle(color: Colors.grey.shade700, fontSize: 12)),
-                                            ],
-                                          ),
-                                        )
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                // Tarjetas Secundarias Apiladas
-                                Expanded(
-                                  flex: 2,
-                                  child: Column(
-                                    children: [
-                                      Container(
-                                        height: 92,
-                                        decoration: BoxDecoration(
-                                          color: TruequiColors.purpura.withValues(alpha: 0.1),
-                                          borderRadius: BorderRadius.circular(24),
-                                          border: Border.all(color: Colors.white, width: 1.5),
-                                        ),
-                                        child: const Center(child: Icon(Icons.menu_book_rounded, color: TruequiColors.purpura, size: 32)),
-                                      ),
-                                      const SizedBox(height: 16),
-                                      Container(
-                                        height: 92,
-                                        decoration: BoxDecoration(
-                                          color: TruequiColors.amarillo.withValues(alpha: 0.15),
-                                          borderRadius: BorderRadius.circular(24),
-                                          border: Border.all(color: Colors.white, width: 1.5),
-                                        ),
-                                        child: const Center(child: Icon(Icons.gamepad_rounded, color: TruequiColors.amarillo, size: 32)),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SliverToBoxAdapter(child: SizedBox(height: 120)),
-                  ],
+                child: IndexedStack(
+                  index: _indiceNavegacion,
+                  children: pantallas, // Inserta la lista de 5 páginas
                 ),
               ),
             ),
@@ -337,22 +330,23 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     children: [
                       _buildNavItem(Icons.home_filled, 0),
                       _buildNavItem(Icons.explore_rounded, 1),
-                      // Botón Central Destacado
+                      // BOTÓN CENTRAL PARA "AÑADIR PUBLICACIÓN" (ÍNDICE 2)
                       GestureDetector(
-                        onTap: () {},
+                        onTap: () => setState(() => _indiceNavegacion = 2),
                         child: Container(
                           width: 50,
                           height: 50,
                           decoration: BoxDecoration(
-                            color: TruequiColors.purpura,
+                            color: _indiceNavegacion == 2 ? TruequiColors.amarillo : TruequiColors.purpura, // Reacciona al estado
                             shape: BoxShape.circle,
                             boxShadow: [BoxShadow(color: TruequiColors.purpura.withValues(alpha: 0.4), blurRadius: 12, offset: const Offset(0, 4))],
                           ),
                           child: const Icon(Icons.add_rounded, color: Colors.white, size: 28),
                         ),
                       ),
-                      _buildNavItem(Icons.chat_bubble_rounded, 2),
-                      _buildNavItem(Icons.person_rounded, 3),
+                      // ÍCONOS DE CHAT (3) Y PERFIL (4) ACTUALIZADOS
+                      _buildNavItem(Icons.chat_bubble_rounded, 3),
+                      _buildNavItem(Icons.person_rounded, 4),
                     ],
                   ),
                 ),
