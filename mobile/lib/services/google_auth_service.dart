@@ -21,16 +21,11 @@ class GoogleAuthService {
       print("DEBUG: Intentando abrir el selector de Google...");
       final googleUser = await GoogleSignIn.instance.authenticate();
       
-      if (googleUser != null) {
-        print("DEBUG: Usuario seleccionado: ${googleUser.email}");
-        final googleAuth = googleUser.authentication;
-        final String? idToken = googleAuth.idToken;
-        print("DEBUG: ID Token obtenido correctamente");
-        return googleUser;
-      } else {
-        print("DEBUG: El usuario canceló el selector o devolvió null.");
-        return null;
-      }
+      print("DEBUG: Usuario seleccionado: ${googleUser.email}");
+      final googleAuth = googleUser.authentication;
+      final String? idToken = googleAuth.idToken;
+      print("DEBUG: ID Token obtenido correctamente");
+      return googleUser;
     } catch (error) {
       print("DEBUG ERROR CRÍTICO: $error");
       return null;

@@ -1,6 +1,12 @@
-import 'package:flutter/material.dart';
-import 'dart:ui';
+import 'dart:async';
+import 'dart:convert';
 import 'dart:math' as math;
+import 'dart:ui';
+
+import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:google_sign_in_web/web_only.dart' as web;
+import 'package:http/http.dart' as http;
 
 class TruequiColors {
   static const Color purpura = Color(0xFF6B42E0);
@@ -9,348 +15,1545 @@ class TruequiColors {
 }
 
 class HomeWeb extends StatefulWidget {
-  final String correo;
-  const HomeWeb({super.key, required this.correo});
+  const HomeWeb({super.key});
 
   @override
   State<HomeWeb> createState() => _HomeWebState();
 }
 
-class _HomeWebState extends State<HomeWeb> with SingleTickerProviderStateMixin {
-  late AnimationController _bgController;
+class _HomeWebState extends State<HomeWeb>
+    with SingleTickerProviderStateMixin {
+  static const String _loginUrl =
+      'https://16663yaped.execute-api.us-east-1.amazonaws.com/dev/login';
+
+  static const String _googleLoginUrl =
+      'https://16663yaped.execute-api.us-east-1.amazonaws.com/dev/login/google';
+
+  final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
+
+  Timer? _timer;
+  double _animationValue = 0;
 
   @override
   void initState() {
     super.initState();
-    // Los orbes del login ahora se expanden y se mueven más lento
-    _bgController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 25),
-    )..repeat();
+
+    _inicializarGoogle();
+    
+
+    _timer = Timer.periodic(const Duration(milliseconds: 50), (_) {
+      if (!mounted) return;
+
+      setState(() {
+        _animationValue += 0.008;
+
+        if (_animationValue > 2 * math.pi) {
+          _animationValue = 0;
+        }
+      });
+    });
   }
+
+  Future<void> _inicializarGoogle() async {
+    try {
+      await _googleSignIn.initialize();
+
+      debugPrint('GOOGLE SIGN-IN INICIALIZADO CORRECTAMENTE');
+    } catch (e) {
+      debugPrint('ERROR INICIALIZANDO GOOGLE: $e');
+    }
+  }
+  Future<void> _loginConGoogle(
+  BuildContext dialogContext,
+  GoogleSignInAccount usuarioGoogle,
+) async {
+  try {
+    debugPrint(
+      'GOOGLE: usuario autenticado: ${usuarioGoogle.email}',
+    );
+
+    final autenticacion = usuarioGoogle.authentication;
+
+    final idToken = autenticacion.idToken;
+
+    if (idToken == null || idToken.isEmpty) {
+      throw Exception(
+        'Google no devolvió el ID token.',
+      );
+    }
+
+    debugPrint(
+      'GOOGLE: ID TOKEN OBTENIDO CORRECTAMENTE',
+    );
+
+    final response = await http.post(
+      Uri.parse(_googleLoginUrl),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'token': idToken,
+      }),
+    );
+
+    debugPrint(
+      'GOOGLE BACKEND STATUS: ${response.statusCode}',
+    );
+
+    debugPrint(
+      'GOOGLE BACKEND RESPONSE: ${response.body}',
+    );
+
+    Map<String, dynamic> data = {};
+
+    try {
+      if (response.body.isNotEmpty) {
+        data = jsonDecode(response.body);
+      }
+    } catch (_) {}
+
+    if (response.statusCode >= 200 &&
+        response.statusCode < 300) {
+      final mensaje =
+          data['message'] ??
+          data['mensaje'] ??
+          'Login con Google exitoso';
+
+      if (!dialogContext.mounted) return;
+
+      Navigator.of(dialogContext).pop();
+
+      ScaffoldMessenger.of(this.context).showSnackBar(
+        SnackBar(
+          content: Text(
+            mensaje.toString(),
+          ),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } else {
+      final mensaje =
+          data['message'] ??
+          data['mensaje'] ??
+          data['error'] ??
+          'No se pudo iniciar sesión con Google.';
+
+      if (!dialogContext.mounted) return;
+
+      ScaffoldMessenger.of(dialogContext).showSnackBar(
+        SnackBar(
+          content: Text(
+            mensaje.toString(),
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  } catch (e) {
+    debugPrint(
+      'ERROR LOGIN GOOGLE: $e',
+    );
+
+    if (!dialogContext.mounted) return;
+
+    ScaffoldMessenger.of(dialogContext).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Error al iniciar sesión con Google: $e',
+        ),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
+}
 
   @override
   void dispose() {
-    _bgController.dispose();
+    _timer?.cancel();
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    String nombreUsuario = widget.correo.split('@').first;
-    nombreUsuario = nombreUsuario[0].toUpperCase() + nombreUsuario.substring(1);
-    final size = MediaQuery.of(context).size;
+  // ============================================================
+  // LOGIN TRADICIONAL
+  // ============================================================
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
-      body: Stack(
-        children: [
-          // ==========================================
-          // CAPA 1: FONDO LÍQUIDO EXPANDIDO
-          // ==========================================
-          AnimatedBuilder(
-            animation: _bgController,
-            builder: (context, child) {
-              return Stack(
-                children: [
-                  Positioned(
-                    top: size.height * 0.1 + (math.sin(_bgController.value * 2 * math.pi) * 80),
-                    left: size.width * 0.1 + (math.cos(_bgController.value * 2 * math.pi) * 80),
-                    child: Container(
-                      width: size.width * 0.5,
-                      height: size.width * 0.5,
-                      decoration: BoxDecoration(shape: BoxShape.circle, color: TruequiColors.purpura.withValues(alpha: 0.15)),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: size.height * 0.1 + (math.cos(_bgController.value * 2 * math.pi) * 100),
-                    right: size.width * 0.05 + (math.sin(_bgController.value * 2 * math.pi) * 120),
-                    child: Container(
-                      width: size.width * 0.6,
-                      height: size.width * 0.6,
-                      decoration: BoxDecoration(shape: BoxShape.circle, color: TruequiColors.amarillo.withValues(alpha: 0.10)),
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
-          
-          BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 90.0, sigmaY: 90.0),
-            child: Container(color: Colors.white.withValues(alpha: 0.3)),
-          ),
+  void _mostrarLogin() {
+    final correoController = TextEditingController();
+    final passwordController = TextEditingController();
 
-          // ==========================================
-          // CAPA 2: CONTENIDO SCROLLABLE (Feed)
-          // ==========================================
-          CustomScrollView(
-            physics: const BouncingScrollPhysics(),
-            slivers: [
-              // NAVBAR DE CRISTAL (Estilo Vinted pero premium)
-              SliverAppBar(
-                pinned: true,
-                floating: false,
-                expandedHeight: 80,
-                collapsedHeight: 80,
-                backgroundColor: Colors.white.withValues(alpha: 0.7),
-                flexibleSpace: ClipRRect(
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 40),
-                      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Colors.white.withValues(alpha: 0.5), width: 1.5))),
-                      child: Row(
-                        children: [
-                          // Logo
-                          const Icon(Icons.sync_rounded, color: TruequiColors.purpura, size: 36),
-                          const SizedBox(width: 12),
-                          const Text('truequi', style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: TruequiColors.purpura, letterSpacing: -1)),
-                          
-                          const SizedBox(width: 48),
-                          
-                          // Buscador Central Gigante
-                          Expanded(
-                            child: Container(
+    bool cargando = false;
+    bool cargandoGoogle = false;
+    bool ocultarPassword = true;
+    String? error;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            Future<void> iniciarSesion() async {
+  final correo = correoController.text.trim();
+  final password = passwordController.text;
+
+  if (correo.isEmpty || password.isEmpty) {
+    setModalState(() {
+      error = 'Completa todos los campos.';
+    });
+    return;
+  }
+
+  setModalState(() {
+    cargando = true;
+    error = null;
+  });
+
+  try {
+    final response = await http.post(
+      Uri.parse(_loginUrl),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'correo': correo,
+        'password': password,
+      }),
+    );
+
+    Map<String, dynamic> data = {};
+
+    try {
+      if (response.body.isNotEmpty) {
+        data = jsonDecode(response.body);
+      }
+    } catch (_) {
+      data = {};
+    }
+
+    if (response.statusCode >= 200 &&
+        response.statusCode < 300) {
+      final mensaje =
+          data['message'] ??
+          data['mensaje'] ??
+          data['msg'] ??
+          'Inicio de sesión exitoso';
+
+      // Primero terminamos el estado de carga.
+     if (!dialogContext.mounted) return;
+
+Navigator.of(dialogContext).pop();
+
+if (mounted) {
+  ScaffoldMessenger.of(this.context).showSnackBar(
+    SnackBar(
+      content: Text(mensaje.toString()),
+      backgroundColor: Colors.green,
+    ),
+  );
+}
+
+      return;
+    }
+
+    final mensaje =
+        data['message'] ??
+        data['mensaje'] ??
+        data['error'] ??
+        'Correo o contraseña incorrectos.';
+
+    if (dialogContext.mounted) {
+      setModalState(() {
+        error = mensaje.toString();
+        cargando = false;
+      });
+    }
+  } catch (e) {
+    debugPrint('ERROR LOGIN: $e');
+
+    if (dialogContext.mounted) {
+      setModalState(() {
+        error = 'No se pudo conectar con el servidor.';
+        cargando = false;
+      });
+    }
+  }
+}
+
+            return Dialog(
+              backgroundColor: Colors.transparent,
+              insetPadding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 30,
+              ),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxWidth: 460,
+                ),
+                child: Container(
+                  padding: const EdgeInsets.all(30),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(28),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.18),
+                        blurRadius: 35,
+                        offset: const Offset(0, 15),
+                      ),
+                    ],
+                  ),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // ==================================================
+                        // ENCABEZADO
+                        // ==================================================
+
+                        Row(
+                          children: [
+                            Container(
+                              width: 48,
                               height: 48,
-                              padding: const EdgeInsets.symmetric(horizontal: 20),
                               decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.8),
-                                borderRadius: BorderRadius.circular(24),
-                                border: Border.all(color: Colors.white, width: 2),
+                                color: TruequiColors.purpura.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(14),
                               ),
-                              child: const Row(
+                              child: const Icon(
+                                Icons.swap_horiz_rounded,
+                                color: TruequiColors.purpura,
+                                size: 28,
+                              ),
+                            ),
+
+                            const SizedBox(width: 14),
+
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Icon(Icons.search_rounded, color: Colors.grey),
-                                  SizedBox(width: 12),
-                                  Expanded(
-                                    child: TextField(
-                                      decoration: InputDecoration(hintText: 'Buscar artículos, libros, tecnología...', border: InputBorder.none),
+                                  Text(
+                                    'Iniciar sesión',
+                                    style: TextStyle(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold,
+                                      color: TruequiColors.textoOscuro,
+                                    ),
+                                  ),
+                                  SizedBox(height: 3),
+                                  Text(
+                                    'Bienvenido a Truequi',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: Colors.grey,
                                     ),
                                   ),
                                 ],
                               ),
                             ),
+
+                            IconButton(
+                              onPressed: () {
+                                Navigator.of(dialogContext).pop();
+                              },
+                              icon: const Icon(Icons.close),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 25),
+
+                        const Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'Ingresa a tu cuenta para continuar.',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.black54,
+                            ),
                           ),
-                          
-                          const SizedBox(width: 48),
-                          
-                          // Acciones de Usuario
-                          Row(
-                            children: [
-                              TextButton(onPressed: () {}, child: const Text('Explorar', style: TextStyle(color: TruequiColors.textoOscuro, fontWeight: FontWeight.w600))),
-                              const SizedBox(width: 16),
-                              ElevatedButton(
-                                style: ElevatedButton.styleFrom(backgroundColor: TruequiColors.purpura, padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16)),
-                                onPressed: () {}, 
-                                child: const Text('Subir artículo', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                        ),
+
+                        const SizedBox(height: 24),
+
+                        // ==================================================
+                        // CORREO
+                        // ==================================================
+
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'Correo electrónico',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: TruequiColors.textoOscuro,
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 8),
+
+                        TextField(
+                          controller: correoController,
+                          keyboardType: TextInputType.emailAddress,
+                          decoration: InputDecoration(
+                            hintText: 'correo@ejemplo.com',
+                            prefixIcon: const Icon(
+                              Icons.email_outlined,
+                            ),
+                            filled: true,
+                            fillColor: const Color(0xFFF8F8FB),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: BorderSide.none,
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: const BorderSide(
+                                color: TruequiColors.purpura,
+                                width: 1.5,
                               ),
-                              const SizedBox(width: 24),
-                              Container(
-                                width: 40, height: 40,
-                                decoration: BoxDecoration(color: TruequiColors.amarillo, shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 2)),
-                                child: Center(child: Text(nombreUsuario[0], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18))),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 18),
+
+                        // ==================================================
+                        // PASSWORD
+                        // ==================================================
+
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'Contraseña',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: TruequiColors.textoOscuro,
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 8),
+
+                        TextField(
+                          controller: passwordController,
+                          obscureText: ocultarPassword,
+                          decoration: InputDecoration(
+                            hintText: '••••••••',
+                            prefixIcon: const Icon(
+                              Icons.lock_outline,
+                            ),
+                            suffixIcon: IconButton(
+                              onPressed: () {
+                                setModalState(() {
+                                  ocultarPassword = !ocultarPassword;
+                                });
+                              },
+                              icon: Icon(
+                                ocultarPassword
+                                    ? Icons.visibility_outlined
+                                    : Icons.visibility_off_outlined,
+                              ),
+                            ),
+                            filled: true,
+                            fillColor: const Color(0xFFF8F8FB),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: BorderSide.none,
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: const BorderSide(
+                                color: TruequiColors.purpura,
+                                width: 1.5,
+                              ),
+                            ),
+                          ),
+                          onSubmitted: (_) {
+                            if (!cargando) {
+                              iniciarSesion();
+                            }
+                          },
+                        ),
+
+                        const SizedBox(height: 18),
+
+                        // ==================================================
+                        // ERROR
+                        // ==================================================
+
+                        if (error != null) ...[
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.red.withOpacity(0.08),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: Colors.red.withOpacity(0.2),
+                              ),
+                            ),
+                            child: Row(
+                              crossAxisAlignment:
+                                  CrossAxisAlignment.start,
+                              children: [
+                                const Icon(
+                                  Icons.error_outline,
+                                  color: Colors.red,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    error!,
+                                    style: const TextStyle(
+                                      color: Colors.red,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 18),
+                        ],
+
+                        // ==================================================
+                        // LOGIN TRADICIONAL
+                        // ==================================================
+
+                        SizedBox(
+                          width: double.infinity,
+                          height: 52,
+                          child: ElevatedButton(
+                            onPressed: cargando || cargandoGoogle
+                                ? null
+                                : iniciarSesion,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: TruequiColors.purpura,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                            ),
+                            child: cargando
+                                ? const SizedBox(
+                                    width: 22,
+                                    height: 22,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.5,
+                                      valueColor:
+                                          AlwaysStoppedAnimation<Color>(
+                                        Colors.white,
+                                      ),
+                                    ),
+                                  )
+                                : const Text(
+                                    'Iniciar sesión',
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 22),
+
+                        // ==================================================
+                        // SEPARADOR "O"
+                        // ==================================================
+
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Container(
+                                height: 1,
+                                color: Colors.grey.shade200,
+                              ),
+                            ),
+                            const Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 14,
+                              ),
+                              child: Text(
+                                'o',
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              child: Container(
+                                height: 1,
+                                color: Colors.grey.shade200,
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        // ==================================================
+                        // GOOGLE LOGIN
+                        // ==================================================
+
+                        SizedBox(
+                          width: double.infinity,
+                          height: 44,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              IgnorePointer(
+                                ignoring: cargando || cargandoGoogle,
+                                child: web.renderButton(
+                                  configuration:
+                                      web.GSIButtonConfiguration(
+                                    type: web.GSIButtonType.standard,
+                                    theme: web.GSIButtonTheme.outline,
+                                    size: web.GSIButtonSize.large,
+                                    text: web.GSIButtonText.continueWith,
+                                    shape: web.GSIButtonShape.pill,
+                                    logoAlignment:
+                                        web.GSIButtonLogoAlignment.left,
+                                    minimumWidth: 360,
+                                    locale: 'es',
+                                  ),
+                                ),
+                              ),
+
+                              if (cargandoGoogle)
+                                Container(
+                                  width: double.infinity,
+                                  height: 44,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.88),
+                                    borderRadius: BorderRadius.circular(22),
+                                  ),
+                                  child: const Center(
+                                    child: SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 24),
+
+                        // ==================================================
+                        // REGISTRO
+                        // ==================================================
+
+                        RichText(
+                          textAlign: TextAlign.center,
+                          text: TextSpan(
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Colors.black54,
+                            ),
+                            children: [
+                              const TextSpan(
+                                text: '¿No tienes cuenta? ',
+                              ),
+                              TextSpan(
+                                text: 'Regístrate',
+                                style: const TextStyle(
+                                  color: TruequiColors.purpura,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ],
-                          )
-                        ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    ).then((_) {
+      correoController.dispose();
+      passwordController.dispose();
+    });
+  }
+
+  // ============================================================
+  // LOGIN CON GOOGLE
+  // ============================================================
+
+  Future<void> _procesarLoginGoogle(
+    BuildContext dialogContext,
+    void Function(void Function()) setModalState,
+  ) async {
+    setModalState(() {
+      // El estado visual se controla desde el botón.
+    });
+
+    try {
+      debugPrint('GOOGLE: esperando autenticación...');
+
+      GoogleSignInAccount? usuarioGoogle;
+
+      final completer = Completer<GoogleSignInAccount?>();
+
+      late StreamSubscription<GoogleSignInAuthenticationEvent>
+          subscription;
+
+      subscription = _googleSignIn.authenticationEvents.listen(
+        (event) {
+          if (event is GoogleSignInAuthenticationEventSignIn) {
+            if (!completer.isCompleted) {
+              completer.complete(event.user);
+            }
+          }
+        },
+        onError: (Object error) {
+          if (!completer.isCompleted) {
+            completer.completeError(error);
+          }
+        },
+      );
+
+      try {
+        // El botón oficial de Google inicia el proceso.
+        // Esperamos brevemente a que el evento de autenticación
+        // llegue al stream.
+        usuarioGoogle = await completer.future.timeout(
+          const Duration(seconds: 120),
+        );
+      } finally {
+        await subscription.cancel();
+      }
+
+      if (usuarioGoogle == null) {
+        throw Exception('No se obtuvo la cuenta de Google.');
+      }
+
+      debugPrint(
+        'GOOGLE: usuario autenticado: ${usuarioGoogle.email}',
+      );
+
+      final autenticacion = await usuarioGoogle.authentication;
+
+      final idToken = autenticacion.idToken;
+
+      if (idToken == null || idToken.isEmpty) {
+        throw Exception(
+          'Google no devolvió un ID token.',
+        );
+      }
+
+      debugPrint('GOOGLE: ID token obtenido correctamente.');
+
+      // ==========================================================
+      // ENVIAR ID TOKEN AL BACKEND
+      // ==========================================================
+
+      final response = await http.post(
+        Uri.parse(_googleLoginUrl),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'token': idToken,
+        }),
+      );
+
+      Map<String, dynamic> data = {};
+
+      try {
+        if (response.body.isNotEmpty) {
+          data = jsonDecode(response.body);
+        }
+      } catch (_) {
+        data = {};
+      }
+
+      debugPrint(
+        'GOOGLE BACKEND STATUS: ${response.statusCode}',
+      );
+
+      debugPrint(
+        'GOOGLE BACKEND RESPONSE: ${response.body}',
+      );
+
+      if (response.statusCode >= 200 &&
+          response.statusCode < 300) {
+        final mensaje =
+            data['message'] ??
+            data['mensaje'] ??
+            'Login con Google exitoso';
+
+        if (!dialogContext.mounted) return;
+
+        Navigator.of(dialogContext).pop();
+
+        ScaffoldMessenger.of(this.context).showSnackBar(
+          SnackBar(
+            content: Text(
+              mensaje.toString(),
+            ),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        final mensaje =
+            data['message'] ??
+            data['mensaje'] ??
+            data['error'] ??
+            'No se pudo iniciar sesión con Google.';
+
+        if (!dialogContext.mounted) return;
+
+        ScaffoldMessenger.of(dialogContext).showSnackBar(
+          SnackBar(
+            content: Text(
+              mensaje.toString(),
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } on TimeoutException {
+      if (!dialogContext.mounted) return;
+
+      ScaffoldMessenger.of(dialogContext).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'La autenticación con Google tardó demasiado.',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } catch (e) {
+      debugPrint('ERROR GOOGLE LOGIN: $e');
+
+      if (!dialogContext.mounted) return;
+
+      ScaffoldMessenger.of(dialogContext).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Error al iniciar sesión con Google: $e',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  // ============================================================
+  // HOME
+  // ============================================================
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8F7FC),
+      body: Stack(
+        children: [
+          // ==========================================================
+          // FONDOS ANIMADOS
+          // ==========================================================
+
+          Positioned(
+            top: -180 + math.sin(_animationValue) * 30,
+            right: -120 + math.cos(_animationValue) * 30,
+            child: Container(
+              width: 420,
+              height: 420,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: TruequiColors.purpura.withOpacity(0.16),
+              ),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(
+                  sigmaX: 80,
+                  sigmaY: 80,
+                ),
+                child: const SizedBox(),
+              ),
+            ),
+          ),
+
+          Positioned(
+            bottom: -180 + math.cos(_animationValue) * 35,
+            left: -120 + math.sin(_animationValue) * 35,
+            child: Container(
+              width: 420,
+              height: 420,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: TruequiColors.amarillo.withOpacity(0.12),
+              ),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(
+                  sigmaX: 80,
+                  sigmaY: 80,
+                ),
+                child: const SizedBox(),
+              ),
+            ),
+          ),
+
+          // ==========================================================
+          // CONTENIDO
+          // ==========================================================
+
+          CustomScrollView(
+            slivers: [
+              SliverAppBar(
+                pinned: true,
+                elevation: 0,
+                backgroundColor: Colors.white.withOpacity(0.86),
+                surfaceTintColor: Colors.transparent,
+                toolbarHeight: 82,
+                titleSpacing: 30,
+                title: Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: TruequiColors.purpura,
+                        borderRadius: BorderRadius.circular(13),
+                      ),
+                      child: const Icon(
+                        Icons.swap_horiz_rounded,
+                        color: Colors.white,
+                        size: 27,
+                      ),
+                    ),
+
+                    const SizedBox(width: 12),
+
+                    const Text(
+                      'Truequi',
+                      style: TextStyle(
+                        color: TruequiColors.textoOscuro,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () {},
+                    child: const Text(
+                      'Explorar',
+                      style: TextStyle(
+                        color: TruequiColors.textoOscuro,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(width: 8),
+
+                  OutlinedButton.icon(
+                    onPressed: () {},
+                    icon: const Icon(
+                      Icons.add_circle_outline,
+                      size: 19,
+                    ),
+                    label: const Text('Subir artículo'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: TruequiColors.purpura,
+                      side: BorderSide(
+                        color: TruequiColors.purpura.withOpacity(0.3),
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(width: 10),
+
+                  Padding(
+                    padding: const EdgeInsets.only(right: 30),
+                    child: ElevatedButton(
+                      onPressed: _mostrarLogin,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: TruequiColors.purpura,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 15,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Iniciar sesión',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              // ========================================================
+              // BUSCADOR
+              // ========================================================
+
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    60,
+                    50,
+                    60,
+                    20,
+                  ),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        maxWidth: 800,
+                      ),
+                      child: TextField(
+                        decoration: InputDecoration(
+                          hintText:
+                              '¿Qué estás buscando?',
+                          prefixIcon: const Icon(
+                            Icons.search,
+                            color: Colors.grey,
+                          ),
+                          filled: true,
+                          fillColor: Colors.white,
+                          contentPadding:
+                              const EdgeInsets.symmetric(
+                            vertical: 18,
+                            horizontal: 20,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius:
+                                BorderRadius.circular(18),
+                            borderSide: BorderSide.none,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius:
+                                BorderRadius.circular(18),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius:
+                                BorderRadius.circular(18),
+                            borderSide: const BorderSide(
+                              color: TruequiColors.purpura,
+                              width: 1.5,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
 
-              // SUBMENU DE CATEGORÍAS
-              SliverToBoxAdapter(
-                child: Container(
-                  height: 50,
-                  padding: const EdgeInsets.symmetric(horizontal: 40),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.location_on_rounded, size: 16, color: TruequiColors.purpura),
-                      const SizedBox(width: 8),
-                      const Text('Campus UAQ', style: TextStyle(fontWeight: FontWeight.bold, color: TruequiColors.textoOscuro)),
-                      const VerticalDivider(indent: 15, endIndent: 15, color: Colors.grey),
-                      _BotonCategoria('Tecnología'),
-                      _BotonCategoria('Libros Universitarios'),
-                      _BotonCategoria('Videojuegos'),
-                      _BotonCategoria('Mobiliario'),
-                    ],
-                  ),
-                ),
-              ),
+              // ========================================================
+              // HERO
+              // ========================================================
 
-              // HERO BANNER (Estilo Depop)
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
+                  padding: const EdgeInsets.fromLTRB(
+                    60,
+                    20,
+                    60,
+                    30,
+                  ),
                   child: Container(
-                    height: 350,
+                    width: double.infinity,
+                    constraints: const BoxConstraints(
+                      minHeight: 260,
+                    ),
+                    padding: const EdgeInsets.all(45),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.4),
-                      borderRadius: BorderRadius.circular(32),
-                      border: Border.all(color: Colors.white, width: 2),
-                      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 30, offset: const Offset(0, 15))],
+                      gradient: const LinearGradient(
+                        colors: [
+                          Color(0xFF6B42E0),
+                          Color(0xFF8A6BE8),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(30),
                     ),
                     child: Row(
                       children: [
                         Expanded(
-                          flex: 1,
-                          child: Padding(
-                            padding: const EdgeInsets.all(48.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                  decoration: BoxDecoration(color: TruequiColors.amarillo.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(20)),
-                                  child: const Text('Renueva tu ecosistema', style: TextStyle(color: Color(0xFFD48B00), fontWeight: FontWeight.bold)),
-                                ),
-                                const SizedBox(height: 24),
-                                const Text('Cambia lo que tienes.\nEncuentra lo que buscas.', style: TextStyle(fontSize: 48, height: 1.1, fontWeight: FontWeight.w900, color: TruequiColors.textoOscuro, letterSpacing: -1.5)),
-                                const SizedBox(height: 24),
-                                ElevatedButton(
-                                  style: ElevatedButton.styleFrom(backgroundColor: TruequiColors.textoOscuro, padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20)),
-                                  onPressed: () {}, 
-                                  child: const Text('Ver Top Matches', style: TextStyle(color: Colors.white, fontSize: 16)),
-                                )
-                              ],
-                            ),
-                          ),
-                        ),
-                        // Área visual del banner
-                        Expanded(
-                          flex: 1,
-                          child: Stack(
+                          child: Column(
+                            crossAxisAlignment:
+                                CrossAxisAlignment.start,
+                            mainAxisAlignment:
+                                MainAxisAlignment.center,
                             children: [
-                              Positioned(
-                                right: -50, top: -50,
-                                child: Icon(Icons.change_circle_rounded, size: 400, color: TruequiColors.purpura.withValues(alpha: 0.1)),
+                              const Text(
+                                'Intercambia lo que ya no necesitas',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 34,
+                                  fontWeight: FontWeight.bold,
+                                  height: 1.15,
+                                ),
+                              ),
+
+                              const SizedBox(height: 15),
+
+                              Text(
+                                'Encuentra nuevos artículos y dale una segunda vida a lo que ya tienes.',
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.9),
+                                  fontSize: 16,
+                                  height: 1.5,
+                                ),
+                              ),
+
+                              const SizedBox(height: 25),
+
+                              ElevatedButton(
+                                onPressed: () {},
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor:
+                                      Colors.white,
+                                  foregroundColor:
+                                      TruequiColors.purpura,
+                                  elevation: 0,
+                                  padding:
+                                      const EdgeInsets.symmetric(
+                                    horizontal: 25,
+                                    vertical: 16,
+                                  ),
+                                  shape:
+                                      RoundedRectangleBorder(
+                                    borderRadius:
+                                        BorderRadius.circular(
+                                      13,
+                                    ),
+                                  ),
+                                ),
+                                child: const Text(
+                                  'Explorar artículos',
+                                  style: TextStyle(
+                                    fontWeight:
+                                        FontWeight.w600,
+                                  ),
+                                ),
                               ),
                             ],
                           ),
-                        )
+                        ),
+
+                        const SizedBox(width: 40),
+
+                        Container(
+                          width: 210,
+                          height: 170,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.12),
+                            borderRadius:
+                                BorderRadius.circular(25),
+                          ),
+                          child: const Icon(
+                            Icons.swap_horizontal_circle_outlined,
+                            color: Colors.white,
+                            size: 110,
+                          ),
+                        ),
                       ],
                     ),
                   ),
                 ),
               ),
 
-              // GRID DE PRODUCTOS (Estilo Vinted - Adaptable a web)
-              SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
-                sliver: SliverGrid(
-                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                    maxCrossAxisExtent: 280, // Ancho máximo de tarjeta
-                    mainAxisSpacing: 24,
-                    crossAxisSpacing: 24,
-                    childAspectRatio: 0.70, // Proporción vertical
+              // ========================================================
+              // CATEGORÍAS
+              // ========================================================
+
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 60,
+                    vertical: 10,
                   ),
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) => _TarjetaProductoWeb(index: index),
-                    childCount: 12,
+                  child: Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    children: [
+                      'Todos',
+                      'Electrónica',
+                      'Hogar',
+                      'Ropa',
+                      'Coleccionables',
+                      'Deportes',
+                      'Libros',
+                    ].map((categoria) {
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 18,
+                          vertical: 11,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius:
+                              BorderRadius.circular(30),
+                          border: Border.all(
+                            color: Colors.grey.shade200,
+                          ),
+                        ),
+                        child: Text(
+                          categoria,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      );
+                    }).toList(),
                   ),
                 ),
               ),
-              
-              const SliverToBoxAdapter(child: SizedBox(height: 100)), // Margen final
+
+              // ========================================================
+              // TÍTULO PRODUCTOS
+              // ========================================================
+
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    60,
+                    45,
+                    60,
+                    20,
+                  ),
+                  child: Row(
+                    children: [
+                      const Text(
+                        'Artículos recientes',
+                        style: TextStyle(
+                          fontSize: 25,
+                          fontWeight: FontWeight.bold,
+                          color: TruequiColors.textoOscuro,
+                        ),
+                      ),
+                      const Spacer(),
+                      TextButton(
+                        onPressed: () {},
+                        child: const Text(
+                          'Ver todos',
+                          style: TextStyle(
+                            color: TruequiColors.purpura,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // ========================================================
+              // PRODUCTOS
+              // ========================================================
+
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(
+                  60,
+                  0,
+                  60,
+                  60,
+                ),
+                sliver: SliverGrid(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final productos = [
+                        ['Laptop', 'Electrónica'],
+                        ['Bicicleta', 'Deportes'],
+                        ['Libros', 'Libros'],
+                        ['Videojuego', 'Entretenimiento'],
+                        ['Audífonos', 'Electrónica'],
+                        ['Mochila', 'Ropa'],
+                        ['Cámara', 'Electrónica'],
+                        ['Silla', 'Hogar'],
+                        ['Colección', 'Coleccionables'],
+                        ['Monitor', 'Electrónica'],
+                        ['Balón', 'Deportes'],
+                        ['Lámpara', 'Hogar'],
+                      ];
+
+                      return _TarjetaProductoWeb(
+                        titulo: productos[index][0],
+                        categoria: productos[index][1],
+                      );
+                    },
+                    childCount: 12,
+                  ),
+                  gridDelegate:
+                      const SliverGridDelegateWithMaxCrossAxisExtent(
+                    maxCrossAxisExtent: 290,
+                    mainAxisExtent: 310,
+                    crossAxisSpacing: 20,
+                    mainAxisSpacing: 20,
+                  ),
+                ),
+              ),
             ],
           ),
         ],
       ),
     );
   }
-
-  Widget _BotonCategoria(String texto) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      child: TextButton(
-        onPressed: () {},
-        child: Text(texto, style: TextStyle(color: TruequiColors.textoOscuro.withValues(alpha: 0.7), fontWeight: FontWeight.w600)),
-      ),
-    );
-  }
 }
 
-// ==========================================
-// TARJETA INTERACTIVA CON HOVER (Web Exclusive)
-// ==========================================
+// ====================================================================
+// TARJETA DE PRODUCTO
+// ====================================================================
+
 class _TarjetaProductoWeb extends StatefulWidget {
-  final int index;
-  const _TarjetaProductoWeb({required this.index});
+  final String titulo;
+  final String categoria;
+
+  const _TarjetaProductoWeb({
+    required this.titulo,
+    required this.categoria,
+  });
 
   @override
-  State<_TarjetaProductoWeb> createState() => _TarjetaProductoWebState();
+  State<_TarjetaProductoWeb> createState() =>
+      _TarjetaProductoWebState();
 }
 
-class _TarjetaProductoWebState extends State<_TarjetaProductoWeb> {
-  bool _isHovered = false;
+class _TarjetaProductoWebState
+    extends State<_TarjetaProductoWeb> {
+  bool hover = false;
 
   @override
   Widget build(BuildContext context) {
     return MouseRegion(
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
+      onEnter: (_) {
+        setState(() {
+          hover = true;
+        });
+      },
+      onExit: (_) {
+        setState(() {
+          hover = false;
+        });
+      },
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        transform: Matrix4.translationValues(0, _isHovered ? -10 : 0, 0), // Se eleva al pasar el mouse
+        duration: const Duration(milliseconds: 180),
+        transform: Matrix4.identity()
+          ..translate(0.0, hover ? -5.0 : 0.0),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.7),
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.white, width: 2),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: TruequiColors.purpura.withValues(alpha: _isHovered ? 0.15 : 0.03),
-              blurRadius: _isHovered ? 30 : 15,
-              offset: Offset(0, _isHovered ? 15 : 8),
-            )
+              color: Colors.black.withOpacity(
+                hover ? 0.12 : 0.05,
+              ),
+              blurRadius: hover ? 22 : 12,
+              offset: const Offset(0, 7),
+            ),
           ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Placeholder de imagen
             Expanded(
-              flex: 5,
               child: Container(
                 width: double.infinity,
-                decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: const BorderRadius.vertical(top: Radius.circular(22))),
-                child: const Center(child: Icon(Icons.laptop_chromebook_rounded, size: 64, color: Colors.grey)),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1EFF8),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(20),
+                  ),
+                ),
+                child: const Center(
+                  child: Icon(
+                    Icons.image_outlined,
+                    size: 65,
+                    color: Color(0xFFB8B1CF),
+                  ),
+                ),
               ),
             ),
-            // Detalles
-            Expanded(
-              flex: 4,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('Monitor Curvo 24"', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: TruequiColors.textoOscuro), maxLines: 1, overflow: TextOverflow.ellipsis),
-                    const Text('Hace 2 horas', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      decoration: BoxDecoration(color: TruequiColors.purpura.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-                      child: const Text('Busca: iPad o Tablet', style: TextStyle(color: TruequiColors.purpura, fontSize: 12, fontWeight: FontWeight.bold)),
+
+            Padding(
+              padding: const EdgeInsets.all(17),
+              child: Column(
+                crossAxisAlignment:
+                    CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.categoria,
+                    style: const TextStyle(
+                      color: TruequiColors.purpura,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
                     ),
-                    const Spacer(),
-                    Row(
-                      children: [
-                        CircleAvatar(radius: 12, backgroundColor: TruequiColors.amarillo.withValues(alpha: 0.5), child: const Icon(Icons.person, size: 14, color: Colors.white)),
-                        const SizedBox(width: 8),
-                        const Text('Usuario', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-                      ],
-                    )
-                  ],
-                ),
+                  ),
+
+                  const SizedBox(height: 5),
+
+                  Text(
+                    widget.titulo,
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                      color: TruequiColors.textoOscuro,
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.swap_horiz,
+                        size: 18,
+                        color: Colors.grey,
+                      ),
+                      const SizedBox(width: 5),
+                      const Text(
+                        'Disponible para intercambio',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+}
+class GoogleLoginButton extends StatefulWidget {
+  final Future<void> Function(GoogleSignInAccount user) onLogin;
+
+  const GoogleLoginButton({
+    super.key,
+    required this.onLogin,
+  });
+
+  @override
+  State<GoogleLoginButton> createState() => _GoogleLoginButtonState();
+}
+
+class _GoogleLoginButtonState extends State<GoogleLoginButton> {
+  StreamSubscription<GoogleSignInAuthenticationEvent>?
+      _authenticationSubscription;
+
+  bool procesando = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _escucharGoogle();
+  }
+
+  void _escucharGoogle() {
+    _authenticationSubscription =
+        GoogleSignIn.instance.authenticationEvents.listen(
+      (event) async {
+        if (event is GoogleSignInAuthenticationEventSignIn) {
+          if (procesando) return;
+
+          setState(() {
+            procesando = true;
+          });
+
+          try {
+            await widget.onLogin(event.user);
+          } finally {
+            if (mounted) {
+              setState(() {
+                procesando = false;
+              });
+            }
+          }
+        }
+      },
+      onError: (Object error) {
+        debugPrint(
+          'ERROR EN AUTENTICACIÓN DE GOOGLE: $error',
+        );
+
+        if (mounted) {
+          setState(() {
+            procesando = false;
+          });
+        }
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _authenticationSubscription?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        IgnorePointer(
+          ignoring: procesando,
+          child: web.renderButton(
+            configuration: web.GSIButtonConfiguration(
+              type: web.GSIButtonType.standard,
+              theme: web.GSIButtonTheme.outline,
+              size: web.GSIButtonSize.large,
+              text: web.GSIButtonText.continueWith,
+              shape: web.GSIButtonShape.pill,
+              logoAlignment: web.GSIButtonLogoAlignment.left,
+              minimumWidth: 360,
+              locale: 'es',
+            ),
+          ),
+        ),
+
+        if (procesando)
+          Container(
+            width: 360,
+            height: 40,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.92),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Center(
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

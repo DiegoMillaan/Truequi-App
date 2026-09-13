@@ -6,3 +6,17 @@
 **/node_modules/
 **/venv/
 **/__pycache__/
+
+project_state.md
+gemini*.md
+.gemini_history/
+gemini_config.json
+
+# Entornos y binarios de herramientas CLI
+node_modules/
+venv/
+.venv/
+
+# Variables de entorno
+.env
+*.env
