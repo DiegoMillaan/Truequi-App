@@ -63,6 +63,22 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   // ==========================================
+  // FUNCIÓN DE CIERRE DE SESIÓN
+  // ==========================================
+  Future<void> _cerrarSesion() async {
+    final googleAuth = GoogleAuthService();
+    await googleAuth.signOut();
+
+    if (!mounted) return;
+
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginScreen()),
+      (Route<dynamic> route) => false,
+    );
+  }
+
+  // ==========================================
   // DISEÑO INTERNO: PESTAÑA INICIO (Bento)
   // ==========================================
   Widget _buildInicioTab(String nombreUsuario) {
@@ -88,18 +104,29 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     ),
                   ],
                 ),
-                Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.5),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2),
-                  ),
-                  child: const CircleAvatar(
-                    radius: 22,
-                    backgroundColor: TruequiColors.amarillo,
-                    child: Icon(Icons.person_rounded, color: Colors.white),
-                  ),
+                // FILA CON EL BOTÓN DE SALIDA Y EL AVATAR
+                Row(
+                  children: [
+                    IconButton(
+                      onPressed: _cerrarSesion,
+                      icon: const Icon(Icons.logout_rounded, color: TruequiColors.purpura),
+                      tooltip: 'Cerrar sesión',
+                    ),
+                    const SizedBox(width: 4),
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.5),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
+                      ),
+                      child: const CircleAvatar(
+                        radius: 22,
+                        backgroundColor: TruequiColors.amarillo,
+                        child: Icon(Icons.person_rounded, color: Colors.white),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -238,7 +265,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     nombreUsuario = nombreUsuario[0].toUpperCase() + nombreUsuario.substring(1);
     final size = MediaQuery.of(context).size;
 
-    // AHORA TIENES 5 PESTAÑAS ACTIVAS (0 a 4)
     final List<Widget> pantallas = [
       _buildInicioTab(nombreUsuario),           // Índice 0: Inicio
       const ExplorarPage(),                     // Índice 1: Explorar
@@ -302,7 +328,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 position: _slideAnimation,
                 child: IndexedStack(
                   index: _indiceNavegacion,
-                  children: pantallas, // Inserta la lista de 5 páginas
+                  children: pantallas,
                 ),
               ),
             ),
@@ -337,14 +363,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           width: 50,
                           height: 50,
                           decoration: BoxDecoration(
-                            color: _indiceNavegacion == 2 ? TruequiColors.amarillo : TruequiColors.purpura, // Reacciona al estado
+                            color: _indiceNavegacion == 2 ? TruequiColors.amarillo : TruequiColors.purpura,
                             shape: BoxShape.circle,
                             boxShadow: [BoxShadow(color: TruequiColors.purpura.withValues(alpha: 0.4), blurRadius: 12, offset: const Offset(0, 4))],
                           ),
                           child: const Icon(Icons.add_rounded, color: Colors.white, size: 28),
                         ),
                       ),
-                      // ÍCONOS DE CHAT (3) Y PERFIL (4) ACTUALIZADOS
                       _buildNavItem(Icons.chat_bubble_rounded, 3),
                       _buildNavItem(Icons.person_rounded, 4),
                     ],
