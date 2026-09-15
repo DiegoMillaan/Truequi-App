@@ -12,12 +12,6 @@ provider:
     DB_PASS: ${env:DB_PASS}
     DB_NAME: ${env:DB_NAME}
     GOOGLE_CLIENT_ID: ${env:GOOGLE_CLIENT_ID}
-  iamRoleStatements:
-    - Effect: Allow
-      Action:
-        - dynamodb:GetItem
-        - dynamodb:Query
-      Resource: "arn:aws:dynamodb:us-east-1:*:table/Usuarios"
 
 functions:
   registroTradicional:
@@ -41,9 +35,31 @@ functions:
           path: /login
           method: post
           cors: true
+  actualizarUsuario:
+    handler: handler.actualizar_usuario
+    events:
+      - http:
+          path: /usuario/actualizar
+          method: put
+          cors: true
+  eliminarUsuario:
+    handler: handler.eliminar_usuario
+    events:
+      - http:
+          path: /usuario/eliminar
+          method: delete
+          cors: true
+  healthCheck:
+    handler: handler.health_check
+    events:
+      - http:
+          path: /health
+          method: get
+          cors: true
 
 plugins:
   - serverless-offline
+  - serverless-python-requirements
 
 custom:
   pythonRequirements: {}
