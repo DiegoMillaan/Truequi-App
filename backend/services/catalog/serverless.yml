@@ -1,19 +1,31 @@
 service: truequi-catalog
 
+useDotenv: true
+
 provider:
   name: aws
-  runtime: python3.9
+  runtime: python3.12
   region: us-east-1
+  environment:
+    # Debes tener un .env en esta carpeta también si te conectas a MySQL para el perfil
+    DB_HOST: ${env:DB_HOST}
+    DB_USER: ${env:DB_USER}
+    DB_PASS: ${env:DB_PASS}
+    DB_NAME: ${env:DB_NAME}
+    BUCKET_NAME: truequi-images-dm2026 # Cambia dm2026 por tus iniciales/año para que sea único
   iamRoleStatements:
     - Effect: Allow
       Action:
         - dynamodb:PutItem
         - dynamodb:Scan
-      Resource: "arn:aws:dynamodb:us-east-1:*:table/Productos"
+        - dynamodb:Query
+      Resource: 
+        - "arn:aws:dynamodb:us-east-1:*:table/Productos"
+        - "arn:aws:dynamodb:us-east-1:*:table/Productos/index/*"
     - Effect: Allow
       Action:
         - s3:PutObject
-      Resource: "arn:aws:s3:::truequi-images-bucket/*"
+      Resource: "arn:aws:s3:::truequi-images-dm2026/*"
 
 functions:
   crearProducto:
@@ -37,10 +49,46 @@ functions:
           path: /productos/upload-url
           method: get
           cors: true
-  healthCheck:
-    handler: handler.health_check
+  obtenerPerfil:
+    handler: handler.obtener_perfil
     events:
       - http:
-          path: /health
+          path: /usuario/perfil/{id}
           method: get
           cors: true
+
+# AQUÍ CREAMOS LA NUBE AUTOMÁTICAMENTE
+resources:
+  Resources:
+    ProductosTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: Productos
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: vendedorId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: VendedorIndex
+            KeySchema:
+              - AttributeName: vendedorId
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+        BillingMode: PAY_PER_REQUEST
+    ImagesBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: truequi-images-dm2026 # Debe coincidir con la variable de entorno de arriba
+        CorsConfiguration:
+          CorsRules:
+            - AllowedMethods: [PUT]
+              AllowedOrigins: ['*']
+              AllowedHeaders: ['*']
+plugins:
+  - serverless-python-requirements
+  - serverless-offline
