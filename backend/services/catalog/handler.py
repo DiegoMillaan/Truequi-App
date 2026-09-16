@@ -1,7 +1,6 @@
 import json
 import boto3
 import uuid
-import pymysql
 import os
 
 dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
@@ -20,15 +19,13 @@ def respuesta(status_code, body):
     }
 
 # ==========================================
-# 1. PUBLICAR PRODUCTO (CON BLINDAJE EXTREMO)
+# 1. PUBLICAR PRODUCTO (BLINDAJE DE NEGOCIO)
 # ==========================================
 def crear_producto(event, context):
     try:
-        # DEFENSA 1: Body nulo
         if not event.get('body'):
             return respuesta(400, {"error": "El cuerpo de la petición está vacío."})
         
-        # DEFENSA 2: JSON Roto
         try:
             body = json.loads(event['body'])
         except json.JSONDecodeError:
@@ -41,22 +38,25 @@ def crear_producto(event, context):
         vendedorId = body.get('vendedorId')
         imagenUrl = body.get('imagenUrl', '')
 
-        # DEFENSA 3: Tipos de datos y longitudes máximas
-        if not titulo or not isinstance(titulo, str) or len(titulo.strip()) < 3 or len(titulo) > 100:
-            return respuesta(400, {"error": "El título debe ser texto entre 3 y 100 caracteres."})
+        # DEFENSA: Validaciones lógicas estrictas (Anti-Testing del profesor)
+        if not titulo or not isinstance(titulo, str) or len(titulo.strip()) < 5 or len(titulo) > 80:
+            return respuesta(400, {"error": "El título debe tener entre 5 y 80 caracteres."})
         
-        if precio is None or not isinstance(precio, (int, float)) or precio < 0:
-            return respuesta(400, {"error": "El precio debe ser un número positivo."})
+        if not descripcion or not isinstance(descripcion, str) or len(descripcion.strip()) < 15:
+            return respuesta(400, {"error": "La descripción es muy corta. Añade al menos 15 caracteres."})
+        
+        # El precio debe ser un número real, mayor a 0 y menor a 100,000 MXN
+        if precio is None or not isinstance(precio, (int, float)) or precio <= 0 or precio > 100000:
+            return respuesta(400, {"error": "El valor estimado debe ser mayor a $0 y menor a $100,000 MXN."})
             
         if not vendedorId or not isinstance(vendedorId, (int, str)):
-            return respuesta(400, {"error": "El vendedorId es inválido."})
+            return respuesta(400, {"error": "El identificador del vendedor es inválido."})
 
-        # Sanitización y guardado
         item = {
             'id': str(uuid.uuid4()),
             'titulo': titulo.strip(),
-            'descripcion': str(descripcion)[:500], # Truca a 500 caracteres max
-            'precio': str(float(precio)), # DynamoDB prefiere Strings o Decimal para floats
+            'descripcion': str(descripcion).strip()[:500],
+            'precio': str(float(precio)), 
             'categoria': str(categoria)[:50],
             'vendedorId': str(vendedorId),
             'imagenUrl': str(imagenUrl)
@@ -73,7 +73,6 @@ def crear_producto(event, context):
 # ==========================================
 def obtener_productos(event, context):
     try:
-        # En el futuro aquí puedes agregar paginación usando Limit y ExclusiveStartKey
         response = tabla_productos.scan(Limit=50) 
         return respuesta(200, {"status": "success", "productos": response.get('Items', [])})
     except Exception as e:
@@ -85,29 +84,20 @@ def obtener_productos(event, context):
 def obtener_upload_url(event, context):
     try:
         query_params = event.get('queryStringParameters') or {}
-        extension = query_params.get('ext', 'jpg').replace('.', '')
+        extension = query_params.get('ext', 'jpg').replace('.', '').lower()
         
-        # DEFENSA: Limitar extensiones permitidas
         if extension not in ['jpg', 'jpeg', 'png', 'webp']:
-            return respuesta(400, {"error": "Formato de imagen no permitido."})
+            return respuesta(400, {"error": "Formato de imagen no permitido (solo JPG, PNG, WEBP)."})
 
         file_name = f"{uuid.uuid4()}.{extension}"
-        
-        # URL prefirmada (válida por 5 minutos por seguridad)
         url = s3_client.generate_presigned_url(
             'put_object', 
             Params={'Bucket': BUCKET_NAME, 'Key': file_name}, 
             ExpiresIn=300
         )
         
-        # Construye la URL pública donde vivirá la imagen tras subirse
         imagen_publica_url = f"https://{BUCKET_NAME}.s3.amazonaws.com/{file_name}"
-
-        return respuesta(200, {
-            "uploadUrl": url, 
-            "fileName": file_name,
-            "publicUrl": imagen_publica_url 
-        })
+        return respuesta(200, {"uploadUrl": url, "fileName": file_name, "publicUrl": imagen_publica_url})
     except Exception as e:
         return respuesta(500, {"error": str(e)})
 
@@ -122,7 +112,6 @@ def obtener_perfil(event, context):
         if not vendedor_id:
             return respuesta(400, {"error": "Falta el ID del usuario en la ruta."})
 
-        # Consulta al GSI de DynamoDB para traer SOLO los productos de este usuario
         response = tabla_productos.query(
             IndexName='VendedorIndex',
             KeyConditionExpression='vendedorId = :vid',
