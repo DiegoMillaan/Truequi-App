@@ -2,16 +2,10 @@ import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'dart:math' as math;
 import '../services/auth_service.dart'; 
-
+import 'home_page.dart';
 // ==========================================
 // PALETA TRUEQUI (Misma del Login)
 // ==========================================
-class TruequiColors {
-  static const Color purpura = Color(0xFF6B42E0);
-  static const Color amarillo = Color(0xFFFFA800);
-  static const Color textoOscuro = Color(0xFF101828);
-  static const Color fondoClaro = Color(0xFFF8F9FA);
-}
 
 class RegistroScreen extends StatefulWidget {
   const RegistroScreen({super.key});

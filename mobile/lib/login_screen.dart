@@ -11,13 +11,6 @@ import 'registro_screen.dart';
 // ==========================================
 // PALETA TRUEQUI
 // ==========================================
-class TruequiColors {
-  static const Color purpura = Color(0xFF6B42E0);
-  static const Color amarillo = Color(0xFFFFA800);
-  static const Color textoOscuro = Color(0xFF101828);
-  static const Color fondoClaro = Color(0xFFF8F9FA);
-}
-
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
