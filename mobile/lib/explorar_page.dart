@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'home_page.dart';
-import '/services/producto_service.dart'; // Ajusta la ruta si lo tienes en otra carpeta, ej: '../services/producto_service.dart'
+import '/SERVICES/producto_service.dart'; 
+import 'detalle_producto_page.dart';
 
 class ExplorarPage extends StatefulWidget {
   const ExplorarPage({super.key});
@@ -11,20 +12,19 @@ class ExplorarPage extends StatefulWidget {
 
 class _ExplorarPageState extends State<ExplorarPage> {
   String _categoriaSeleccionada = 'Todos';
-  List<dynamic> _articulos = []; // Ahora inicia vacía
-  bool _isLoading = true; // Variable para mostrar el círculo de carga
+  List<dynamic> _articulos = []; 
+  bool _isLoading = true; 
 
   final List<String> _categorias = [
-    'Todos', 'Tecnología', 'Hogar y Cocina', 'Juegos de Mesa', 'Mascotas', 'Libros y Educación'
+    'Todos', 'Electrónica', 'Libros', 'Accesorios', 'Hogar y Cocina', 'Mascotas'
   ];
 
   @override
   void initState() {
     super.initState();
-    _cargarProductos(); // Cargamos los datos al iniciar la pantalla
+    _cargarProductos(); 
   }
 
-  // Llama al backend usando tu servicio
   Future<void> _cargarProductos() async {
     final servicio = ProductoService();
     final productos = await servicio.obtenerProductos();
@@ -37,19 +37,18 @@ class _ExplorarPageState extends State<ExplorarPage> {
     }
   }
 
-  // Funciones de apoyo para mantener tu diseño
   Color _obtenerColor(String? categoria) {
-    if (categoria == 'Tecnología' || categoria == 'Juegos de Mesa') return TruequiColors.purpura;
+    if (categoria == 'Electrónica' || categoria == 'Libros') return TruequiColors.purpura;
     return TruequiColors.amarillo;
   }
 
   IconData _obtenerIcono(String? categoria) {
     switch (categoria) {
-      case 'Tecnología': return Icons.devices_rounded;
+      case 'Electrónica': return Icons.devices_rounded;
+      case 'Libros': return Icons.menu_book_rounded;
+      case 'Accesorios': return Icons.watch_rounded;
       case 'Hogar y Cocina': return Icons.rice_bowl_rounded;
-      case 'Juegos de Mesa': return Icons.extension_rounded;
       case 'Mascotas': return Icons.pets_rounded;
-      case 'Libros y Educación': return Icons.menu_book_rounded;
       default: return Icons.inventory_2_rounded;
     }
   }
@@ -60,111 +59,120 @@ class _ExplorarPageState extends State<ExplorarPage> {
         ? _articulos
         : _articulos.where((item) => item['categoria'] == _categoriaSeleccionada).toList();
 
-    return CustomScrollView(
-      physics: const BouncingScrollPhysics(),
-      slivers: [
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
-            child: Row(
-              children: [
-                const Icon(Icons.explore_rounded, color: TruequiColors.purpura, size: 32),
-                const SizedBox(width: 12),
-                const Text('Explorar', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: TruequiColors.purpura, letterSpacing: -0.5)),
-              ],
-            ),
-          ),
-        ),
-        SliverToBoxAdapter(
-          child: SizedBox(
-            height: 40,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              itemCount: _categorias.length,
-              itemBuilder: (context, index) {
-                final categoria = _categorias[index];
-                final isSelected = _categoriaSeleccionada == categoria;
-                return GestureDetector(
-                  onTap: () => setState(() => _categoriaSeleccionada = categoria),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
-                    margin: const EdgeInsets.only(right: 12),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: isSelected ? TruequiColors.purpura : Colors.white.withValues(alpha: 0.6),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: isSelected ? TruequiColors.purpura : Colors.white, width: 1.5),
-                    ),
-                    child: Center(
-                      child: Text(
-                        categoria,
-                        style: TextStyle(color: isSelected ? Colors.white : TruequiColors.textoOscuro, fontWeight: isSelected ? FontWeight.bold : FontWeight.w600),
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ),
-        const SliverToBoxAdapter(child: SizedBox(height: 24)),
-
-        // MOSTRAR CARGA O DATOS REALES
-        if (_isLoading)
-          const SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.only(top: 60), 
-              child: Center(child: CircularProgressIndicator(color: TruequiColors.purpura))
-            ),
-          )
-        else if (articulosFiltrados.isEmpty)
+    return RefreshIndicator(
+      color: TruequiColors.purpura,
+      backgroundColor: Colors.white,
+      onRefresh: _cargarProductos,
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+        slivers: [
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.only(top: 60),
-              child: Center(child: Text('No hay artículos disponibles', style: TextStyle(color: Colors.grey.shade600, fontSize: 16))),
-            ),
-          )
-        else
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            sliver: SliverGrid(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2, crossAxisSpacing: 16, mainAxisSpacing: 16, childAspectRatio: 0.75,
-              ),
-              delegate: SliverChildBuilderDelegate(
-                (context, index) {
-                  final item = articulosFiltrados[index];
-                  // Aseguramos que los valores existan de forma segura
-                  final titulo = item['titulo'] ?? 'Sin título';
-                  final busca = item['busca'] ?? 'Abierto a ofertas';
-                  final ubicacion = item['ubicacion'] ?? 'Querétaro';
-                  final categoria = item['categoria'];
-
-                  return _buildArticuloCard(
-                    titulo: titulo,
-                    busca: busca,
-                    ubicacion: ubicacion,
-                    icono: _obtenerIcono(categoria),
-                    color: _obtenerColor(categoria),
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Seleccionaste: $titulo')));
-                    },
-                  );
-                },
-                childCount: articulosFiltrados.length,
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
+              child: Row(
+                children: [
+                  const Icon(Icons.explore_rounded, color: TruequiColors.purpura, size: 32),
+                  const SizedBox(width: 12),
+                  const Text('Explorar', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: TruequiColors.purpura, letterSpacing: -0.5)),
+                ],
               ),
             ),
           ),
-        
-        const SliverToBoxAdapter(child: SizedBox(height: 120)),
-      ],
+          SliverToBoxAdapter(
+            child: SizedBox(
+              height: 40,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                itemCount: _categorias.length,
+                itemBuilder: (context, index) {
+                  final categoria = _categorias[index];
+                  final isSelected = _categoriaSeleccionada == categoria;
+                  return GestureDetector(
+                    onTap: () => setState(() => _categoriaSeleccionada = categoria),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      margin: const EdgeInsets.only(right: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: isSelected ? TruequiColors.purpura : Colors.white.withValues(alpha: 0.6),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: isSelected ? TruequiColors.purpura : Colors.white, width: 1.5),
+                      ),
+                      child: Center(
+                        child: Text(
+                          categoria,
+                          style: TextStyle(color: isSelected ? Colors.white : TruequiColors.textoOscuro, fontWeight: isSelected ? FontWeight.bold : FontWeight.w600),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+          const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+          if (_isLoading)
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.only(top: 60), 
+                child: Center(child: CircularProgressIndicator(color: TruequiColors.purpura))
+              ),
+            )
+          else if (articulosFiltrados.isEmpty)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.only(top: 60),
+                child: Center(child: Text('No hay artículos disponibles', style: TextStyle(color: Colors.grey.shade600, fontSize: 16))),
+              ),
+            )
+          else
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              sliver: SliverGrid(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2, crossAxisSpacing: 16, mainAxisSpacing: 16, childAspectRatio: 0.75,
+                ),
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final item = articulosFiltrados[index];
+                    final titulo = item['titulo'] ?? 'Sin título';
+                    final descripcion = item['descripcion'] ?? 'Abierto a ofertas'; 
+                    final ubicacion = item['ubicacion'] ?? 'Querétaro';
+                    final categoria = item['categoria'];
+
+                    return _buildArticuloCard(
+                      titulo: titulo,
+                      subtitulo: descripcion,
+                      ubicacion: ubicacion,
+                      icono: _obtenerIcono(categoria),
+                      color: _obtenerColor(categoria),
+                      onTap: () {
+                        // 👇 AQUÍ ESTÁ LA MAGIA: Navegación real a los detalles del producto 👇
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => DetalleProductoPage(producto: item),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                  childCount: articulosFiltrados.length,
+                ),
+              ),
+            ),
+          
+          const SliverToBoxAdapter(child: SizedBox(height: 120)),
+        ],
+      ),
     );
   }
 
   Widget _buildArticuloCard({
-    required String titulo, required String busca, required String ubicacion, required IconData icono, required Color color, required VoidCallback onTap,
+    required String titulo, required String subtitulo, required String ubicacion, required IconData icono, required Color color, required VoidCallback onTap,
   }) {
     return GestureDetector(
       onTap: onTap,
@@ -204,9 +212,9 @@ class _ExplorarPageState extends State<ExplorarPage> {
                       decoration: BoxDecoration(color: TruequiColors.fondoClaro, borderRadius: BorderRadius.circular(8)),
                       child: Row(
                         children: [
-                          const Icon(Icons.swap_horiz_rounded, size: 12, color: TruequiColors.purpura),
+                          const Icon(Icons.info_outline_rounded, size: 12, color: TruequiColors.purpura),
                           const SizedBox(width: 4),
-                          Expanded(child: Text(busca, style: TextStyle(color: TruequiColors.textoOscuro.withValues(alpha: 0.8), fontSize: 10, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                          Expanded(child: Text(subtitulo, style: TextStyle(color: TruequiColors.textoOscuro.withValues(alpha: 0.8), fontSize: 10, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis)),
                         ],
                       ),
                     ),

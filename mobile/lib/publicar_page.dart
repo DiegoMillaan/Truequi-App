@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'home_page.dart';
+import '/services/producto_service.dart'; // Importamos tu servicio de AWS
 
 class PublicarPage extends StatefulWidget {
   const PublicarPage({super.key});
@@ -10,43 +11,80 @@ class PublicarPage extends StatefulWidget {
 
 class _PublicarPageState extends State<PublicarPage> {
   final _tituloController = TextEditingController();
-  final _buscanController = TextEditingController();
   final _descripcionController = TextEditingController();
+  final _precioController = TextEditingController();
   
-  String _categoriaSeleccionada = 'Tecnología';
+  // Categorías sincronizadas con el backend
+  String _categoriaSeleccionada = 'Electrónica';
   final List<String> _categorias = [
-    'Tecnología',
+    'Electrónica',
+    'Libros',
+    'Accesorios',
     'Hogar y Cocina',
-    'Juegos de Mesa',
     'Mascotas',
-    'Libros y Educación',
   ];
+
+  bool _isPublishing = false;
 
   @override
   void dispose() {
     _tituloController.dispose();
-    _buscanController.dispose();
     _descripcionController.dispose();
+    _precioController.dispose();
     super.dispose();
   }
 
-  void _publicarTrueque() {
-    if (_tituloController.text.trim().isEmpty || _buscanController.text.trim().isEmpty) {
+  // Enviar datos usando ProductoService hacia AWS
+  Future<void> _publicarTrueque() async {
+    if (_tituloController.text.trim().isEmpty || _descripcionController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor completa qué ofreces y qué buscas')),
+        const SnackBar(content: Text('Por favor completa el título y la descripción')),
       );
       return;
     }
 
-    // Aquí conectarás con tu backend de AWS API Gateway más adelante con Millán
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('¡Trueque "${_tituloController.text}" publicado con éxito!')),
-    );
+    setState(() => _isPublishing = true);
 
-    // Limpiar campos
-    _tituloController.clear();
-    _buscanController.clear();
-    _descripcionController.clear();
+    // Limpiamos el texto por si pusiste "$" o comas por accidente
+    String textoPrecio = _precioController.text.replaceAll(RegExp(r'[^0-9.]'), '');
+    
+    // Lo convertimos a número decimal. Si está vacío o es inválido, le ponemos 1.0
+    double precioFinal = double.tryParse(textoPrecio) ?? 1.0;
+    
+    // AWS nos exige que sea estrictamente mayor a 0
+    if (precioFinal <= 0) precioFinal = 1.0;
+
+    // Estructura blindada para que AWS no se queje de nada
+    final productoData = {
+      'id': DateTime.now().millisecondsSinceEpoch.toString(), // Generamos un ID único simulado
+      'titulo': _tituloController.text.trim(),
+      'descripcion': _descripcionController.text.trim(),
+      'precio': precioFinal, // Lo mandamos como string limpio ('150.0')
+      'categoria': _categoriaSeleccionada,
+      'vendedorId': '1',
+      'imagenUrl': 'https://truequi-images-dm2026.s3.amazonaws.com/dummy/default.jpg',
+    };
+
+    final servicio = ProductoService();
+    final exito = await servicio.crearProducto(productoData);
+
+    if (!mounted) return;
+    setState(() => _isPublishing = false);
+
+    if (exito) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('¡Trueque "${_tituloController.text}" publicado en AWS con éxito!')),
+      );
+      
+      // Limpiar campos
+      _tituloController.clear();
+      _descripcionController.clear();
+      _precioController.clear();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Hubo un error al conectar con AWS. Intenta más tarde.')),
+      );
+    }
   }
 
   @override
@@ -103,7 +141,7 @@ class _PublicarPageState extends State<PublicarPage> {
                 children: [
                   // Simulación de carga de foto
                   Container(
-                    height: 140,
+                    height: 120,
                     decoration: BoxDecoration(
                       color: TruequiColors.purpura.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(24),
@@ -117,14 +155,14 @@ class _PublicarPageState extends State<PublicarPage> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.camera_alt_rounded, size: 40, color: TruequiColors.purpura.withValues(alpha: 0.7)),
-                          const SizedBox(height: 8),
+                          Icon(Icons.camera_alt_rounded, size: 36, color: TruequiColors.purpura.withValues(alpha: 0.7)),
+                          const SizedBox(height: 6),
                           Text(
                             'Añadir foto del artículo',
                             style: TextStyle(
                               color: TruequiColors.purpura.withValues(alpha: 0.8),
                               fontWeight: FontWeight.w600,
-                              fontSize: 14,
+                              fontSize: 13,
                             ),
                           ),
                         ],
@@ -133,27 +171,39 @@ class _PublicarPageState extends State<PublicarPage> {
                   ),
                   const SizedBox(height: 20),
 
-                  // Campo: Título (Qué ofreces)
+                  // Campo: Título
                   const Text('¿Qué ofreces?', style: TextStyle(fontWeight: FontWeight.bold, color: TruequiColors.textoOscuro)),
                   const SizedBox(height: 8),
                   _buildTextField(
                     controller: _tituloController,
-                    hintText: 'Ej. MacBook Air M1 / Arrocera Chefman',
+                    hintText: 'Ej. Calculadora Científica Casio',
                     icon: Icons.inventory_2_rounded,
                   ),
                   const SizedBox(height: 16),
 
-                  // Campo: Qué buscas a cambio
-                  const Text('¿Qué buscas a cambio?', style: TextStyle(fontWeight: FontWeight.bold, color: TruequiColors.textoOscuro)),
+                  // Campo: Descripción / Qué buscas
+                  const Text('Descripción y qué buscas a cambio', style: TextStyle(fontWeight: FontWeight.bold, color: TruequiColors.textoOscuro)),
                   const SizedBox(height: 8),
                   _buildTextField(
-                    controller: _buscanController,
-                    hintText: 'Ej. iPad Pro / Parrilla eléctrica',
-                    icon: Icons.swap_horiz_rounded,
+                    controller: _descripcionController,
+                    hintText: 'Ej. Ideal para ingeniería. Busco libro de Cálculo...',
+                    icon: Icons.notes_rounded,
+                    maxLines: 3,
                   ),
                   const SizedBox(height: 16),
 
-                  // Selector de Categoría
+                  // Campo: Valor / Precio estimado
+                  const Text('Valor estimado (MXN)', style: TextStyle(fontWeight: FontWeight.bold, color: TruequiColors.textoOscuro)),
+                  const SizedBox(height: 8),
+                  _buildTextField(
+                    controller: _precioController,
+                    hintText: 'Ej. 150.0',
+                    icon: Icons.attach_money_rounded,
+                    keyboardType: TextInputType.number,
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Selector de Categoría (Sincronizado con DynamoDB)
                   const Text('Categoría', style: TextStyle(fontWeight: FontWeight.bold, color: TruequiColors.textoOscuro)),
                   const SizedBox(height: 8),
                   Container(
@@ -178,17 +228,6 @@ class _PublicarPageState extends State<PublicarPage> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
-
-                  // Descripción opcional
-                  const Text('Descripción adicional', style: TextStyle(fontWeight: FontWeight.bold, color: TruequiColors.textoOscuro)),
-                  const SizedBox(height: 8),
-                  _buildTextField(
-                    controller: _descripcionController,
-                    hintText: 'Estado del producto, detalles de entrega...',
-                    icon: Icons.notes_rounded,
-                    maxLines: 3,
-                  ),
                   const SizedBox(height: 24),
 
                   // Botón de Publicar
@@ -196,21 +235,23 @@ class _PublicarPageState extends State<PublicarPage> {
                     width: double.infinity,
                     height: 52,
                     child: ElevatedButton(
-                      onPressed: _publicarTrueque,
+                      onPressed: _isPublishing ? null : _publicarTrueque,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: TruequiColors.purpura,
                         foregroundColor: Colors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                       ),
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.publish_rounded),
-                          SizedBox(width: 8),
-                          Text('Publicar Trueque', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                        ],
-                      ),
+                      child: _isPublishing
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.publish_rounded),
+                                SizedBox(width: 8),
+                                Text('Publicar Trueque', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                              ],
+                            ),
                     ),
                   ),
                 ],
@@ -230,6 +271,7 @@ class _PublicarPageState extends State<PublicarPage> {
     required String hintText,
     required IconData icon,
     int maxLines = 1,
+    TextInputType keyboardType = TextInputType.text,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -240,6 +282,7 @@ class _PublicarPageState extends State<PublicarPage> {
       child: TextField(
         controller: controller,
         maxLines: maxLines,
+        keyboardType: keyboardType,
         decoration: InputDecoration(
           hintText: hintText,
           hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
