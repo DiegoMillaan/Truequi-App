@@ -5,7 +5,7 @@ import 'dart:ui';
 import 'dart:math' as math; 
 import 'home_page.dart';
 import 'services/google_auth_service.dart';
-import 'services/auth_service.dart'; // Importado para conectar con el backend de AWS
+import 'services/auth_service.dart'; 
 import 'registro_screen.dart';
 
 // ==========================================
@@ -23,7 +23,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   final GoogleAuthService _googleAuthService = GoogleAuthService();
-  final AuthService _authService = AuthService(); // Instancia del servicio AWS para autenticación
+  final AuthService _authService = AuthService(); 
 
   bool _cargando = false;
   late AnimationController _animationController;
@@ -40,6 +40,8 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   @override
   void dispose() {
     _animationController.dispose();
+    _correoController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
@@ -106,8 +108,33 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     );
   }
 
-  bool _validarEmail(String email) => RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
-  String? _validarPassword(String? value) => (value == null || value.trim().isEmpty) ? 'Ingresa tu contraseña' : null;
+  // 🛡️ VALIDACIÓN ESTRICTA ANTI-CORREOS BASURA (como a@a.com)
+  bool _validarEmail(String email) {
+    final emailLimpio = email.trim();
+    
+    // 1. Expresión regular formal de correo electrónico
+    final regexFormal = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+    if (!regexFormal.hasMatch(emailLimpio)) return false;
+
+    // 2. Filtro estricto para bloquear cadenas de prueba o basura comunes
+    if (emailLimpio.startsWith('a@a') || 
+        emailLimpio.contains('test@test') || 
+        emailLimpio.length < 8) {
+      return false;
+    }
+
+    return true;
+  }
+
+  String? _validarPassword(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Ingresa tu contraseña';
+    }
+    if (value.trim().length < 6) {
+      return 'La contraseña debe tener mínimo 6 caracteres';
+    }
+    return null;
+  }
 
   // NUEVO LOGO ANIMADO
   Widget _buildLogoBiologico() {
@@ -290,8 +317,9 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                 fillColor: Colors.white.withValues(alpha: 0.5),
                                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
                                 focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: TruequiColors.purpura, width: 2)),
+                                errorStyle: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold, fontSize: 11),
                               ),
-                              validator: (value) => _validarEmail(value ?? '') ? null : 'Ingresa un correo válido',
+                              validator: (value) => _validarEmail(value ?? '') ? null : 'Ingresa un correo real válido',
                             ),
                             const SizedBox(height: 16),
                             TextFormField(
@@ -304,6 +332,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                 fillColor: Colors.white.withValues(alpha: 0.5),
                                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
                                 focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: TruequiColors.purpura, width: 2)),
+                                errorStyle: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold, fontSize: 11),
                               ),
                               validator: _validarPassword,
                             ),
@@ -337,11 +366,9 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                                 ),
                                 onPressed: () async {
-                                  // 1. Obtener usuario de Google
                                   final user = await _googleAuthService.signInWithGoogle();
                                   
                                   if (user != null) {
-                                    // 2. Extraer el idToken y enviarlo a AWS
                                     final googleAuth = await user.authentication;
                                     final idToken = googleAuth.idToken;
 

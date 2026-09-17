@@ -3,18 +3,41 @@ import 'package:http/http.dart' as http;
 
 class ProductoService {
 
-  // 1. GET - Obtener productos
+// 1. GET - Obtener productos
   Future<List<dynamic>> obtenerProductos() async {
     try {
-      final response = await http.get(Uri.parse('https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/productos'));
+      final response = await http.get(
+        Uri.parse('https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/productos'),
+      );
       
+      // 👇 Vamos a espiar qué nos manda exactamente AWS 👇
+      print('=== RESPUESTA DE AWS (EXPLORAR) ===');
+      print('Código: ${response.statusCode}');
+      print('Datos: ${response.body}');
+      print('===================================');
+
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        final decodedData = jsonDecode(response.body);
+        
+        // Caso A: AWS devuelve la lista directamente
+        if (decodedData is List) {
+          return decodedData;
+        } 
+        // Caso B: AWS devuelve un objeto de DynamoDB con la clave "Items" o "productos"
+        else if (decodedData is Map) {
+          if (decodedData.containsKey('Items')) {
+            return decodedData['Items'];
+          } else if (decodedData.containsKey('productos')) {
+            return decodedData['productos'];
+          }
+        }
+        // Si no es ninguna, regresamos vacío pero ya lo veremos en la consola
+        return [];
       } else {
-        throw Exception('Error al cargar productos: ${response.statusCode}');
+        return [];
       }
     } catch (e) {
-      print('Error en obtenerProductos: $e');
+      print('Error al obtener productos: $e');
       return [];
     }
   }
@@ -28,9 +51,18 @@ class ProductoService {
         body: jsonEncode(productoData),
       );
       
-      return response.statusCode == 200 || response.statusCode == 201;
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return true;
+      } else {
+        // 👇 ESTO IMPRIMIRÁ LA RAZÓN EXACTA DEL RECHAZO 👇
+        print('====== ERROR DE AWS ======');
+        print('Código: ${response.statusCode}');
+        print('Motivo: ${response.body}');
+        print('==========================');
+        return false;
+      }
     } catch (e) {
-      print('Error en crearProducto: $e');
+      print('Error de red: $e');
       return false;
     }
   }
