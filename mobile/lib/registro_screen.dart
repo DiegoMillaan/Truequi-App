@@ -3,9 +3,6 @@ import 'dart:ui';
 import 'dart:math' as math;
 import '../services/auth_service.dart'; 
 import 'home_page.dart';
-// ==========================================
-// PALETA TRUEQUI (Misma del Login)
-// ==========================================
 
 class RegistroScreen extends StatefulWidget {
   const RegistroScreen({super.key});
@@ -77,9 +74,40 @@ class _RegistroScreenState extends State<RegistroScreen> with SingleTickerProvid
     );
   }
 
-  bool _validarEmail(String email) => RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
-  String? _validarPassword(String? value) => (value == null || value.trim().length < 6) ? 'Mínimo 6 caracteres' : null;
-  String? _validarNombre(String? value) => (value == null || value.trim().isEmpty) ? 'Ingresa tu nombre' : null;
+  // 🛡️ VALIDACIÓN ESTRICTA ANTI-CORREOS BASURA (como a@a.com)
+  bool _validarEmail(String email) {
+    final emailLimpio = email.trim();
+    
+    // 1. Regex formal para correos electrónicos válidos
+    final regexFormal = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+    if (!regexFormal.hasMatch(emailLimpio)) return false;
+
+    // 2. Filtro estricto para bloquear correos de prueba o basura comunes
+    if (emailLimpio.startsWith('a@a') || 
+        emailLimpio.contains('test@test') || 
+        emailLimpio.length < 8) {
+      return false;
+    }
+
+    return true;
+  }
+
+  String? _validarPassword(String? value) {
+    if (value == null || value.trim().length < 6) {
+      return 'La contraseña debe tener mínimo 6 caracteres';
+    }
+    return null;
+  }
+
+  String? _validarNombre(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Por favor ingresa tu nombre';
+    }
+    if (value.trim().length < 3) {
+      return 'El nombre es muy corto';
+    }
+    return null;
+  }
 
   // LOGO ANIMADO IDÉNTICO AL LOGIN
   Widget _buildLogoBiologico() {
@@ -186,7 +214,6 @@ class _RegistroScreenState extends State<RegistroScreen> with SingleTickerProvid
       backgroundColor: TruequiColors.fondoClaro,
       body: Stack(
         children: [
-          // Fondo dinámico con círculos animados difuminados
           AnimatedBuilder(
             animation: _animationController,
             builder: (context, child) {
@@ -242,7 +269,6 @@ class _RegistroScreenState extends State<RegistroScreen> with SingleTickerProvid
                       ),
                       const SizedBox(height: 30),
                       
-                      // Contenedor de cristal con los campos de texto
                       Container(
                         padding: const EdgeInsets.all(24),
                         decoration: BoxDecoration(
@@ -264,6 +290,7 @@ class _RegistroScreenState extends State<RegistroScreen> with SingleTickerProvid
                                 fillColor: Colors.white.withValues(alpha: 0.5),
                                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
                                 focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: TruequiColors.purpura, width: 2)),
+                                errorStyle: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold, fontSize: 11),
                               ),
                               validator: _validarNombre,
                             ),
@@ -278,8 +305,9 @@ class _RegistroScreenState extends State<RegistroScreen> with SingleTickerProvid
                                 fillColor: Colors.white.withValues(alpha: 0.5),
                                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
                                 focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: TruequiColors.purpura, width: 2)),
+                                errorStyle: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold, fontSize: 11),
                               ),
-                              validator: (value) => _validarEmail(value ?? '') ? null : 'Ingresa un correo válido',
+                              validator: (value) => _validarEmail(value ?? '') ? null : 'Ingresa un correo electrónico real válido',
                             ),
                             const SizedBox(height: 16),
                             TextFormField(
@@ -292,6 +320,7 @@ class _RegistroScreenState extends State<RegistroScreen> with SingleTickerProvid
                                 fillColor: Colors.white.withValues(alpha: 0.5),
                                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
                                 focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: TruequiColors.purpura, width: 2)),
+                                errorStyle: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold, fontSize: 11),
                               ),
                               validator: _validarPassword,
                             ),
@@ -314,7 +343,6 @@ class _RegistroScreenState extends State<RegistroScreen> with SingleTickerProvid
                             ),
                             const SizedBox(height: 16),
                             
-                            // Botón para regresar al login si ya tiene cuenta
                             TextButton(
                               onPressed: () => Navigator.pop(context),
                               child: const Text(
