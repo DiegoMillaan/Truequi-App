@@ -1,4 +1,3 @@
-```markdown
 # Truequi - Plataforma de Intercambios
 
 ## Objetivo (Product Goal)
