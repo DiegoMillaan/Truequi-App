@@ -5,7 +5,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 
 class GoogleAuthService {
-  // Client ID de Truequi
+  // El Client ID exclusivo para la Web que configuramos en Google Cloud
   static const String clientId = '765285641470-jh7if1qr7a9hvfmofs6ume22vgu8v64m.apps.googleusercontent.com';
 
   // URL OFICIAL DE TU BACKEND DE AUTH EN AWS
@@ -47,7 +47,6 @@ class GoogleAuthService {
           if (response.statusCode >= 200 && response.statusCode < 300) {
             onSuccess(Map<String, dynamic>.from(data['usuario'] ?? {}));
           } else {
-            // Captura los errores 400 que configuraste en tu handler.py
             onError(data['error'] ?? data['message'] ?? 'Acceso denegado por el servidor.');
           }
         } catch (e) {
@@ -58,6 +57,17 @@ class GoogleAuthService {
     }, onError: (error) {
       onError('Se canceló o falló el inicio de sesión con Google.');
     });
+  }
+
+  // ==========================================
+  // NUEVO: MÉTODO PARA CERRAR SESIÓN
+  // ==========================================
+  Future<void> signOut() async {
+    try {
+      await _googleSignIn.signOut();
+    } catch (e) {
+      debugPrint('Error al cerrar sesión de Google: $e');
+    }
   }
 
   Future<void> dispose() async {

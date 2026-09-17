@@ -6,13 +6,14 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:google_sign_in_web/web_only.dart' as web;
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 
-// Rutas corregidas a las carpetas dentro de lib
 import 'services/google_auth_service.dart';
 import 'widgets/google_login_button.dart';
+import 'perfil_web.dart';
+import 'mensajes_web.dart';
+import 'detalle_producto_web.dart'; 
 
 class TruequiColors {
   static const Color purpura = Color(0xFF6B42E0);
@@ -27,74 +28,60 @@ class HomeWeb extends StatefulWidget {
   State<HomeWeb> createState() => _HomeWebState();
 }
 
-class _HomeWebState extends State<HomeWeb> with SingleTickerProviderStateMixin {
-  // ==========================================
-  // 1. URLS OFICIALES DE TU BACKEND (AWS)
-  // ==========================================
-  // Auth apunta a 16663yaped
+class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
+  // URLs AWS
   static const String _loginUrl = 'https://16663yaped.execute-api.us-east-1.amazonaws.com/dev/login';
   static const String _registroUrl = 'https://16663yaped.execute-api.us-east-1.amazonaws.com/dev/registro';
-  
-  // Catálogo apunta a y3cokge8sa
   static const String _productosUrl = 'https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/productos';
   static const String _uploadUrlEndpoint = 'https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/productos/upload-url';
 
   final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
-  Timer? _timer;
-  double _animationValue = 0;
+  late AnimationController _bgController;
+  late AnimationController _floatController;
 
   List<dynamic> _productos = [];
   bool _isLoadingCatalog = true;
+
+  // ESTADO DEL USUARIO (Si es null, no ha iniciado sesión)
+  Map<String, dynamic>? _usuarioActual;
 
   @override
   void initState() {
     super.initState();
     _inicializarGoogle();
-    _cargarProductos(); // Petición a AWS al abrir la página
-    
-    // Animación fluida de fondo
-    _timer = Timer.periodic(const Duration(milliseconds: 50), (_) {
-      if (!mounted) return;
-      setState(() {
-        _animationValue += 0.008;
-        if (_animationValue > 2 * math.pi) _animationValue = 0;
-      });
-    });
+    _cargarProductos();
+    _bgController = AnimationController(vsync: this, duration: const Duration(seconds: 20))..repeat();
+    _floatController = AnimationController(vsync: this, duration: const Duration(seconds: 4))..repeat(reverse: true);
   }
 
+  // CORRECCIÓN: Inicialización limpia sin llamadas a métodos web conflictivos
   Future<void> _inicializarGoogle() async {
-    try { await _googleSignIn.initialize(); } catch (e) { debugPrint('ERROR GOOGLE: $e'); }
+    try { 
+      await _googleSignIn.initialize(); 
+    } catch (e) { 
+      debugPrint('ERROR GOOGLE: $e'); 
+    }
   }
 
-  // ==========================================
-  // 2. CONSUMO DE API: CATÁLOGO DE DYNAMODB
-  // ==========================================
   Future<void> _cargarProductos() async {
     try {
       final response = await http.get(Uri.parse(_productosUrl));
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        setState(() {
-          _productos = data['productos'];
-          _isLoadingCatalog = false;
-        });
-      }
-    } catch (e) {
-      setState(() => _isLoadingCatalog = false);
-    }
+      if (response.statusCode == 200) setState(() { _productos = jsonDecode(response.body)['productos']; _isLoadingCatalog = false; });
+    } catch (e) { setState(() => _isLoadingCatalog = false); }
   }
 
   @override
   void dispose() {
-    _timer?.cancel();
+    _bgController.dispose();
+    _floatController.dispose();
     super.dispose();
   }
 
   // ============================================================
-  // 3. MODAL DE LOGIN / REGISTRO (CON DEFENSAS FRONTEND)
+  // MODAL DE LOGIN (LA ILUSIÓN ÓPTICA)
   // ============================================================
   void _mostrarLogin() {
-    final nombreController = TextEditingController(); // <-- NUEVO CAMPO
+    final nombreController = TextEditingController(); 
     final correoController = TextEditingController();
     final passwordController = TextEditingController();
     bool cargando = false;
@@ -102,28 +89,30 @@ class _HomeWebState extends State<HomeWeb> with SingleTickerProviderStateMixin {
     bool esRegistro = false; 
     String? error;
 
-    final googleAuth = GoogleAuthService();
-
     showDialog(
       context: context,
-      barrierDismissible: false,
+      barrierColor: Colors.black.withOpacity(0.6), // Fondo más oscuro para resaltar la luz
       builder: (dialogContext) {
         return StatefulBuilder(
           builder: (context, setModalState) {
 
-            googleAuth.listenToAuthentication(
-              onSuccess: (usuario) {
+            // CORRECCIÓN: Usamos la data que nos devuelve GoogleAuthService
+            GoogleAuthService().listenToAuthentication(
+              onSuccess: (usuarioData) async {
                 if (!dialogContext.mounted) return;
-                Navigator.of(dialogContext).pop();
+                Navigator.pop(dialogContext);
+                setState(() { 
+                  _usuarioActual = { 
+                    'nombre': usuarioData['correo'].split('@')[0], 
+                    'correo': usuarioData['correo'], 
+                    'foto': null 
+                  }; 
+                });
                 if (mounted) {
-                  ScaffoldMessenger.of(this.context).showSnackBar(
-                    const SnackBar(content: Text('Acceso con Google exitoso'), backgroundColor: Colors.green)
-                  );
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Acceso con Google exitoso'), backgroundColor: Colors.green));
                 }
               },
-              onError: (mensaje) {
-                setModalState(() { error = mensaje; cargando = false; });
-              }
+              onError: (mensaje) { setModalState(() { error = mensaje; cargando = false; }); }
             );
 
             Future<void> procesarFormulario() async {
@@ -131,130 +120,115 @@ class _HomeWebState extends State<HomeWeb> with SingleTickerProviderStateMixin {
               final correo = correoController.text.trim();
               final password = passwordController.text;
 
-              // Validaciones Frontend
               if (esRegistro && nombre.isEmpty) { setModalState(() => error = 'Por favor ingresa tu nombre.'); return; }
               if (correo.isEmpty || password.isEmpty) { setModalState(() => error = 'Completa todos los campos.'); return; }
-              
-              final emailRegex = RegExp(r'^[\w\.-]+@[\w\.-]+\.\w+$');
-              if (!emailRegex.hasMatch(correo)) { setModalState(() => error = 'Ingresa un correo electrónico válido.'); return; }
-              if (password.length < 5) { setModalState(() => error = 'La contraseña debe tener al menos 5 caracteres.'); return; }
+              if (!RegExp(r'^[\w\.-]+@[\w\.-]+\.\w+$').hasMatch(correo)) { setModalState(() => error = 'Ingresa un correo válido.'); return; }
+              if (password.length < 5) { setModalState(() => error = 'Mínimo 5 caracteres.'); return; }
 
               setModalState(() { cargando = true; error = null; });
 
               try {
                 final urlActual = esRegistro ? _registroUrl : _loginUrl;
-                
-                final response = await http.post(
-                  Uri.parse(urlActual),
-                  headers: {'Content-Type': 'application/json'},
-                  body: jsonEncode({
-                    'nombre': nombre, // Se envía el nombre (aunque tu backend actual solo guarda correo/pass, es buena práctica mandarlo)
-                    'correo': correo, 
-                    'password': password,
-                    'rol': 'Usuario' 
-                  }),
-                );
-
-                Map<String, dynamic> data = {};
-                if (response.body.isNotEmpty) data = jsonDecode(response.body);
+                final response = await http.post(Uri.parse(urlActual), headers: {'Content-Type': 'application/json'}, body: jsonEncode({'nombre': nombre, 'correo': correo, 'password': password, 'rol': 'Usuario'}));
 
                 if (response.statusCode >= 200 && response.statusCode < 300) {
                   if (!dialogContext.mounted) return;
-                  Navigator.of(dialogContext).pop();
-                  if (mounted) {
-                    ScaffoldMessenger.of(this.context).showSnackBar(
-                      SnackBar(content: Text(data['message'] ?? 'Éxito'), backgroundColor: Colors.green)
-                    );
-                  }
+                  Navigator.pop(dialogContext);
+                  // Establecemos la sesión tradicional (sin foto, usa inicial)
+                  setState(() { _usuarioActual = { 'nombre': nombre.isNotEmpty ? nombre : correo.split('@')[0], 'correo': correo }; });
+                  if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Acceso exitoso'), backgroundColor: Colors.green));
                   return;
                 }
-                setModalState(() { error = data['error'] ?? 'Credenciales incorrectas o usuario ya existe.'; cargando = false; });
-              } catch (e) {
-                setModalState(() { error = 'Error de conexión con AWS.'; cargando = false; });
-              }
+                setModalState(() { error = jsonDecode(response.body)['error'] ?? 'Credenciales incorrectas.'; cargando = false; });
+              } catch (e) { setModalState(() { error = 'Error de conexión con AWS.'; cargando = false; }); }
             }
 
-            return Dialog(
-              backgroundColor: Colors.white, 
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-              child: Container(
-                width: 400, 
-                padding: const EdgeInsets.all(30),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween, 
-                      children: [
-                        Text(esRegistro ? 'Crea tu cuenta' : 'Iniciar sesión', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: TruequiColors.purpura)), 
-                        IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close))
-                      ]
-                    ),
-                    const SizedBox(height: 25),
-
-                    // CAMPO NOMBRE COMPLETO (Solo aparece en Registro)
-                    if (esRegistro) ...[
-                      TextField(
-                        controller: nombreController, 
-                        decoration: const InputDecoration(labelText: 'Nombre Completo', border: OutlineInputBorder(), prefixIcon: Icon(Icons.person_outline_rounded))
+            return TweenAnimationBuilder(
+              tween: Tween<double>(begin: 0, end: 1),
+              duration: const Duration(milliseconds: 700),
+              curve: Curves.easeOutExpo,
+              builder: (context, double val, child) {
+                return Transform.scale(
+                  scale: val,
+                  child: Dialog(
+                    backgroundColor: Colors.transparent, elevation: 0,
+                    child: SizedBox(
+                      width: 450, height: esRegistro ? 650 : 550,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          // LA MAGIA: Orbe giratorio y pulsante detrás del cristal
+                          AnimatedBuilder(
+                            animation: _floatController,
+                            builder: (context, child) {
+                              return Transform.translate(
+                                offset: Offset(math.cos(_floatController.value * math.pi) * 40, math.sin(_floatController.value * math.pi) * 40),
+                                child: Container(width: 250, height: 250, decoration: BoxDecoration(shape: BoxShape.circle, gradient: const RadialGradient(colors: [TruequiColors.purpura, Colors.transparent]), boxShadow: [BoxShadow(color: TruequiColors.purpura.withOpacity(0.8), blurRadius: 80, spreadRadius: 20)])),
+                              );
+                            }
+                          ),
+                          
+                          // El Cristal del Modal
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(40),
+                            child: BackdropFilter(
+                              filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30), 
+                              child: Container(
+                                width: 420, padding: const EdgeInsets.all(40),
+                                decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(40), border: Border.all(color: Colors.white.withOpacity(0.3), width: 1.5)),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(esRegistro ? 'Crea tu cuenta' : 'Iniciar sesión', style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)), 
+                                    const SizedBox(height: 30),
+                                    
+                                    if (esRegistro) ...[ _ConstruirCampoGlass('Nombre Completo', Icons.person_outline, nombreController, false), const SizedBox(height: 15) ],
+                                    _ConstruirCampoGlass('Correo electrónico', Icons.email_outlined, correoController, false),
+                                    const SizedBox(height: 15),
+                                    _ConstruirCampoGlass('Contraseña', Icons.lock_outline, passwordController, true), 
+                                    
+                                    if (error != null) Padding(padding: const EdgeInsets.only(top: 15), child: Text(error!, style: const TextStyle(color: Color(0xFFFF6B6B), fontWeight: FontWeight.bold))),
+                                    const SizedBox(height: 30),
+                                    
+                                    SizedBox(width: double.infinity, height: 55, child: ElevatedButton(onPressed: cargando ? null : procesarFormulario, style: ElevatedButton.styleFrom(backgroundColor: TruequiColors.purpura, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))), child: cargando ? const CircularProgressIndicator(color: Colors.white) : Text(esRegistro ? 'Registrarme' : 'Ingresar', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)))),
+                                    const SizedBox(height: 20),
+                                    TextButton(onPressed: () => setModalState(() { esRegistro = !esRegistro; error = null; }), child: Text(esRegistro ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600))),
+                                    Padding(padding: const EdgeInsets.symmetric(vertical: 15), child: Row(children: [Expanded(child: Divider(color: Colors.white.withOpacity(0.3))), Padding(padding: const EdgeInsets.symmetric(horizontal: 10), child: Text('O', style: TextStyle(color: Colors.white.withOpacity(0.5)))), Expanded(child: Divider(color: Colors.white.withOpacity(0.3)))]),),
+                                    Container(decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)), child: const GoogleLoginButton()),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 15),
-                    ],
-
-                    TextField(
-                      controller: correoController, 
-                      decoration: const InputDecoration(labelText: 'Correo electrónico', border: OutlineInputBorder(), prefixIcon: Icon(Icons.email_outlined))
                     ),
-                    const SizedBox(height: 15),
-                    TextField(
-                      controller: passwordController, 
-                      obscureText: ocultarPassword, 
-                      decoration: InputDecoration(
-                        labelText: 'Contraseña', border: const OutlineInputBorder(), prefixIcon: const Icon(Icons.lock_outline),
-                        suffixIcon: IconButton(icon: Icon(ocultarPassword ? Icons.visibility : Icons.visibility_off), onPressed: () => setModalState(() => ocultarPassword = !ocultarPassword))
-                      )
-                    ),
-                    if (error != null) Padding(padding: const EdgeInsets.only(top: 15), child: Text(error!, style: const TextStyle(color: Colors.red, fontSize: 13))),
-                    const SizedBox(height: 25),
-                    
-                    SizedBox(
-                      width: double.infinity, height: 50, 
-                      child: ElevatedButton(
-                        onPressed: cargando ? null : procesarFormulario, 
-                        style: ElevatedButton.styleFrom(backgroundColor: TruequiColors.amarillo, foregroundColor: TruequiColors.textoOscuro, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), 
-                        child: cargando 
-                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: TruequiColors.textoOscuro, strokeWidth: 2)) 
-                          : Text(esRegistro ? 'Registrarme' : 'Ingresar', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold))
-                      )
-                    ),
-                    const SizedBox(height: 15),
-
-                    TextButton(
-                      onPressed: () => setModalState(() { esRegistro = !esRegistro; error = null; }),
-                      child: Text(esRegistro ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate', style: const TextStyle(color: TruequiColors.purpura, fontWeight: FontWeight.bold)),
-                    ),
-
-                    const Divider(height: 30),
-                    const Text('O continúa con', style: TextStyle(color: Colors.grey, fontSize: 12)),
-                    const SizedBox(height: 15),
-
-                    const GoogleLoginButton(),
-                  ],
-                ),
-              ),
+                  ),
+                );
+              }
             );
           },
         );
       },
-    ).then((_) {
-      googleAuth.dispose(); 
-    });
+    );
+  }
+
+  Widget _ConstruirCampoGlass(String label, IconData icon, TextEditingController controller, bool isPass) {
+    return Container(
+      decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white.withOpacity(0.3))),
+      child: TextField(controller: controller, obscureText: isPass, style: const TextStyle(color: Colors.white), decoration: InputDecoration(labelText: label, labelStyle: TextStyle(color: Colors.white.withOpacity(0.7)), border: InputBorder.none, contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16), prefixIcon: Icon(icon, color: Colors.white.withOpacity(0.7)))),
+    );
   }
 
   // ============================================================
-  // 4. MODAL: SUBIR ARTÍCULO (CREAR TRUEQUE CON S3)
+  // MODAL: SUBIR ARTÍCULO
   // ============================================================
   void _mostrarPublicar() {
+    if (_usuarioActual == null) {
+      _mostrarLogin(); 
+      return;
+    }
+    
     final tituloController = TextEditingController();
     final descripcionController = TextEditingController();
     final precioController = TextEditingController();
@@ -293,7 +267,6 @@ class _HomeWebState extends State<HomeWeb> with SingleTickerProviderStateMixin {
               final precioRaw = precioController.text.trim();
               final precio = double.tryParse(precioRaw);
 
-              // Validaciones Frontend
               if (titulo.length < 5 || titulo.length > 80) { setModalState(() => error = 'El título debe tener entre 5 y 80 caracteres.'); return; }
               if (descripcion.length < 15) { setModalState(() => error = 'La descripción es muy corta. Mínimo 15 caracteres.'); return; }
               if (precio == null || precio <= 0 || precio > 100000) { setModalState(() => error = 'El valor debe ser numérico entre \$1 y \$100,000 MXN.'); return; }
@@ -303,7 +276,6 @@ class _HomeWebState extends State<HomeWeb> with SingleTickerProviderStateMixin {
               setModalState(() { cargando = true; error = null; });
 
               try {
-                // Paso A: Pedir URL pre-firmada a AWS API Gateway
                 final resUrl = await http.get(Uri.parse('$_uploadUrlEndpoint?ext=$imagenExt'));
                 if (resUrl.statusCode != 200) throw Exception('Error al obtener URL de S3');
                 
@@ -311,11 +283,9 @@ class _HomeWebState extends State<HomeWeb> with SingleTickerProviderStateMixin {
                 final uploadUrl = urlData['uploadUrl'];
                 final publicUrl = urlData['publicUrl'];
 
-                // Paso B: Subir los bytes de la imagen directamente a S3
                 final resS3 = await http.put(Uri.parse(uploadUrl), body: imagenBytes);
                 if (resS3.statusCode != 200) throw Exception('Error al subir imagen a S3');
 
-                // Paso C: Registrar el producto en DynamoDB
                 final resDB = await http.post(
                   Uri.parse(_productosUrl),
                   headers: {'Content-Type': 'application/json'},
@@ -325,17 +295,17 @@ class _HomeWebState extends State<HomeWeb> with SingleTickerProviderStateMixin {
                     'precio': precio,
                     'categoria': categoriaSeleccionada,
                     'imagenUrl': publicUrl,
-                    'vendedorId': '1' // ID temporal para propósitos del sprint
+                    'vendedorId': '1' 
                   }),
                 );
 
                 if (resDB.statusCode == 201) {
                   if (!dialogContext.mounted) return;
-                  Navigator.pop(dialogContext); // Cierra modal
+                  Navigator.pop(dialogContext); 
                   if (mounted) {
-                    ScaffoldMessenger.of(this.context).showSnackBar(const SnackBar(content: Text('¡Artículo publicado exitosamente!'), backgroundColor: Colors.green));
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('¡Artículo publicado exitosamente!'), backgroundColor: Colors.green));
                   }
-                  _cargarProductos(); // Refresca el feed automáticamente
+                  _cargarProductos(); 
                 } else {
                   throw Exception('Error al guardar en DynamoDB');
                 }
@@ -364,7 +334,6 @@ class _HomeWebState extends State<HomeWeb> with SingleTickerProviderStateMixin {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Columna Izquierda: Imagen
                         Expanded(
                           flex: 1,
                           child: GestureDetector(
@@ -386,7 +355,6 @@ class _HomeWebState extends State<HomeWeb> with SingleTickerProviderStateMixin {
                           ),
                         ),
                         const SizedBox(width: 30),
-                        // Columna Derecha: Formulario
                         Expanded(
                           flex: 1,
                           child: Column(
@@ -435,76 +403,133 @@ class _HomeWebState extends State<HomeWeb> with SingleTickerProviderStateMixin {
   }
 
   // ============================================================
-  // 5. DISEÑO DE LA PÁGINA PRINCIPAL
+  // DISEÑO PRINCIPAL
   // ============================================================
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F7FC),
+      backgroundColor: const Color(0xFFF0F2F5),
       body: Stack(
         children: [
-          // Capas de fondo animadas
-          Positioned(top: -180 + math.sin(_animationValue) * 30, right: -120 + math.cos(_animationValue) * 30, child: Container(width: 420, height: 420, decoration: BoxDecoration(shape: BoxShape.circle, color: TruequiColors.purpura.withOpacity(0.16)), child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 80, sigmaY: 80), child: const SizedBox()))),
-          Positioned(bottom: -180 + math.cos(_animationValue) * 35, left: -120 + math.sin(_animationValue) * 35, child: Container(width: 420, height: 420, decoration: BoxDecoration(shape: BoxShape.circle, color: TruequiColors.amarillo.withOpacity(0.12)), child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 80, sigmaY: 80), child: const SizedBox()))),
-          
-          CustomScrollView(
-            slivers: [
-              // Navbar
-              SliverAppBar(
-                pinned: true, elevation: 0, backgroundColor: Colors.white.withOpacity(0.86), toolbarHeight: 82, titleSpacing: 30,
-                title: Row(children: [Container(width: 44, height: 44, decoration: BoxDecoration(color: TruequiColors.purpura, borderRadius: BorderRadius.circular(13)), child: const Icon(Icons.swap_horiz_rounded, color: Colors.white, size: 27)), const SizedBox(width: 12), const Text('Truequi', style: TextStyle(color: TruequiColors.textoOscuro, fontSize: 24, fontWeight: FontWeight.bold))]),
-                actions: [
-                  OutlinedButton.icon(
-                    onPressed: _mostrarPublicar, 
-                    icon: const Icon(Icons.add_circle_outline, size: 19), label: const Text('Subir artículo'),
-                    style: OutlinedButton.styleFrom(foregroundColor: TruequiColors.purpura, side: BorderSide(color: TruequiColors.purpura.withOpacity(0.3)), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                  ),
-                  const SizedBox(width: 10),
-                  Padding(
-                    padding: const EdgeInsets.only(right: 30),
-                    child: ElevatedButton(
-                      onPressed: _mostrarLogin,
-                      style: ElevatedButton.styleFrom(backgroundColor: TruequiColors.purpura, foregroundColor: Colors.white, elevation: 0, padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                      child: const Text('Iniciar sesión', style: TextStyle(fontWeight: FontWeight.w600)),
-                    ),
-                  ),
+          // FONDO LÍQUIDO
+          AnimatedBuilder(
+            animation: _bgController,
+            builder: (context, child) {
+              return Stack(
+                children: [
+                  Positioned(top: size.height * 0.05 + (math.sin(_bgController.value * 2 * math.pi) * 100), left: size.width * 0.1 + (math.cos(_bgController.value * 2 * math.pi) * 80), child: Container(width: size.width * 0.4, height: size.width * 0.4, decoration: BoxDecoration(shape: BoxShape.circle, color: TruequiColors.purpura.withOpacity(0.2)))),
+                  Positioned(bottom: size.height * 0.1 + (math.cos(_bgController.value * 2 * math.pi) * 120), right: size.width * 0.05 + (math.sin(_bgController.value * 2 * math.pi) * 90), child: Container(width: size.width * 0.5, height: size.width * 0.5, decoration: BoxDecoration(shape: BoxShape.circle, color: TruequiColors.amarillo.withOpacity(0.15)))),
                 ],
-              ),
-              
-              // Hero Banner
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(60, 40, 60, 30),
-                  child: Container(
-                    width: double.infinity, padding: const EdgeInsets.all(45),
-                    decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF6B42E0), Color(0xFF8A6BE8)]), borderRadius: BorderRadius.circular(30)),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('Intercambia lo que ya no necesitas', style: TextStyle(color: Colors.white, fontSize: 34, fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 15),
-                        Text('Descubre miles de artículos y dales una segunda vida.', style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 16)),
-                      ],
+              );
+            },
+          ),
+          BackdropFilter(filter: ImageFilter.blur(sigmaX: 80.0, sigmaY: 80.0), child: Container(color: Colors.white.withOpacity(0.1))),
+
+          CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              // NAVBAR DINÁMICA
+              SliverAppBar(
+                pinned: true, expandedHeight: 90, collapsedHeight: 90, backgroundColor: Colors.white.withOpacity(0.5),
+                flexibleSpace: ClipRRect(
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 40),
+                      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Colors.white.withOpacity(0.5), width: 1.5))),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.sync_rounded, color: TruequiColors.purpura, size: 40),
+                          const SizedBox(width: 15),
+                          const Text('truequi', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: TruequiColors.purpura, letterSpacing: -1)),
+                          const Spacer(),
+                          
+                          // ESTADO: NO LOGUEADO
+                          if (_usuarioActual == null) ...[
+                            TextButton.icon(onPressed: _mostrarLogin, icon: const Icon(Icons.person_outline, color: TruequiColors.textoOscuro), label: const Text('Ingresar', style: TextStyle(color: TruequiColors.textoOscuro, fontWeight: FontWeight.bold))),
+                            const SizedBox(width: 20),
+                            ElevatedButton(onPressed: _mostrarLogin, style: ElevatedButton.styleFrom(backgroundColor: TruequiColors.purpura, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 18), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)), elevation: 10, shadowColor: TruequiColors.purpura.withOpacity(0.4)), child: const Text('Iniciar sesión', style: TextStyle(fontWeight: FontWeight.bold))),
+                          ] 
+                          // ESTADO: LOGUEADO
+                          else ...[
+                            TextButton.icon(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MensajesWeb())), icon: const Icon(Icons.chat_bubble_outline, color: TruequiColors.textoOscuro), label: const Text('Mensajes', style: TextStyle(color: TruequiColors.textoOscuro, fontWeight: FontWeight.bold))),
+                            const SizedBox(width: 20),
+                            OutlinedButton.icon(onPressed: _mostrarPublicar, icon: const Icon(Icons.add), label: const Text('Subir artículo'), style: OutlinedButton.styleFrom(foregroundColor: TruequiColors.purpura, side: BorderSide(color: TruequiColors.purpura.withOpacity(0.5), width: 2), padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)))),
+                            const SizedBox(width: 20),
+                            
+                            // BURBUJA DE PERFIL GLASS
+                            GestureDetector(
+                              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PerfilWeb(usuario: _usuarioActual!))),
+                              child: Container(
+                                padding: const EdgeInsets.all(5),
+                                decoration: BoxDecoration(color: Colors.white.withOpacity(0.5), shape: BoxShape.circle, border: Border.all(color: TruequiColors.purpura.withOpacity(0.5), width: 2), boxShadow: [BoxShadow(color: TruequiColors.purpura.withOpacity(0.2), blurRadius: 10)]),
+                                child: CircleAvatar(
+                                  backgroundColor: TruequiColors.purpura.withOpacity(0.2),
+                                  backgroundImage: _usuarioActual!['foto'] != null ? NetworkImage(_usuarioActual!['foto']) : null,
+                                  child: _usuarioActual!['foto'] == null ? Text(_usuarioActual!['nombre'][0].toUpperCase(), style: const TextStyle(color: TruequiColors.purpura, fontWeight: FontWeight.bold)) : null,
+                                ),
+                              ),
+                            )
+                          ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
 
-              const SliverToBoxAdapter(child: Padding(padding: EdgeInsets.fromLTRB(60, 10, 60, 20), child: Text('Catálogo en Vivo', style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold, color: TruequiColors.textoOscuro)))),
+              // HERO BANNER
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(50.0),
+                  child: AnimatedBuilder(
+                    animation: _floatController,
+                    builder: (context, child) {
+                      return Transform.translate(
+                        offset: Offset(0, math.sin(_floatController.value * math.pi) * 10),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(40),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+                            child: Container(
+                              width: double.infinity, padding: const EdgeInsets.all(60),
+                              decoration: BoxDecoration(color: Colors.white.withOpacity(0.3), borderRadius: BorderRadius.circular(40), border: Border.all(color: Colors.white.withOpacity(0.6), width: 2), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 40, spreadRadius: 10)]),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Container(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10), decoration: BoxDecoration(color: TruequiColors.amarillo.withOpacity(0.2), borderRadius: BorderRadius.circular(20)), child: const Text('Bienvenido al futuro del intercambio', style: TextStyle(color: Color(0xFFD48B00), fontWeight: FontWeight.bold))),
+                                  const SizedBox(height: 25),
+                                  const Text('Cambia lo que tienes.\nEncuentra lo que buscas.', style: TextStyle(fontSize: 54, fontWeight: FontWeight.w900, color: TruequiColors.textoOscuro, height: 1.1, letterSpacing: -2)),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }
+                  ),
+                ),
+              ),
 
-              // ==========================================
-              // 6. GRID DINÁMICO DE PRODUCTOS DESDE AWS
-              // ==========================================
+              // GRID DE PRODUCTOS
               _isLoadingCatalog
-                ? const SliverToBoxAdapter(child: Padding(padding: EdgeInsets.all(60.0), child: Center(child: CircularProgressIndicator(color: TruequiColors.purpura))))
+                ? const SliverToBoxAdapter(child: Center(child: CircularProgressIndicator(color: TruequiColors.purpura)))
                 : SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(60, 0, 60, 60),
+                    padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 20),
                     sliver: SliverGrid(
                       delegate: SliverChildBuilderDelegate(
-                        (context, index) { return _TarjetaProductoWeb(producto: _productos[index]); },
-                        childCount: _productos.length,
+                        (context, index) {
+                          // AL DAR CLIC, ABRE LA PANTALLA DE DETALLES
+                          return GestureDetector(
+                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => DetalleProductoWeb(producto: _productos[index]))),
+                            child: _TarjetaProductoWeb(producto: _productos[index]),
+                          );
+                        },
+                        childCount: _productos.length
                       ),
-                      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(maxCrossAxisExtent: 290, mainAxisExtent: 310, crossAxisSpacing: 20, mainAxisSpacing: 20),
+                      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(maxCrossAxisExtent: 320, mainAxisExtent: 380, crossAxisSpacing: 30, mainAxisSpacing: 30),
                     ),
                   ),
             ],
@@ -515,9 +540,6 @@ class _HomeWebState extends State<HomeWeb> with SingleTickerProviderStateMixin {
   }
 }
 
-// ====================================================================
-// COMPONENTE: TARJETA DE PRODUCTO
-// ====================================================================
 class _TarjetaProductoWeb extends StatefulWidget {
   final Map<String, dynamic> producto;
   const _TarjetaProductoWeb({required this.producto});
@@ -531,24 +553,23 @@ class _TarjetaProductoWebState extends State<_TarjetaProductoWeb> {
     return MouseRegion(
       onEnter: (_) => setState(() => hover = true), onExit: (_) => setState(() => hover = false),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180), transform: Matrix4.identity()..translate(0.0, hover ? -5.0 : 0.0),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: Colors.black.withOpacity(hover ? 0.12 : 0.05), blurRadius: hover ? 22 : 12, offset: const Offset(0, 7))]),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(child: Container(width: double.infinity, decoration: BoxDecoration(color: const Color(0xFFF1EFF8), borderRadius: const BorderRadius.vertical(top: Radius.circular(20)), image: DecorationImage(image: NetworkImage(widget.producto['imagenUrl'] ?? 'https://via.placeholder.com/200'), fit: BoxFit.cover)))),
-            Padding(
-              padding: const EdgeInsets.all(17),
+        duration: const Duration(milliseconds: 250),
+        transform: Matrix4.translationValues(0, hover ? -15 : 0, 0),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(30),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: hover ? 20 : 10, sigmaY: hover ? 20 : 10),
+            child: Container(
+              decoration: BoxDecoration(color: Colors.white.withOpacity(hover ? 0.6 : 0.4), borderRadius: BorderRadius.circular(30), border: Border.all(color: Colors.white.withOpacity(0.8), width: 1.5), boxShadow: [BoxShadow(color: TruequiColors.purpura.withOpacity(hover ? 0.15 : 0.05), blurRadius: hover ? 40 : 20, offset: Offset(0, hover ? 20 : 10))]),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: TruequiColors.amarillo.withOpacity(0.2), borderRadius: BorderRadius.circular(6)), child: Text(widget.producto['categoria'] ?? 'General', style: const TextStyle(color: TruequiColors.amarillo, fontSize: 10, fontWeight: FontWeight.bold))),
-                  const SizedBox(height: 8), Text(widget.producto['titulo'] ?? 'Sin título', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: TruequiColors.textoOscuro), maxLines: 1, overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: 12), Row(children: [const Icon(Icons.attach_money_rounded, size: 18, color: TruequiColors.purpura), const SizedBox(width: 5), Text(widget.producto['precio']?.toString() ?? '0.00', style: const TextStyle(fontSize: 13, color: Colors.grey, fontWeight: FontWeight.w600))]),
+                  Expanded(flex: 5, child: Container(decoration: BoxDecoration(borderRadius: const BorderRadius.vertical(top: Radius.circular(30)), image: DecorationImage(image: NetworkImage(widget.producto['imagenUrl'] ?? 'https://via.placeholder.com/200'), fit: BoxFit.cover)))),
+                  Expanded(flex: 4, child: Padding(padding: const EdgeInsets.all(24), child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), decoration: BoxDecoration(color: TruequiColors.purpura.withOpacity(0.1), borderRadius: BorderRadius.circular(10)), child: Text(widget.producto['categoria'] ?? 'General', style: const TextStyle(color: TruequiColors.purpura, fontSize: 12, fontWeight: FontWeight.bold))), Text(widget.producto['titulo'] ?? 'Sin título', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: TruequiColors.textoOscuro), maxLines: 2, overflow: TextOverflow.ellipsis), Row(children: [const Icon(Icons.attach_money_rounded, size: 20, color: TruequiColors.amarillo), const SizedBox(width: 5), Text(widget.producto['precio']?.toString() ?? '0.00', style: const TextStyle(fontSize: 16, color: Colors.black87, fontWeight: FontWeight.w900))])]))),
                 ],
               ),
             ),
-          ],
+          ),
         ),
       ),
     );
