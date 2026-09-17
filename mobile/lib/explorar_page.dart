@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'home_page.dart';
-import '/services/producto_service.dart'; // Ajusta la ruta si lo tienes en otra carpeta, ej: '../services/producto_service.dart'
+import '/services/producto_service.dart';
 
 class ExplorarPage extends StatefulWidget {
   const ExplorarPage({super.key});
@@ -11,20 +11,19 @@ class ExplorarPage extends StatefulWidget {
 
 class _ExplorarPageState extends State<ExplorarPage> {
   String _categoriaSeleccionada = 'Todos';
-  List<dynamic> _articulos = []; // Ahora inicia vacía
-  bool _isLoading = true; // Variable para mostrar el círculo de carga
+  List<dynamic> _articulos = []; 
+  bool _isLoading = true; 
 
   final List<String> _categorias = [
-    'Todos', 'Tecnología', 'Hogar y Cocina', 'Juegos de Mesa', 'Mascotas', 'Libros y Educación'
+    'Todos', 'Electrónica', 'Accesorios', 'Libros'
   ];
 
   @override
   void initState() {
     super.initState();
-    _cargarProductos(); // Cargamos los datos al iniciar la pantalla
+    _cargarProductos(); 
   }
 
-  // Llama al backend usando tu servicio
   Future<void> _cargarProductos() async {
     final servicio = ProductoService();
     final productos = await servicio.obtenerProductos();
@@ -34,23 +33,6 @@ class _ExplorarPageState extends State<ExplorarPage> {
         _articulos = productos;
         _isLoading = false;
       });
-    }
-  }
-
-  // Funciones de apoyo para mantener tu diseño
-  Color _obtenerColor(String? categoria) {
-    if (categoria == 'Tecnología' || categoria == 'Juegos de Mesa') return TruequiColors.purpura;
-    return TruequiColors.amarillo;
-  }
-
-  IconData _obtenerIcono(String? categoria) {
-    switch (categoria) {
-      case 'Tecnología': return Icons.devices_rounded;
-      case 'Hogar y Cocina': return Icons.rice_bowl_rounded;
-      case 'Juegos de Mesa': return Icons.extension_rounded;
-      case 'Mascotas': return Icons.pets_rounded;
-      case 'Libros y Educación': return Icons.menu_book_rounded;
-      default: return Icons.inventory_2_rounded;
     }
   }
 
@@ -111,7 +93,6 @@ class _ExplorarPageState extends State<ExplorarPage> {
         ),
         const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
-        // MOSTRAR CARGA O DATOS REALES
         if (_isLoading)
           const SliverToBoxAdapter(
             child: Padding(
@@ -123,7 +104,7 @@ class _ExplorarPageState extends State<ExplorarPage> {
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.only(top: 60),
-              child: Center(child: Text('No hay artículos disponibles', style: TextStyle(color: Colors.grey.shade600, fontSize: 16))),
+              child: Center(child: Text('No hay artículos en esta categoría', style: TextStyle(color: Colors.grey.shade600, fontSize: 16))),
             ),
           )
         else
@@ -136,18 +117,15 @@ class _ExplorarPageState extends State<ExplorarPage> {
               delegate: SliverChildBuilderDelegate(
                 (context, index) {
                   final item = articulosFiltrados[index];
-                  // Aseguramos que los valores existan de forma segura
                   final titulo = item['titulo'] ?? 'Sin título';
-                  final busca = item['busca'] ?? 'Abierto a ofertas';
-                  final ubicacion = item['ubicacion'] ?? 'Querétaro';
-                  final categoria = item['categoria'];
+                  // Se extrae la URL de la imagen en lugar del icono
+                  final imagenUrl = item['imagenUrl'] ?? ''; 
+                  final precio = item['precio'] ?? '0.0';
 
                   return _buildArticuloCard(
                     titulo: titulo,
-                    busca: busca,
-                    ubicacion: ubicacion,
-                    icono: _obtenerIcono(categoria),
-                    color: _obtenerColor(categoria),
+                    precio: precio,
+                    imagenUrl: imagenUrl,
                     onTap: () {
                       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Seleccionaste: $titulo')));
                     },
@@ -157,63 +135,53 @@ class _ExplorarPageState extends State<ExplorarPage> {
               ),
             ),
           ),
-        
         const SliverToBoxAdapter(child: SizedBox(height: 120)),
       ],
     );
   }
 
+  // Tarjeta rediseñada para usar imágenes (NetworkImage)
   Widget _buildArticuloCard({
-    required String titulo, required String busca, required String ubicacion, required IconData icono, required Color color, required VoidCallback onTap,
+    required String titulo, required String precio, required String imagenUrl, required VoidCallback onTap,
   }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.7), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white, width: 2),
-          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 15, offset: const Offset(0, 8))],
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: Colors.white, width: 2),
+          image: DecorationImage(
+            // Carga la imagen desde S3, si está vacía pone un color base
+            image: NetworkImage(imagenUrl.isNotEmpty ? imagenUrl : 'https://via.placeholder.com/150'),
+            fit: BoxFit.cover,
+          ),
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 10, offset: const Offset(0, 5))],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+        child: Stack(
           children: [
-            Expanded(
-              flex: 3,
+            Positioned(
+              bottom: 0, left: 0, right: 0,
               child: Container(
-                decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: const BorderRadius.vertical(top: Radius.circular(22))),
-                child: Center(child: Icon(icono, size: 48, color: color)),
-              ),
-            ),
-            Expanded(
-              flex: 2,
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(titulo, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13), maxLines: 1, overflow: TextOverflow.ellipsis),
-                    Row(
-                      children: [
-                        const Icon(Icons.location_on_rounded, size: 12, color: Colors.grey),
-                        const SizedBox(width: 4),
-                        Expanded(child: Text(ubicacion, style: const TextStyle(color: Colors.grey, fontSize: 11), maxLines: 1, overflow: TextOverflow.ellipsis)),
-                      ],
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                      decoration: BoxDecoration(color: TruequiColors.fondoClaro, borderRadius: BorderRadius.circular(8)),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.swap_horiz_rounded, size: 12, color: TruequiColors.purpura),
-                          const SizedBox(width: 4),
-                          Expanded(child: Text(busca, style: TextStyle(color: TruequiColors.textoOscuro.withValues(alpha: 0.8), fontSize: 10, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis)),
-                        ],
-                      ),
-                    ),
-                  ],
+                height: 70,
+                decoration: BoxDecoration(
+                  borderRadius: const BorderRadius.vertical(bottom: Radius.circular(22)),
+                  gradient: LinearGradient(
+                    begin: Alignment.bottomCenter, end: Alignment.topCenter,
+                    colors: [Colors.black.withValues(alpha: 0.8), Colors.transparent],
+                  ),
                 ),
               ),
             ),
+            Positioned(
+              bottom: 12, left: 12, right: 12,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(titulo, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white), maxLines: 1, overflow: TextOverflow.ellipsis),
+                  Text('\$$precio', style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 12, fontWeight: FontWeight.w600)),
+                ],
+              ),
+            )
           ],
         ),
       ),
