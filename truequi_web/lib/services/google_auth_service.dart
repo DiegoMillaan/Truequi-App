@@ -1,24 +1,21 @@
 import 'dart:async';
 import 'dart:convert';
-
+import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 
 class GoogleAuthService {
-  static const String clientId =
-      '675434790186-c149sqg826b8ki0tpv4dq4j778mcg2sh.apps.googleusercontent.com';
+  // Client ID de Truequi
+  static const String clientId = '675434790186-c149sqg826b8ki0tpv4dq4j778mcg2sh.apps.googleusercontent.com';
 
-  static const String loginUrl =
-      'https://16663yaped.execute-api.us-east-1.amazonaws.com/dev/login/google';
+  // URL OFICIAL DE TU BACKEND BLINDADO EN AWS
+  static const String loginUrl = 'https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/login/google';
 
   final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
-
   StreamSubscription<GoogleSignInAuthenticationEvent>? _authSubscription;
 
   Future<void> initialize() async {
-    await _googleSignIn.initialize(
-      clientId: clientId,
-    );
+    await _googleSignIn.initialize(clientId: clientId);
   }
 
   void listenToAuthentication({
@@ -27,15 +24,11 @@ class GoogleAuthService {
   }) {
     _authSubscription?.cancel();
 
-    _authSubscription =
-        _googleSignIn.authenticationEvents.listen((event) async {
+    _authSubscription = _googleSignIn.authenticationEvents.listen((event) async {
       if (event is GoogleSignInAuthenticationEventSignIn) {
         try {
           final GoogleSignInAccount account = event.user;
-
-          final GoogleSignInAuthentication authentication =
-              account.authentication;
-
+          final GoogleSignInAuthentication authentication = await account.authentication;
           final String? idToken = authentication.idToken;
 
           if (idToken == null || idToken.isEmpty) {
@@ -45,45 +38,25 @@ class GoogleAuthService {
 
           final response = await http.post(
             Uri.parse(loginUrl),
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: jsonEncode({
-              'token': idToken,
-            }),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'token': idToken}),
           );
 
-          if (response.statusCode >= 200 &&
-              response.statusCode < 300) {
-            final Map<String, dynamic> data =
-                jsonDecode(response.body);
+          final Map<String, dynamic> data = jsonDecode(response.body);
 
-            if (data['status'] == 'success') {
-              final usuario =
-                  Map<String, dynamic>.from(data['usuario'] ?? {});
-
-              onSuccess(usuario);
-            } else {
-              onError(
-                data['message'] ??
-                    'El servidor rechazó el inicio de sesión.',
-              );
-            }
+          if (response.statusCode >= 200 && response.statusCode < 300) {
+            onSuccess(Map<String, dynamic>.from(data['usuario'] ?? {}));
           } else {
-            onError(
-              'Error del servidor (${response.statusCode}).',
-            );
+            // Captura los errores 400 que configuraste en tu handler.py
+            onError(data['error'] ?? data['message'] ?? 'Acceso denegado por el servidor.');
           }
         } catch (e) {
-          onError(
-            'Ocurrió un error al iniciar sesión con Google.',
-          );
+          debugPrint("Error de conexión: $e");
+          onError('Ocurrió un error al conectar con el servidor AWS.');
         }
       }
     }, onError: (error) {
-      onError(
-        'No se pudo iniciar sesión con Google.',
-      );
+      onError('Se canceló o falló el inicio de sesión con Google.');
     });
   }
 

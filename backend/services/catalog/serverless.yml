@@ -80,15 +80,33 @@ resources:
             Projection:
               ProjectionType: ALL
         BillingMode: PAY_PER_REQUEST
+        
     ImagesBucket:
       Type: AWS::S3::Bucket
       Properties:
-        BucketName: truequi-images-dm2026 # Debe coincidir con la variable de entorno de arriba
+        BucketName: truequi-images-dm2026
+        PublicAccessBlockConfiguration:
+          BlockPublicAcls: false
+          BlockPublicPolicy: false
+          IgnorePublicAcls: false
+          RestrictPublicBuckets: false
         CorsConfiguration:
           CorsRules:
-            - AllowedMethods: [PUT]
+            - AllowedMethods: [PUT, GET]
               AllowedOrigins: ['*']
               AllowedHeaders: ['*']
+              
+    ImagesBucketPolicy:
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        Bucket:
+          Ref: ImagesBucket
+        PolicyDocument:
+          Statement:
+            - Action: s3:GetObject
+              Effect: Allow
+              Resource: "arn:aws:s3:::truequi-images-dm2026/*"
+              Principal: "*"
 plugins:
   - serverless-python-requirements
   - serverless-offline
