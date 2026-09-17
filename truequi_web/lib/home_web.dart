@@ -31,8 +31,11 @@ class _HomeWebState extends State<HomeWeb> with SingleTickerProviderStateMixin {
   // ==========================================
   // 1. URLS OFICIALES DE TU BACKEND (AWS)
   // ==========================================
-  static const String _loginUrl = 'https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/login';
-  static const String _registroUrl = 'https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/registro';
+  // Auth apunta a 16663yaped
+  static const String _loginUrl = 'https://16663yaped.execute-api.us-east-1.amazonaws.com/dev/login';
+  static const String _registroUrl = 'https://16663yaped.execute-api.us-east-1.amazonaws.com/dev/registro';
+  
+  // Catálogo apunta a y3cokge8sa
   static const String _productosUrl = 'https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/productos';
   static const String _uploadUrlEndpoint = 'https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/productos/upload-url';
 
@@ -91,11 +94,12 @@ class _HomeWebState extends State<HomeWeb> with SingleTickerProviderStateMixin {
   // 3. MODAL DE LOGIN / REGISTRO (CON DEFENSAS FRONTEND)
   // ============================================================
   void _mostrarLogin() {
+    final nombreController = TextEditingController(); // <-- NUEVO CAMPO
     final correoController = TextEditingController();
     final passwordController = TextEditingController();
     bool cargando = false;
     bool ocultarPassword = true;
-    bool esRegistro = false; // Controla si la vista es Login o Registro
+    bool esRegistro = false; 
     String? error;
 
     final googleAuth = GoogleAuthService();
@@ -107,7 +111,6 @@ class _HomeWebState extends State<HomeWeb> with SingleTickerProviderStateMixin {
         return StatefulBuilder(
           builder: (context, setModalState) {
 
-            // Escuchador del botón de Google
             googleAuth.listenToAuthentication(
               onSuccess: (usuario) {
                 if (!dialogContext.mounted) return;
@@ -124,11 +127,14 @@ class _HomeWebState extends State<HomeWeb> with SingleTickerProviderStateMixin {
             );
 
             Future<void> procesarFormulario() async {
+              final nombre = nombreController.text.trim();
               final correo = correoController.text.trim();
               final password = passwordController.text;
 
-              // Validaciones Frontend estrictas
+              // Validaciones Frontend
+              if (esRegistro && nombre.isEmpty) { setModalState(() => error = 'Por favor ingresa tu nombre.'); return; }
               if (correo.isEmpty || password.isEmpty) { setModalState(() => error = 'Completa todos los campos.'); return; }
+              
               final emailRegex = RegExp(r'^[\w\.-]+@[\w\.-]+\.\w+$');
               if (!emailRegex.hasMatch(correo)) { setModalState(() => error = 'Ingresa un correo electrónico válido.'); return; }
               if (password.length < 5) { setModalState(() => error = 'La contraseña debe tener al menos 5 caracteres.'); return; }
@@ -136,23 +142,22 @@ class _HomeWebState extends State<HomeWeb> with SingleTickerProviderStateMixin {
               setModalState(() { cargando = true; error = null; });
 
               try {
-                // Selecciona el endpoint según el modo actual
                 final urlActual = esRegistro ? _registroUrl : _loginUrl;
                 
                 final response = await http.post(
                   Uri.parse(urlActual),
                   headers: {'Content-Type': 'application/json'},
                   body: jsonEncode({
+                    'nombre': nombre, // Se envía el nombre (aunque tu backend actual solo guarda correo/pass, es buena práctica mandarlo)
                     'correo': correo, 
                     'password': password,
-                    'rol': 'Usuario' // Dato requerido por tu backend en registro
+                    'rol': 'Usuario' 
                   }),
                 );
 
                 Map<String, dynamic> data = {};
                 if (response.body.isNotEmpty) data = jsonDecode(response.body);
 
-                // Manejo de éxito 200 o 201
                 if (response.statusCode >= 200 && response.statusCode < 300) {
                   if (!dialogContext.mounted) return;
                   Navigator.of(dialogContext).pop();
@@ -163,7 +168,6 @@ class _HomeWebState extends State<HomeWeb> with SingleTickerProviderStateMixin {
                   }
                   return;
                 }
-                // Manejo de error 400 del servidor
                 setModalState(() { error = data['error'] ?? 'Credenciales incorrectas o usuario ya existe.'; cargando = false; });
               } catch (e) {
                 setModalState(() { error = 'Error de conexión con AWS.'; cargando = false; });
@@ -182,11 +186,21 @@ class _HomeWebState extends State<HomeWeb> with SingleTickerProviderStateMixin {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween, 
                       children: [
-                        Text(esRegistro ? 'Crear cuenta' : 'Iniciar sesión', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: TruequiColors.textoOscuro)), 
+                        Text(esRegistro ? 'Crea tu cuenta' : 'Iniciar sesión', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: TruequiColors.purpura)), 
                         IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close))
                       ]
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 25),
+
+                    // CAMPO NOMBRE COMPLETO (Solo aparece en Registro)
+                    if (esRegistro) ...[
+                      TextField(
+                        controller: nombreController, 
+                        decoration: const InputDecoration(labelText: 'Nombre Completo', border: OutlineInputBorder(), prefixIcon: Icon(Icons.person_outline_rounded))
+                      ),
+                      const SizedBox(height: 15),
+                    ],
+
                     TextField(
                       controller: correoController, 
                       decoration: const InputDecoration(labelText: 'Correo electrónico', border: OutlineInputBorder(), prefixIcon: Icon(Icons.email_outlined))
@@ -201,32 +215,29 @@ class _HomeWebState extends State<HomeWeb> with SingleTickerProviderStateMixin {
                       )
                     ),
                     if (error != null) Padding(padding: const EdgeInsets.only(top: 15), child: Text(error!, style: const TextStyle(color: Colors.red, fontSize: 13))),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 25),
                     
-                    // Botón Principal
                     SizedBox(
-                      width: double.infinity, height: 45, 
+                      width: double.infinity, height: 50, 
                       child: ElevatedButton(
                         onPressed: cargando ? null : procesarFormulario, 
-                        style: ElevatedButton.styleFrom(backgroundColor: TruequiColors.purpura, foregroundColor: Colors.white), 
+                        style: ElevatedButton.styleFrom(backgroundColor: TruequiColors.amarillo, foregroundColor: TruequiColors.textoOscuro, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), 
                         child: cargando 
-                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) 
-                          : Text(esRegistro ? 'Registrarme' : 'Ingresar', style: const TextStyle(fontWeight: FontWeight.bold))
+                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: TruequiColors.textoOscuro, strokeWidth: 2)) 
+                          : Text(esRegistro ? 'Registrarme' : 'Ingresar', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold))
                       )
                     ),
                     const SizedBox(height: 15),
 
-                    // Alternador entre Login y Registro
                     TextButton(
                       onPressed: () => setModalState(() { esRegistro = !esRegistro; error = null; }),
-                      child: Text(esRegistro ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate', style: const TextStyle(color: TruequiColors.purpura)),
+                      child: Text(esRegistro ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate', style: const TextStyle(color: TruequiColors.purpura, fontWeight: FontWeight.bold)),
                     ),
 
                     const Divider(height: 30),
                     const Text('O continúa con', style: TextStyle(color: Colors.grey, fontSize: 12)),
                     const SizedBox(height: 15),
 
-                    // Botón oficial de Google
                     const GoogleLoginButton(),
                   ],
                 ),
@@ -236,7 +247,6 @@ class _HomeWebState extends State<HomeWeb> with SingleTickerProviderStateMixin {
         );
       },
     ).then((_) {
-      // Limpiamos la memoria del servicio de Google al cerrar el modal
       googleAuth.dispose(); 
     });
   }

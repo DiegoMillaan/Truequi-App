@@ -6,10 +6,10 @@ import 'package:http/http.dart' as http;
 
 class GoogleAuthService {
   // Client ID de Truequi
-  static const String clientId = '675434790186-c149sqg826b8ki0tpv4dq4j778mcg2sh.apps.googleusercontent.com';
+  static const String clientId = '765285641470-jh7if1qr7a9hvfmofs6ume22vgu8v64m.apps.googleusercontent.com';
 
-  // URL OFICIAL DE TU BACKEND BLINDADO EN AWS
-  static const String loginUrl = 'https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/login/google';
+  // URL OFICIAL DE TU BACKEND DE AUTH EN AWS
+  static const String loginUrl = 'https://16663yaped.execute-api.us-east-1.amazonaws.com/dev/login/google';
 
   final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
   StreamSubscription<GoogleSignInAuthenticationEvent>? _authSubscription;

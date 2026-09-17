@@ -10,7 +10,8 @@ DB_HOST = os.environ['DB_HOST']
 DB_USER = os.environ['DB_USER']
 DB_PASS = os.environ['DB_PASS']
 DB_NAME = os.environ['DB_NAME']
-GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID', '')
+# Convertimos la cadena separada por comas en una lista de Python
+GOOGLE_CLIENT_IDS = [i.strip() for i in os.environ.get('GOOGLE_CLIENT_ID', '').split(',')]
 
 def get_connection():
     return pymysql.connect(host=DB_HOST, user=DB_USER, password=DB_PASS, database=DB_NAME, cursorclass=pymysql.cursors.DictCursor)
@@ -94,7 +95,7 @@ def login_google(event, context):
         if not token or not isinstance(token, str):
             return respuesta(400, {"error": "Token de Google ausente o con formato inválido."})
 
-        idinfo = id_token.verify_oauth2_token(token, requests.Request(), GOOGLE_CLIENT_ID)
+        idinfo = id_token.verify_oauth2_token(token, requests.Request(), audience=GOOGLE_CLIENT_IDS)
         correo = idinfo['email']
 
         return respuesta(200, {
