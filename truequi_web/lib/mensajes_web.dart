@@ -37,6 +37,19 @@ class MensajesWeb extends StatelessWidget {
                         const Text('Tus conversaciones', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: TruequiColors.textoOscuro)),
                         const SizedBox(height: 10),
                         const Text('Aún no tienes mensajes sobre tus trueques.', style: TextStyle(fontSize: 16, color: Colors.grey)),
+                        const SizedBox(height: 30),
+                        // NUEVO BOTÓN INTERACTIVO
+                        ElevatedButton.icon(
+                          onPressed: () => Navigator.pop(context), 
+                          icon: const Icon(Icons.search_rounded), 
+                          label: const Text('Explorar artículos', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: TruequiColors.purpura,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 18),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          ),
+                        ),
                       ],
                     ),
                   ),
