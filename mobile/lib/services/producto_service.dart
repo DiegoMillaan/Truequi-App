@@ -43,7 +43,8 @@ class ProductoService {
   }
 
   // 2. POST - Crear producto
-  Future<bool> crearProducto(Map<String, dynamic> productoData) async {
+  // 2. POST - Crear producto
+  Future<Map<String, dynamic>> crearProducto(Map<String, dynamic> productoData) async {
     try {
       final response = await http.post(
         Uri.parse('https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/productos'),
@@ -52,18 +53,19 @@ class ProductoService {
       );
       
       if (response.statusCode == 200 || response.statusCode == 201) {
-        return true;
+        return {'exito': true, 'mensaje': 'Publicado'};
       } else {
-        // 👇 ESTO IMPRIMIRÁ LA RAZÓN EXACTA DEL RECHAZO 👇
+        // Obtenemos el error exacto de AWS para mostrarlo en el frontend
+        final decodedData = jsonDecode(response.body);
         print('====== ERROR DE AWS ======');
         print('Código: ${response.statusCode}');
-        print('Motivo: ${response.body}');
+        print('Motivo: ${decodedData['error']}');
         print('==========================');
-        return false;
+        return {'exito': false, 'mensaje': decodedData['error'] ?? 'Error desconocido en AWS'};
       }
     } catch (e) {
       print('Error de red: $e');
-      return false;
+      return {'exito': false, 'mensaje': 'Error de conexión a internet.'};
     }
   }
 

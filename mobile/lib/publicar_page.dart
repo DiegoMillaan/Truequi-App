@@ -39,18 +39,15 @@ class _PublicarPageState extends State<PublicarPage> {
 
   // Enviar datos usando ProductoService hacia AWS con validación profesional
   Future<void> _publicarTrueque() async {
-    // 1. Validar que el formulario cumpla con todas las reglas de los TextFormField
     if (!_formKey.currentState!.validate()) {
-      return; // Si hay errores, se detiene y muestra los mensajes en rojo
+      return; 
     }
 
     setState(() => _isPublishing = true);
 
-    // Limpiamos el texto por si pusiste "$" o comas por accidente
     String textoPrecio = _precioController.text.replaceAll(RegExp(r'[^0-9.]'), '');
     double precioFinal = double.tryParse(textoPrecio) ?? 1.0;
 
-    // Estructura blindada para que AWS no se queje de nada
     final productoData = {
       'id': DateTime.now().millisecondsSinceEpoch.toString(),
       'titulo': _tituloController.text.trim(),
@@ -62,24 +59,25 @@ class _PublicarPageState extends State<PublicarPage> {
     };
 
     final servicio = ProductoService();
-    final exito = await servicio.crearProducto(productoData);
+    // Ahora recibimos un mapa con 'exito' y 'mensaje'
+    final resultado = await servicio.crearProducto(productoData);
 
     if (!mounted) return;
     setState(() => _isPublishing = false);
 
-    if (exito) {
+    if (resultado['exito'] == true) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('¡Trueque "${_tituloController.text}" publicado en AWS con éxito!')),
+        SnackBar(content: Text('¡Trueque "${_tituloController.text}" publicado con éxito!'), backgroundColor: Colors.green),
       );
       
-      // Limpiar campos y reiniciar validaciones del formulario
       _formKey.currentState!.reset();
       _tituloController.clear();
       _descripcionController.clear();
       _precioController.clear();
     } else {
+      // Mostramos el mensaje exacto que nos devolvió el servidor
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Hubo un error al conectar con AWS. Intenta más tarde.')),
+        SnackBar(content: Text(resultado['mensaje']), backgroundColor: Colors.redAccent),
       );
     }
   }
@@ -181,8 +179,9 @@ class _PublicarPageState extends State<PublicarPage> {
                         if (value == null || value.trim().isEmpty) {
                           return 'Por favor ingresa un título';
                         }
-                        if (value.trim().length < 3) {
-                          return 'El título debe tener al menos 3 caracteres';
+                        // Sincronizado con la regla de AWS (5 a 80 caracteres)
+                        if (value.trim().length < 5 || value.trim().length > 80) {
+                          return 'El título debe tener entre 5 y 80 caracteres';
                         }
                         return null;
                       },
