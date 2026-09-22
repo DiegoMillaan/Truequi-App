@@ -9,6 +9,7 @@ import 'explorar_page.dart';
 import 'publicar_page.dart';
 import 'chats_page.dart';
 import 'perfil_page.dart';
+import 'detalle_producto_page.dart';
 
 class TruequiColors {
   static const Color purpura = Color(0xFF6B42E0);
@@ -67,7 +68,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   // ==========================================
   Future<void> _cargarProductos() async {
     try {
-      // Reemplaza con tu URL real si es diferente
       final url = Uri.parse('https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/productos');
       final response = await http.get(url);
 
@@ -193,7 +193,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {
                     final producto = _productos[index];
-                    return _buildProductoCard(producto);
+                    // Se pasa el context a la función
+                    return _buildProductoCard(context, producto); 
                   },
                   childCount: _productos.length,
                 ),
@@ -204,54 +205,64 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildProductoCard(Map<String, dynamic> producto) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white, width: 2),
-        image: DecorationImage(
-          image: NetworkImage(producto['imagenUrl']), // Carga la imagen real de S3
-          fit: BoxFit.cover,
+  // AHORA RECIBE EL BUILDCONTEXT
+  Widget _buildProductoCard(BuildContext context, Map<String, dynamic> producto) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DetalleProductoPage(producto: producto),
+          ),
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: Colors.white, width: 2),
+          image: DecorationImage(
+            image: NetworkImage(producto['imagenUrl']), 
+            fit: BoxFit.cover,
+          ),
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 10, offset: const Offset(0, 5))],
         ),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 10, offset: const Offset(0, 5))],
-      ),
-      child: Stack(
-        children: [
-          // Gradiente oscuro en la base para que el texto sea legible
-          Positioned(
-            bottom: 0, left: 0, right: 0,
-            child: Container(
-              height: 80,
-              decoration: BoxDecoration(
-                borderRadius: const BorderRadius.vertical(bottom: Radius.circular(22)),
-                gradient: LinearGradient(
-                  begin: Alignment.bottomCenter, end: Alignment.topCenter,
-                  colors: [Colors.black.withValues(alpha: 0.8), Colors.transparent],
+        child: Stack(
+          children: [
+            Positioned(
+              bottom: 0, left: 0, right: 0,
+              child: Container(
+                height: 80,
+                decoration: BoxDecoration(
+                  borderRadius: const BorderRadius.vertical(bottom: Radius.circular(22)),
+                  gradient: LinearGradient(
+                    begin: Alignment.bottomCenter, end: Alignment.topCenter,
+                    colors: [Colors.black.withValues(alpha: 0.8), Colors.transparent],
+                  ),
                 ),
               ),
             ),
-          ),
-          Positioned(
-            bottom: 12, left: 12, right: 12,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(color: TruequiColors.amarillo, borderRadius: BorderRadius.circular(8)),
-                  child: Text(producto['categoria'], style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  producto['titulo'], 
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white),
-                  maxLines: 1, overflow: TextOverflow.ellipsis,
-                ),
-                Text('\$${producto['precio']}', style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 12)),
-              ],
-            ),
-          )
-        ],
+            Positioned(
+              bottom: 12, left: 12, right: 12,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(color: TruequiColors.amarillo, borderRadius: BorderRadius.circular(8)),
+                    child: Text(producto['categoria'], style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    producto['titulo'], 
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white),
+                    maxLines: 1, overflow: TextOverflow.ellipsis,
+                  ),
+                  Text('\$${producto['precio']}', style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 12)),
+                ],
+              ),
+            )
+          ],
+        ),
       ),
     );
   }

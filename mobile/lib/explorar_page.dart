@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'home_page.dart';
 import '/services/producto_service.dart';
+import 'detalle_producto_page.dart';
 
 class ExplorarPage extends StatefulWidget {
   const ExplorarPage({super.key});
@@ -127,7 +128,13 @@ class _ExplorarPageState extends State<ExplorarPage> {
                     precio: precio,
                     imagenUrl: imagenUrl,
                     onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Seleccionaste: $titulo')));
+                      // Se reemplaza el SnackBar por la navegación a la pantalla de detalles
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => DetalleProductoPage(producto: item),
+                        ),
+                      );
                     },
                   );
                 },
