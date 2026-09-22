@@ -104,3 +104,7 @@ aws s3 sync build/web/ s3://truequi-web-2026-dm --delete
 
 * **[Tablero Scrum (GitHub Projects)](https://www.google.com/search?q=https://github.com/users/DiegoMillaan/projects/1)**: Gestión del Product Backlog, Sprints y tareas.
 * **[Documentación Técnica](https://www.google.com/search?q=/docs/)**: Directorio interno con decisiones de arquitectura, manuales operativos y diagramas.
+
+
+
+Hola
