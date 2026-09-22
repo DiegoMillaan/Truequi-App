@@ -46,6 +46,24 @@ class PerfilWeb extends StatelessWidget {
                       const SizedBox(height: 20),
                       Text(nombre, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: TruequiColors.textoOscuro)),
                       Text(correo, style: const TextStyle(fontSize: 16, color: Colors.grey)),
+                      
+                      const SizedBox(height: 25),
+                      // NUEVOS BOTONES Y ESTADÍSTICAS
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _buildStatBadge(Icons.star_rounded, '4.9', TruequiColors.amarillo),
+                          const SizedBox(width: 15),
+                          _buildStatBadge(Icons.handshake_rounded, '12 Trueques', TruequiColors.purpura),
+                        ],
+                      ),
+                      const SizedBox(height: 25),
+                      TextButton.icon(
+                        onPressed: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Modo edición activado ✏️'))), 
+                        icon: const Icon(Icons.edit_rounded, color: TruequiColors.purpura), 
+                        label: const Text('Editar Perfil', style: TextStyle(color: TruequiColors.purpura, fontWeight: FontWeight.bold))
+                      ),
+                      
                       const Spacer(),
                       OutlinedButton.icon(onPressed: () => _cerrarSesion(context), icon: const Icon(Icons.logout), label: const Text('Cerrar Sesión'), style: OutlinedButton.styleFrom(foregroundColor: Colors.redAccent, side: const BorderSide(color: Colors.redAccent, width: 2), padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))))
                     ],
@@ -54,6 +72,22 @@ class PerfilWeb extends StatelessWidget {
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  // === AQUÍ ESTÁ LA FUNCIÓN FALTANTE ===
+  // Se coloca dentro de la clase PerfilWeb, pero fuera del método build()
+  Widget _buildStatBadge(IconData icon, String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(20), border: Border.all(color: color.withOpacity(0.3))),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 20),
+          const SizedBox(width: 8),
+          Text(text, style: TextStyle(color: color, fontWeight: FontWeight.bold)),
         ],
       ),
     );
