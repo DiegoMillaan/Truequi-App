@@ -9,10 +9,22 @@ class PerfilWeb extends StatelessWidget {
   const PerfilWeb({super.key, required this.usuario});
 
   Future<void> _cerrarSesion(BuildContext context) async {
-    await GoogleAuthService().signOut(); // Cierra sesión en Google si aplica
+    // 1. Damos feedback visual
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Cerrando sesión...'), duration: Duration(seconds: 1))
+    );
+
+    // 2. Limpiamos tokens y desconectamos de Google[cite: 17]
+    await GoogleAuthService().signOut(); 
+    
     if (!context.mounted) return;
-    // Resetea toda la app mandándonos de vuelta al Home (limpiando el estado)
-    Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const HomeWeb()), (route) => false);
+    
+    // 3. Resetea toda la app mandándonos de vuelta al Home (limpiando el estado)[cite: 17]
+    Navigator.pushAndRemoveUntil(
+      context, 
+      MaterialPageRoute(builder: (_) => const HomeWeb()), 
+      (route) => false
+    );
   }
 
   @override

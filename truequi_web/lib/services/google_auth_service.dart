@@ -62,9 +62,13 @@ class GoogleAuthService {
   // ==========================================
   // NUEVO: MÉTODO PARA CERRAR SESIÓN
   // ==========================================
+  // ==========================================
+  // NUEVO: MÉTODO PARA CERRAR SESIÓN
+  // ==========================================
   Future<void> signOut() async {
     try {
       await _googleSignIn.signOut();
+      await _googleSignIn.disconnect(); // Desconecta la cuenta del navegador por completo
     } catch (e) {
       debugPrint('Error al cerrar sesión de Google: $e');
     }
