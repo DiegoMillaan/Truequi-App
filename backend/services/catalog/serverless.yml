@@ -7,21 +7,25 @@ provider:
   runtime: python3.12
   region: us-east-1
   environment:
-    # Debes tener un .env en esta carpeta también si te conectas a MySQL para el perfil
     DB_HOST: ${env:DB_HOST}
     DB_USER: ${env:DB_USER}
     DB_PASS: ${env:DB_PASS}
     DB_NAME: ${env:DB_NAME}
-    BUCKET_NAME: truequi-images-dm2026 # Cambia dm2026 por tus iniciales/año para que sea único
+    BUCKET_NAME: truequi-images-dm2026
   iamRoleStatements:
     - Effect: Allow
       Action:
         - dynamodb:PutItem
+        - dynamodb:GetItem
+        - dynamodb:UpdateItem
         - dynamodb:Scan
         - dynamodb:Query
       Resource: 
         - "arn:aws:dynamodb:us-east-1:*:table/Productos"
         - "arn:aws:dynamodb:us-east-1:*:table/Productos/index/*"
+        - "arn:aws:dynamodb:us-east-1:*:table/Mensajes"
+        - "arn:aws:dynamodb:us-east-1:*:table/Mensajes/index/*"
+        - "arn:aws:dynamodb:us-east-1:*:table/Usuarios"
     - Effect: Allow
       Action:
         - s3:PutObject
@@ -56,8 +60,28 @@ functions:
           path: /usuario/perfil/{id}
           method: get
           cors: true
+  actualizarPerfil:
+    handler: handler.actualizar_perfil
+    events:
+      - http:
+          path: /usuario/perfil
+          method: put
+          cors: true
+  crearMensaje:
+    handler: handler.crear_mensaje
+    events:
+      - http:
+          path: /mensajes
+          method: post
+          cors: true
+  obtenerMensajes:
+    handler: handler.obtener_mensajes
+    events:
+      - http:
+          path: /mensajes
+          method: get
+          cors: true
 
-# AQUÍ CREAMOS LA NUBE AUTOMÁTICAMENTE
 resources:
   Resources:
     ProductosTable:
@@ -76,6 +100,35 @@ resources:
           - IndexName: VendedorIndex
             KeySchema:
               - AttributeName: vendedorId
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+        BillingMode: PAY_PER_REQUEST
+
+    MensajesTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: Mensajes
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: destinatario
+            AttributeType: S
+          - AttributeName: remitente
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: DestinatarioIndex
+            KeySchema:
+              - AttributeName: destinatario
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+          - IndexName: RemitenteIndex
+            KeySchema:
+              - AttributeName: remitente
                 KeyType: HASH
             Projection:
               ProjectionType: ALL
@@ -107,6 +160,7 @@ resources:
               Effect: Allow
               Resource: "arn:aws:s3:::truequi-images-dm2026/*"
               Principal: "*"
+
 plugins:
   - serverless-python-requirements
   - serverless-offline
