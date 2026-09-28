@@ -97,11 +97,18 @@ def login_google(event, context):
 
         idinfo = id_token.verify_oauth2_token(token, requests.Request(), audience=GOOGLE_CLIENT_IDS)
         correo = idinfo['email']
+        nombre = idinfo.get('name', correo.split('@')[0])
+        foto = idinfo.get('picture')
 
         return respuesta(200, {
             "status": "success",
             "message": "Login con Google exitoso",
-            "usuario": {"correo": correo, "rol": "Usuario"}
+            "usuario": {
+                "correo": correo,
+                "nombre": nombre,
+                "foto": foto,
+                "rol": "Usuario"
+            }
         })
     except ValueError as e:
         return respuesta(401, {"error": "Token de Google inválido o expirado."})
