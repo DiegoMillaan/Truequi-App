@@ -18,6 +18,7 @@ provider:
         - dynamodb:PutItem
         - dynamodb:GetItem
         - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
         - dynamodb:Scan
         - dynamodb:Query
       Resource: 
@@ -45,6 +46,13 @@ functions:
       - http:
           path: /productos
           method: get
+          cors: true
+  eliminarProducto:
+    handler: handler.eliminar_producto
+    events:
+      - http:
+          path: /productos/{id}
+          method: delete
           cors: true
   obtenerUploadUrl:
     handler: handler.obtener_upload_url
@@ -80,6 +88,13 @@ functions:
       - http:
           path: /mensajes
           method: get
+          cors: true
+  actualizarEstadoMensaje:
+    handler: handler.actualizar_estado_mensaje
+    events:
+      - http:
+          path: /mensajes/{id}
+          method: put
           cors: true
 
 resources:
