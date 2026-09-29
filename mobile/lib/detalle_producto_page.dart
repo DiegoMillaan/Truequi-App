@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'home_page.dart';
-import 'chat_page.dart'; // Importamos la pantalla del chat
+import 'chat_page.dart';
+import 'services/auth_service.dart'; // Importamos el servicio de autenticación para obtener el ID dinámico
 
 class DetalleProductoPage extends StatelessWidget {
   final Map<String, dynamic> producto;
@@ -9,14 +10,17 @@ class DetalleProductoPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Extraemos los datos de AWS
+    // Extraemos los datos dinámicos de AWS
     final titulo = producto['titulo'] ?? 'Sin título';
     final descripcion = producto['descripcion'] ?? 'Sin descripción';
     final precio = producto['precio']?.toString() ?? '0.0';
     final categoria = producto['categoria'] ?? 'General';
     final ubicacion = producto['ubicacion'] ?? 'Querétaro';
     final imagenUrl = producto['imagenUrl'];
-    final vendedorId = producto['vendedorId']?.toString() ?? '2';
+    
+    // Obtenemos dinámicamente el ID y Nombre del dueño del producto desde AWS
+    final vendedorId = producto['vendedorId']?.toString() ?? producto['usuarioId']?.toString() ?? '';
+    final vendedorNombre = producto['vendedorNombre']?.toString() ?? producto['usuarioNombre']?.toString() ?? 'Propietario';
 
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
@@ -47,7 +51,6 @@ class DetalleProductoPage extends StatelessWidget {
               ),
               child: SafeArea(
                 child: Center(
-                  // Si hay URL real intenta cargarla, si no, muestra el icono
                   child: imagenUrl != null && imagenUrl.startsWith('http')
                       ? Image.network(
                           imagenUrl,
@@ -99,20 +102,33 @@ class DetalleProductoPage extends StatelessWidget {
                   Text(descripcion, style: TextStyle(fontSize: 15, color: Colors.grey.shade700, height: 1.5)),
                   const SizedBox(height: 40),
                   
-                  // Botón de Acción
+                  // Botón de Acción Dinámico
                   SizedBox(
                     width: double.infinity,
                     height: 56,
                     child: ElevatedButton(
-                      onPressed: () {
-                        // Navegación hacia la pantalla de Chat enviando los parámetros necesarios
+                      onPressed: () async {
+                        // 1. Obtener mi ID de usuario en sesión desde AuthService
+                        final miId = await AuthService.obtenerMiUsuarioId();
+
+                        if (!context.mounted) return;
+
+                        // Validar si tenemos el ID del vendedor para abrir la conversación
+                        if (vendedorId.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('No se encontró el identificador del usuario para iniciar el chat.')),
+                          );
+                          return;
+                        }
+
+                        // 2. Abrir la pantalla del chat con los datos obtenidos dinámicamente
                         Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (context) => ChatPage(
-                              miUsuarioId: '1',
+                              miUsuarioId: miId,
                               destinatarioId: vendedorId,
-                              nombreDestinatario: 'Vendedor',
+                              nombreDestinatario: vendedorNombre,
                               productoTitulo: titulo,
                             ),
                           ),
