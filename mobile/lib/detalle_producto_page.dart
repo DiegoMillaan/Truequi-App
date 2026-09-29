@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'home_page.dart';
+import 'chat_page.dart'; // Importamos la pantalla del chat
 
 class DetalleProductoPage extends StatelessWidget {
   final Map<String, dynamic> producto;
@@ -15,6 +16,7 @@ class DetalleProductoPage extends StatelessWidget {
     final categoria = producto['categoria'] ?? 'General';
     final ubicacion = producto['ubicacion'] ?? 'Querétaro';
     final imagenUrl = producto['imagenUrl'];
+    final vendedorId = producto['vendedorId']?.toString() ?? '2';
 
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
@@ -47,7 +49,11 @@ class DetalleProductoPage extends StatelessWidget {
                 child: Center(
                   // Si hay URL real intenta cargarla, si no, muestra el icono
                   child: imagenUrl != null && imagenUrl.startsWith('http')
-                      ? Image.network(imagenUrl, fit: BoxFit.cover, errorBuilder: (c, e, s) => const Icon(Icons.inventory_2_rounded, size: 100, color: TruequiColors.purpura))
+                      ? Image.network(
+                          imagenUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (c, e, s) => const Icon(Icons.inventory_2_rounded, size: 100, color: TruequiColors.purpura),
+                        )
                       : const Icon(Icons.inventory_2_rounded, size: 100, color: TruequiColors.purpura),
                 ),
               ),
@@ -99,14 +105,32 @@ class DetalleProductoPage extends StatelessWidget {
                     height: 56,
                     child: ElevatedButton(
                       onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('¡Pronto podrás enviar ofertas!')));
+                        // Navegación hacia la pantalla de Chat enviando los parámetros necesarios
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ChatPage(
+                              miUsuarioId: '1',
+                              destinatarioId: vendedorId,
+                              nombreDestinatario: 'Vendedor',
+                              productoTitulo: titulo,
+                            ),
+                          ),
+                        );
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: TruequiColors.purpura,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                         elevation: 0,
                       ),
-                      child: const Text('Proponer Trueque', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.chat_rounded, color: Colors.white),
+                          SizedBox(width: 8),
+                          Text('Proponer Trueque', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+                        ],
+                      ),
                     ),
                   ),
                 ],
