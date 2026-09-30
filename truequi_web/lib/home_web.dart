@@ -54,7 +54,6 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
     _floatController = AnimationController(vsync: this, duration: const Duration(seconds: 4))..repeat(reverse: true);
   }
 
-  // CORRECCIÓN: Inicialización limpia sin llamadas a métodos web conflictivos
   Future<void> _inicializarGoogle() async {
     try { 
       await _googleSignIn.initialize(); 
@@ -91,12 +90,11 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
 
     showDialog(
       context: context,
-      barrierColor: Colors.black.withOpacity(0.6), // Fondo más oscuro para resaltar la luz
+      barrierColor: Colors.black.withOpacity(0.6), 
       builder: (dialogContext) {
         return StatefulBuilder(
           builder: (context, setModalState) {
 
-            // CORRECCIÓN: Usamos la data que nos devuelve GoogleAuthService
             GoogleAuthService().listenToAuthentication(
               onSuccess: (usuarioData) async {
                 if (!dialogContext.mounted) return;
@@ -134,7 +132,6 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
                 if (response.statusCode >= 200 && response.statusCode < 300) {
                   if (!dialogContext.mounted) return;
                   Navigator.pop(dialogContext);
-                  // Establecemos la sesión tradicional (sin foto, usa inicial)
                   setState(() { _usuarioActual = { 'nombre': nombre.isNotEmpty ? nombre : correo.split('@')[0], 'correo': correo }; });
                   if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Acceso exitoso'), backgroundColor: Colors.green));
                   return;
@@ -157,7 +154,6 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
                       child: Stack(
                         alignment: Alignment.center,
                         children: [
-                          // LA MAGIA: Orbe giratorio y pulsante detrás del cristal
                           AnimatedBuilder(
                             animation: _floatController,
                             builder: (context, child) {
@@ -167,8 +163,6 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
                               );
                             }
                           ),
-                          
-                          // El Cristal del Modal
                           ClipRRect(
                             borderRadius: BorderRadius.circular(40),
                             child: BackdropFilter(
@@ -221,7 +215,7 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
   }
 
   // ============================================================
-  // MODAL: SUBIR ARTÍCULO
+  // MODAL: SUBIR ARTÍCULO (CONECTADO AL USUARIO REAL)
   // ============================================================
   void _mostrarPublicar() {
     if (_usuarioActual == null) {
@@ -286,6 +280,7 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
                 final resS3 = await http.put(Uri.parse(uploadUrl), body: imagenBytes);
                 if (resS3.statusCode != 200) throw Exception('Error al subir imagen a S3');
 
+                // VINCULACIÓN CON USUARIO REAL
                 final resDB = await http.post(
                   Uri.parse(_productosUrl),
                   headers: {'Content-Type': 'application/json'},
@@ -295,7 +290,8 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
                     'precio': precio,
                     'categoria': categoriaSeleccionada,
                     'imagenUrl': publicUrl,
-                    'vendedorId': '1' 
+                    'vendedorId': _usuarioActual!['correo'], 
+                    'vendedorNombre': _usuarioActual!['nombre'] 
                   }),
                 );
 
@@ -413,7 +409,6 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
       backgroundColor: const Color(0xFFF0F2F5),
       body: Stack(
         children: [
-          // FONDO LÍQUIDO
           AnimatedBuilder(
             animation: _bgController,
             builder: (context, child) {
@@ -430,7 +425,6 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
           CustomScrollView(
             physics: const BouncingScrollPhysics(),
             slivers: [
-              // NAVBAR DINÁMICA
               SliverAppBar(
                 pinned: true, expandedHeight: 90, collapsedHeight: 90, backgroundColor: Colors.white.withOpacity(0.5),
                 flexibleSpace: ClipRRect(
@@ -446,20 +440,22 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
                           const Text('truequi', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: TruequiColors.purpura, letterSpacing: -1)),
                           const Spacer(),
                           
-                          // ESTADO: NO LOGUEADO
                           if (_usuarioActual == null) ...[
                             TextButton.icon(onPressed: _mostrarLogin, icon: const Icon(Icons.person_outline, color: TruequiColors.textoOscuro), label: const Text('Ingresar', style: TextStyle(color: TruequiColors.textoOscuro, fontWeight: FontWeight.bold))),
                             const SizedBox(width: 20),
                             ElevatedButton(onPressed: _mostrarLogin, style: ElevatedButton.styleFrom(backgroundColor: TruequiColors.purpura, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 18), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)), elevation: 10, shadowColor: TruequiColors.purpura.withOpacity(0.4)), child: const Text('Iniciar sesión', style: TextStyle(fontWeight: FontWeight.bold))),
                           ] 
-                          // ESTADO: LOGUEADO
                           else ...[
-                            TextButton.icon(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MensajesWeb())), icon: const Icon(Icons.chat_bubble_outline, color: TruequiColors.textoOscuro), label: const Text('Mensajes', style: TextStyle(color: TruequiColors.textoOscuro, fontWeight: FontWeight.bold))),
+                            // NAVEGACIÓN A MENSAJES CON SESIÓN ACTIVA
+                            TextButton.icon(
+                              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => MensajesWeb(usuarioActual: _usuarioActual!))), 
+                              icon: const Icon(Icons.chat_bubble_outline, color: TruequiColors.textoOscuro), 
+                              label: const Text('Mensajes', style: TextStyle(color: TruequiColors.textoOscuro, fontWeight: FontWeight.bold))
+                            ),
                             const SizedBox(width: 20),
                             OutlinedButton.icon(onPressed: _mostrarPublicar, icon: const Icon(Icons.add), label: const Text('Subir artículo'), style: OutlinedButton.styleFrom(foregroundColor: TruequiColors.purpura, side: BorderSide(color: TruequiColors.purpura.withOpacity(0.5), width: 2), padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)))),
                             const SizedBox(width: 20),
                             
-                            // BURBUJA DE PERFIL GLASS
                             GestureDetector(
                               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PerfilWeb(usuario: _usuarioActual!))),
                               child: Container(
@@ -480,7 +476,6 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
                 ),
               ),
 
-              // HERO BANNER
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.all(50.0),
@@ -513,7 +508,6 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
                 ),
               ),
 
-              // GRID DE PRODUCTOS
               _isLoadingCatalog
                 ? const SliverToBoxAdapter(child: Center(child: CircularProgressIndicator(color: TruequiColors.purpura)))
                 : SliverPadding(
@@ -521,9 +515,12 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
                     sliver: SliverGrid(
                       delegate: SliverChildBuilderDelegate(
                         (context, index) {
-                          // AL DAR CLIC, ABRE LA PANTALLA DE DETALLES
                           return GestureDetector(
-                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => DetalleProductoWeb(producto: _productos[index]))),
+                            // NAVEGACIÓN AL DETALLE CON SESIÓN ACTIVA
+                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => DetalleProductoWeb(
+                              producto: _productos[index], 
+                              usuarioActual: _usuarioActual 
+                            ))),
                             child: _TarjetaProductoWeb(producto: _productos[index]),
                           );
                         },
