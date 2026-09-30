@@ -210,18 +210,32 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
             // CORRECCIÓN estricta para leer imágenes en Flutter Web
             Future<void> seleccionarImagen() async {
               try {
+                // 1. Limpiamos cualquier error previo
+                setModalState(() => error = null); 
+                
                 final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+                
                 if (image != null) {
+                  // 2. Extraemos los bytes de forma segura para Web
                   final bytes = await image.readAsBytes(); 
+                  
                   setModalState(() {
                     imagenBytes = bytes;
-                    final nameParts = image.name.split('.');
-                    imagenExt = nameParts.length > 1 ? nameParts.last.toLowerCase() : 'png';
+                    
+                    // 3. Extracción de formato a prueba de fallos de navegador
+                    if (image.name.contains('.')) {
+                      imagenExt = image.name.split('.').last.toLowerCase();
+                    } else if (image.mimeType != null && image.mimeType!.contains('/')) {
+                      imagenExt = image.mimeType!.split('/').last.toLowerCase();
+                    } else {
+                      imagenExt = 'png'; // Fallback por defecto para S3
+                    }
                     error = null;
                   });
                 }
               } catch (e) {
-                setModalState(() => error = 'Error al cargar imagen del explorador.');
+                // 4. Si el navegador bloquea la acción, imprimimos el error EXACTO
+                setModalState(() => error = 'Fallo en navegador: $e');
               }
             }
 
