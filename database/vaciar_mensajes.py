@@ -11,7 +11,7 @@ def purgar_mensajes():
         return
 
     for each in items:
-        pass # Preparando eliminación por llave
+        llave_primaria = {'id': each['id']}
 
 if __name__ == '__main__':
     purgar_mensajes()
