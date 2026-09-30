@@ -29,7 +29,6 @@ class HomeWeb extends StatefulWidget {
 }
 
 class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
-  // URLs AWS
   static const String _loginUrl = 'https://16663yaped.execute-api.us-east-1.amazonaws.com/dev/login';
   static const String _registroUrl = 'https://16663yaped.execute-api.us-east-1.amazonaws.com/dev/registro';
   static const String _productosUrl = 'https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/productos';
@@ -41,8 +40,6 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
 
   List<dynamic> _productos = [];
   bool _isLoadingCatalog = true;
-
-  // ESTADO DEL USUARIO (Si es null, no ha iniciado sesión)
   Map<String, dynamic>? _usuarioActual;
 
   @override
@@ -55,11 +52,7 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
   }
 
   Future<void> _inicializarGoogle() async {
-    try { 
-      await _googleSignIn.initialize(); 
-    } catch (e) { 
-      debugPrint('ERROR GOOGLE: $e'); 
-    }
+    try { await _googleSignIn.initialize(); } catch (e) { debugPrint('ERROR GOOGLE: $e'); }
   }
 
   Future<void> _cargarProductos() async {
@@ -76,15 +69,11 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
     super.dispose();
   }
 
-  // ============================================================
-  // MODAL DE LOGIN (LA ILUSIÓN ÓPTICA)
-  // ============================================================
   void _mostrarLogin() {
     final nombreController = TextEditingController(); 
     final correoController = TextEditingController();
     final passwordController = TextEditingController();
     bool cargando = false;
-    bool ocultarPassword = true;
     bool esRegistro = false; 
     String? error;
 
@@ -99,16 +88,8 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
               onSuccess: (usuarioData) async {
                 if (!dialogContext.mounted) return;
                 Navigator.pop(dialogContext);
-                setState(() { 
-                  _usuarioActual = { 
-                    'nombre': usuarioData['correo'].split('@')[0], 
-                    'correo': usuarioData['correo'], 
-                    'foto': null 
-                  }; 
-                });
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Acceso con Google exitoso'), backgroundColor: Colors.green));
-                }
+                setState(() { _usuarioActual = { 'nombre': usuarioData['correo'].split('@')[0], 'correo': usuarioData['correo'], 'foto': null }; });
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Acceso exitoso'), backgroundColor: Colors.green));
               },
               onError: (mensaje) { setModalState(() { error = mensaje; cargando = false; }); }
             );
@@ -137,13 +118,11 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
                   return;
                 }
                 setModalState(() { error = jsonDecode(response.body)['error'] ?? 'Credenciales incorrectas.'; cargando = false; });
-              } catch (e) { setModalState(() { error = 'Error de conexión con AWS.'; cargando = false; }); }
+              } catch (e) { setModalState(() { error = 'Error de conexión.'; cargando = false; }); }
             }
 
             return TweenAnimationBuilder(
-              tween: Tween<double>(begin: 0, end: 1),
-              duration: const Duration(milliseconds: 700),
-              curve: Curves.easeOutExpo,
+              tween: Tween<double>(begin: 0, end: 1), duration: const Duration(milliseconds: 700), curve: Curves.easeOutExpo,
               builder: (context, double val, child) {
                 return Transform.scale(
                   scale: val,
@@ -154,36 +133,24 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
                       child: Stack(
                         alignment: Alignment.center,
                         children: [
-                          AnimatedBuilder(
-                            animation: _floatController,
-                            builder: (context, child) {
-                              return Transform.translate(
-                                offset: Offset(math.cos(_floatController.value * math.pi) * 40, math.sin(_floatController.value * math.pi) * 40),
-                                child: Container(width: 250, height: 250, decoration: BoxDecoration(shape: BoxShape.circle, gradient: const RadialGradient(colors: [TruequiColors.purpura, Colors.transparent]), boxShadow: [BoxShadow(color: TruequiColors.purpura.withOpacity(0.8), blurRadius: 80, spreadRadius: 20)])),
-                              );
-                            }
-                          ),
+                          AnimatedBuilder(animation: _floatController, builder: (context, child) {
+                            return Transform.translate(offset: Offset(math.cos(_floatController.value * math.pi) * 40, math.sin(_floatController.value * math.pi) * 40), child: Container(width: 250, height: 250, decoration: BoxDecoration(shape: BoxShape.circle, gradient: const RadialGradient(colors: [TruequiColors.purpura, Colors.transparent]), boxShadow: [BoxShadow(color: TruequiColors.purpura.withOpacity(0.8), blurRadius: 80, spreadRadius: 20)])));
+                          }),
                           ClipRRect(
                             borderRadius: BorderRadius.circular(40),
                             child: BackdropFilter(
                               filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30), 
                               child: Container(
-                                width: 420, padding: const EdgeInsets.all(40),
-                                decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(40), border: Border.all(color: Colors.white.withOpacity(0.3), width: 1.5)),
+                                width: 420, padding: const EdgeInsets.all(40), decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(40), border: Border.all(color: Colors.white.withOpacity(0.3), width: 1.5)),
                                 child: Column(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Text(esRegistro ? 'Crea tu cuenta' : 'Iniciar sesión', style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)), 
-                                    const SizedBox(height: 30),
-                                    
+                                    Text(esRegistro ? 'Crea tu cuenta' : 'Iniciar sesión', style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)), const SizedBox(height: 30),
                                     if (esRegistro) ...[ _ConstruirCampoGlass('Nombre Completo', Icons.person_outline, nombreController, false), const SizedBox(height: 15) ],
-                                    _ConstruirCampoGlass('Correo electrónico', Icons.email_outlined, correoController, false),
-                                    const SizedBox(height: 15),
+                                    _ConstruirCampoGlass('Correo electrónico', Icons.email_outlined, correoController, false), const SizedBox(height: 15),
                                     _ConstruirCampoGlass('Contraseña', Icons.lock_outline, passwordController, true), 
-                                    
                                     if (error != null) Padding(padding: const EdgeInsets.only(top: 15), child: Text(error!, style: const TextStyle(color: Color(0xFFFF6B6B), fontWeight: FontWeight.bold))),
                                     const SizedBox(height: 30),
-                                    
                                     SizedBox(width: double.infinity, height: 55, child: ElevatedButton(onPressed: cargando ? null : procesarFormulario, style: ElevatedButton.styleFrom(backgroundColor: TruequiColors.purpura, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))), child: cargando ? const CircularProgressIndicator(color: Colors.white) : Text(esRegistro ? 'Registrarme' : 'Ingresar', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)))),
                                     const SizedBox(height: 20),
                                     TextButton(onPressed: () => setModalState(() { esRegistro = !esRegistro; error = null; }), child: Text(esRegistro ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600))),
@@ -207,15 +174,15 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
     );
   }
 
-  Widget _ConstruirCampoGlass(String label, IconData icon, TextEditingController controller, bool isPass) {
+  Widget _ConstruirCampoGlass(String label, IconData icon, TextEditingController controller, bool isPass, [int lines = 1]) {
     return Container(
-      decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white.withOpacity(0.3))),
-      child: TextField(controller: controller, obscureText: isPass, style: const TextStyle(color: Colors.white), decoration: InputDecoration(labelText: label, labelStyle: TextStyle(color: Colors.white.withOpacity(0.7)), border: InputBorder.none, contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16), prefixIcon: Icon(icon, color: Colors.white.withOpacity(0.7)))),
+      decoration: BoxDecoration(color: Colors.white.withOpacity(0.15), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white.withOpacity(0.3))),
+      child: TextField(controller: controller, obscureText: isPass, maxLines: lines, style: const TextStyle(color: Colors.white), decoration: InputDecoration(labelText: label, labelStyle: TextStyle(color: Colors.white.withOpacity(0.7)), border: InputBorder.none, contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16), prefixIcon: icon != Icons.abc ? Icon(icon, color: Colors.white.withOpacity(0.7)) : null)),
     );
   }
 
   // ============================================================
-  // MODAL: SUBIR ARTÍCULO (CONECTADO AL USUARIO REAL)
+  // MODAL: SUBIR ARTÍCULO (GLASSMORPHISM + CORRECCIÓN WEB)
   // ============================================================
   void _mostrarPublicar() {
     if (_usuarioActual == null) {
@@ -230,170 +197,147 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
     
     Uint8List? imagenBytes;
     String? imagenExt;
-    
     bool cargando = false;
     String? error;
-
     final picker = ImagePicker();
 
     showDialog(
-      context: context,
-      barrierDismissible: false,
+      context: context, barrierDismissible: false,
       builder: (dialogContext) {
         return StatefulBuilder(
           builder: (context, setModalState) {
 
+            // CORRECCIÓN estricta para leer imágenes en Flutter Web
             Future<void> seleccionarImagen() async {
-              final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-              if (image != null) {
-                // CORRECCIÓN: Para Flutter Web extraemos los bytes de forma segura
-                final bytes = await image.readAsBytes(); 
-                setModalState(() {
-                  imagenBytes = bytes;
-                  // Si no detecta extensión en web, asigna .png por defecto para S3
-                  final nameParts = image.name.split('.');
-                  imagenExt = nameParts.length > 1 ? nameParts.last.toLowerCase() : 'png';
-                  error = null;
-                });
+              try {
+                final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+                if (image != null) {
+                  final bytes = await image.readAsBytes(); 
+                  setModalState(() {
+                    imagenBytes = bytes;
+                    final nameParts = image.name.split('.');
+                    imagenExt = nameParts.length > 1 ? nameParts.last.toLowerCase() : 'png';
+                    error = null;
+                  });
+                }
+              } catch (e) {
+                setModalState(() => error = 'Error al cargar imagen del explorador.');
               }
             }
 
             Future<void> publicarArticulo() async {
               final titulo = tituloController.text.trim();
               final descripcion = descripcionController.text.trim();
-              final precioRaw = precioController.text.trim();
-              final precio = double.tryParse(precioRaw);
+              final precio = double.tryParse(precioController.text.trim());
 
               if (titulo.length < 5 || titulo.length > 80) { setModalState(() => error = 'El título debe tener entre 5 y 80 caracteres.'); return; }
               if (descripcion.length < 15) { setModalState(() => error = 'La descripción es muy corta. Mínimo 15 caracteres.'); return; }
               if (precio == null || precio <= 0 || precio > 100000) { setModalState(() => error = 'El valor debe ser numérico entre \$1 y \$100,000 MXN.'); return; }
               if (imagenBytes == null) { setModalState(() => error = 'Debes subir una fotografía del artículo.'); return; }
-              if (imagenExt != 'jpg' && imagenExt != 'jpeg' && imagenExt != 'png' && imagenExt != 'webp') { setModalState(() => error = 'Formato de imagen inválido (solo JPG, PNG o WEBP).'); return; }
 
               setModalState(() { cargando = true; error = null; });
 
               try {
                 final resUrl = await http.get(Uri.parse('$_uploadUrlEndpoint?ext=$imagenExt'));
-                if (resUrl.statusCode != 200) throw Exception('Error al obtener URL de S3');
+                if (resUrl.statusCode != 200) throw Exception('Error AWS S3');
                 
                 final urlData = jsonDecode(resUrl.body);
-                final uploadUrl = urlData['uploadUrl'];
-                final publicUrl = urlData['publicUrl'];
+                final resS3 = await http.put(Uri.parse(urlData['uploadUrl']), body: imagenBytes);
+                if (resS3.statusCode != 200) throw Exception('Fallo subida a S3');
 
-                final resS3 = await http.put(Uri.parse(uploadUrl), body: imagenBytes);
-                if (resS3.statusCode != 200) throw Exception('Error al subir imagen a S3');
-
-                // VINCULACIÓN CON USUARIO REAL
                 final resDB = await http.post(
-                  Uri.parse(_productosUrl),
-                  headers: {'Content-Type': 'application/json'},
-                  body: jsonEncode({
-                    'titulo': titulo,
-                    'descripcion': descripcion,
-                    'precio': precio,
-                    'categoria': categoriaSeleccionada,
-                    'imagenUrl': publicUrl,
-                    'vendedorId': _usuarioActual!['correo'], 
-                    'vendedorNombre': _usuarioActual!['nombre'] 
-                  }),
+                  Uri.parse(_productosUrl), headers: {'Content-Type': 'application/json'},
+                  body: jsonEncode({'titulo': titulo, 'descripcion': descripcion, 'precio': precio, 'categoria': categoriaSeleccionada, 'imagenUrl': urlData['publicUrl'], 'vendedorId': _usuarioActual!['correo'], 'vendedorNombre': _usuarioActual!['nombre']}),
                 );
 
                 if (resDB.statusCode == 201) {
                   if (!dialogContext.mounted) return;
                   Navigator.pop(dialogContext); 
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('¡Artículo publicado exitosamente!'), backgroundColor: Colors.green));
-                  }
+                  if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('¡Artículo publicado!'), backgroundColor: Colors.green));
                   _cargarProductos(); 
-                } else {
-                  throw Exception('Error al guardar en DynamoDB');
-                }
+                } else throw Exception('Fallo en DB');
               } catch (e) {
-                setModalState(() { error = 'Hubo un error al publicar el artículo: $e'; cargando = false; });
+                setModalState(() { error = 'Hubo un error al publicar el artículo.'; cargando = false; });
               }
             }
 
-            return Dialog(
-              backgroundColor: Colors.transparent,
-              insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
-              child: Container(
-                width: 800, padding: const EdgeInsets.all(30),
-                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(28), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.18), blurRadius: 35, offset: const Offset(0, 15))]),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text('Crear Trueque', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: TruequiColors.textoOscuro)),
-                        IconButton(onPressed: () => Navigator.of(dialogContext).pop(), icon: const Icon(Icons.close)),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          flex: 1,
-                          child: GestureDetector(
-                            onTap: cargando ? null : seleccionarImagen,
-                            child: Container(
-                              height: 300,
-                              decoration: BoxDecoration(color: const Color(0xFFF8F8FB), borderRadius: BorderRadius.circular(16), border: Border.all(color: TruequiColors.purpura.withOpacity(0.3), width: 2, style: BorderStyle.solid)),
-                              child: imagenBytes != null
-                                  ? ClipRRect(borderRadius: BorderRadius.circular(14), child: Image.memory(imagenBytes!, fit: BoxFit.cover, width: double.infinity, height: double.infinity))
-                                  : Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
+            return TweenAnimationBuilder(
+              tween: Tween<double>(begin: 0, end: 1), duration: const Duration(milliseconds: 500), curve: Curves.easeOutExpo,
+              builder: (context, double val, child) {
+                return Transform.scale(
+                  scale: val,
+                  child: Dialog(
+                    backgroundColor: Colors.transparent, elevation: 0,
+                    insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(40),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
+                        child: Container(
+                          width: 800, padding: const EdgeInsets.all(40),
+                          decoration: BoxDecoration(color: Colors.white.withOpacity(0.15), borderRadius: BorderRadius.circular(40), border: Border.all(color: Colors.white.withOpacity(0.3), width: 1.5)),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text('Crear Trueque', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
+                                  IconButton(onPressed: () => Navigator.of(dialogContext).pop(), icon: const Icon(Icons.close, color: Colors.white)),
+                                ],
+                              ),
+                              const SizedBox(height: 30),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    flex: 1,
+                                    child: GestureDetector(
+                                      onTap: cargando ? null : seleccionarImagen,
+                                      child: Container(
+                                        height: 330, decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white.withOpacity(0.4), width: 2, style: BorderStyle.solid)),
+                                        child: imagenBytes != null
+                                            ? ClipRRect(borderRadius: BorderRadius.circular(22), child: Image.memory(imagenBytes!, fit: BoxFit.cover, width: double.infinity, height: double.infinity))
+                                            : Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.add_a_photo_rounded, size: 50, color: Colors.white.withOpacity(0.8)), const SizedBox(height: 12), const Text('Añadir foto del artículo', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))]),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 30),
+                                  Expanded(
+                                    flex: 1,
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Icon(Icons.add_a_photo_rounded, size: 48, color: TruequiColors.purpura.withOpacity(0.6)),
-                                        const SizedBox(height: 12),
-                                        Text('Añadir foto del artículo', style: TextStyle(color: TruequiColors.purpura.withOpacity(0.8), fontWeight: FontWeight.bold)),
+                                        _ConstruirCampoGlass('¿Qué ofreces? (Título)', Icons.inventory_2_outlined, tituloController, false), const SizedBox(height: 15),
+                                        _ConstruirCampoGlass('Valor estimado (MXN)', Icons.attach_money, precioController, false), const SizedBox(height: 15),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                                          decoration: BoxDecoration(color: Colors.white.withOpacity(0.15), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white.withOpacity(0.3))),
+                                          child: DropdownButtonHideUnderline(
+                                            child: DropdownButton<String>(
+                                              value: categoriaSeleccionada, isExpanded: true, dropdownColor: const Color(0xFF2A1B54), style: const TextStyle(color: Colors.white, fontSize: 16), icon: Icon(Icons.keyboard_arrow_down, color: Colors.white.withOpacity(0.7)),
+                                              items: ['Electrónica', 'Hogar', 'Ropa', 'Coleccionables', 'Deportes', 'Libros', 'Accesorios'].map((String valor) => DropdownMenuItem<String>(value: valor, child: Text(valor))).toList(),
+                                              onChanged: (nuevoValor) { setModalState(() { categoriaSeleccionada = nuevoValor!; }); },
+                                            ),
+                                          ),
+                                        ), const SizedBox(height: 15),
+                                        _ConstruirCampoGlass('Descripción y qué buscas a cambio', Icons.abc, descripcionController, false, 3),
                                       ],
                                     ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 30),
-                        Expanded(
-                          flex: 1,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              TextField(controller: tituloController, decoration: const InputDecoration(labelText: '¿Qué ofreces? (Título)', border: OutlineInputBorder(), prefixIcon: Icon(Icons.inventory_2_outlined))),
-                              const SizedBox(height: 15),
-                              TextField(controller: precioController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Valor estimado (MXN)', border: OutlineInputBorder(), prefixIcon: Icon(Icons.attach_money))),
-                              const SizedBox(height: 15),
-                              DropdownButtonFormField<String>(
-                                value: categoriaSeleccionada,
-                                decoration: const InputDecoration(labelText: 'Categoría', border: OutlineInputBorder(), prefixIcon: Icon(Icons.category_outlined)),
-                                items: ['Electrónica', 'Hogar', 'Ropa', 'Coleccionables', 'Deportes', 'Libros', 'Accesorios'].map((String valor) {
-                                  return DropdownMenuItem<String>(value: valor, child: Text(valor));
-                                }).toList(),
-                                onChanged: (nuevoValor) { setModalState(() { categoriaSeleccionada = nuevoValor!; }); },
+                                  ),
+                                ],
                               ),
-                              const SizedBox(height: 15),
-                              TextField(controller: descripcionController, maxLines: 3, decoration: const InputDecoration(labelText: 'Descripción y qué buscas a cambio', border: OutlineInputBorder(), alignLabelWithHint: true)),
+                              const SizedBox(height: 30),
+                              if (error != null) ...[Container(width: double.infinity, padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: Colors.redAccent.withOpacity(0.2), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.redAccent.withOpacity(0.5))), child: Text(error!, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))), const SizedBox(height: 15)],
+                              SizedBox(width: double.infinity, height: 60, child: ElevatedButton(onPressed: cargando ? null : publicarArticulo, style: ElevatedButton.styleFrom(backgroundColor: TruequiColors.amarillo, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))), child: cargando ? const CircularProgressIndicator(color: Colors.white) : const Text('Publicar Trueque', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)))),
                             ],
                           ),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    if (error != null) ...[
-                      Container(width: double.infinity, padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: Colors.red.withOpacity(0.08), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.red.withOpacity(0.2))), child: Text(error!, style: const TextStyle(color: Colors.red, fontSize: 13))),
-                      const SizedBox(height: 15),
-                    ],
-                    SizedBox(
-                      width: double.infinity, height: 52,
-                      child: ElevatedButton(
-                        onPressed: cargando ? null : publicarArticulo,
-                        style: ElevatedButton.styleFrom(backgroundColor: TruequiColors.amarillo, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
-                        child: cargando ? const CircularProgressIndicator(color: Colors.white) : const Text('Publicar Trueque', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                       ),
                     ),
-                  ],
-                ),
-              ),
+                  ),
+                );
+              }
             );
           },
         );
@@ -401,9 +345,6 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
     );
   }
 
-  // ============================================================
-  // DISEÑO PRINCIPAL
-  // ============================================================
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -449,7 +390,6 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
                             ElevatedButton(onPressed: _mostrarLogin, style: ElevatedButton.styleFrom(backgroundColor: TruequiColors.purpura, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 18), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)), elevation: 10, shadowColor: TruequiColors.purpura.withOpacity(0.4)), child: const Text('Iniciar sesión', style: TextStyle(fontWeight: FontWeight.bold))),
                           ] 
                           else ...[
-                            // NAVEGACIÓN A MENSAJES CON SESIÓN ACTIVA
                             TextButton.icon(
                               onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => MensajesWeb(usuarioActual: _usuarioActual!))), 
                               icon: const Icon(Icons.chat_bubble_outline, color: TruequiColors.textoOscuro), 
@@ -519,11 +459,7 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
                       delegate: SliverChildBuilderDelegate(
                         (context, index) {
                           return GestureDetector(
-                            // NAVEGACIÓN AL DETALLE CON SESIÓN ACTIVA
-                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => DetalleProductoWeb(
-                              producto: _productos[index], 
-                              usuarioActual: _usuarioActual 
-                            ))),
+                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => DetalleProductoWeb(producto: _productos[index], usuarioActual: _usuarioActual))),
                             child: _TarjetaProductoWeb(producto: _productos[index]),
                           );
                         },
