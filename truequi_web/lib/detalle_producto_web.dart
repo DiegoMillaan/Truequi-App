@@ -6,7 +6,7 @@ import 'home_web.dart';
 
 class DetalleProductoWeb extends StatelessWidget {
   final Map<String, dynamic> producto;
-  final Map<String, dynamic>? usuarioActual; // Recibimos la sesión actual
+  final Map<String, dynamic>? usuarioActual; 
 
   const DetalleProductoWeb({super.key, required this.producto, this.usuarioActual});
 
@@ -65,33 +65,43 @@ class DetalleProductoWeb extends StatelessWidget {
               }
             }
 
-            return Dialog(
-              backgroundColor: Colors.transparent, elevation: 0,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(30),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-                  child: Container(
-                    width: 500, padding: const EdgeInsets.all(40),
-                    decoration: BoxDecoration(color: Colors.white.withOpacity(0.15), borderRadius: BorderRadius.circular(30), border: Border.all(color: Colors.white.withOpacity(0.3), width: 1.5)),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('Proponer Trueque', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
-                        const SizedBox(height: 10),
-                        Text('Artículo: ${producto['titulo']}', style: const TextStyle(fontSize: 16, color: TruequiColors.amarillo, fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 25),
-                        Container(
-                          decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white.withOpacity(0.2))),
-                          child: TextField(controller: mensajeController, maxLines: 4, style: const TextStyle(color: Colors.white), decoration: InputDecoration(hintText: 'Hola, me interesa tu artículo. Te ofrezco a cambio...', hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)), border: InputBorder.none, contentPadding: const EdgeInsets.all(20))),
+            return TweenAnimationBuilder(
+              tween: Tween<double>(begin: 0, end: 1),
+              duration: const Duration(milliseconds: 500),
+              curve: Curves.easeOutExpo,
+              builder: (context, double val, child) {
+                return Transform.scale(
+                  scale: val,
+                  child: Dialog(
+                    backgroundColor: Colors.transparent, elevation: 0,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(40),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+                        child: Container(
+                          width: 500, padding: const EdgeInsets.all(40),
+                          decoration: BoxDecoration(color: Colors.white.withOpacity(0.15), borderRadius: BorderRadius.circular(40), border: Border.all(color: Colors.white.withOpacity(0.3), width: 1.5)),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Proponer Trueque', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
+                              const SizedBox(height: 10),
+                              Text('Artículo: ${producto['titulo']}', style: const TextStyle(fontSize: 16, color: TruequiColors.amarillo, fontWeight: FontWeight.bold)),
+                              const SizedBox(height: 25),
+                              Container(
+                                decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white.withOpacity(0.2))),
+                                child: TextField(controller: mensajeController, maxLines: 4, style: const TextStyle(color: Colors.white), decoration: InputDecoration(hintText: 'Hola, me interesa tu artículo. Te ofrezco a cambio...', hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)), border: InputBorder.none, contentPadding: const EdgeInsets.all(20))),
+                              ),
+                              const SizedBox(height: 30),
+                              SizedBox(width: double.infinity, height: 55, child: ElevatedButton(onPressed: enviando ? null : enviarPropuesta, style: ElevatedButton.styleFrom(backgroundColor: TruequiColors.purpura, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))), child: enviando ? const CircularProgressIndicator(color: Colors.white) : const Text('Enviar Propuesta', style: TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold)))),
+                            ],
+                          ),
                         ),
-                        const SizedBox(height: 30),
-                        SizedBox(width: double.infinity, height: 55, child: ElevatedButton(onPressed: enviando ? null : enviarPropuesta, style: ElevatedButton.styleFrom(backgroundColor: TruequiColors.purpura, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))), child: enviando ? const CircularProgressIndicator(color: Colors.white) : const Text('Enviar Propuesta', style: TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold)))),
-                      ],
+                      ),
                     ),
                   ),
-                ),
-              ),
+                );
+              }
             );
           },
         );
@@ -107,6 +117,9 @@ class DetalleProductoWeb extends StatelessWidget {
     final categoria = producto['categoria'] ?? 'General';
     final imagenUrl = producto['imagenUrl'];
     final vendedor = producto['vendedorNombre'] ?? producto['vendedorId'] ?? 'Comunidad UAQ';
+
+    // VALIDACIÓN: ¿Es mi propio artículo?
+    final bool esMiProducto = usuarioActual != null && usuarioActual!['correo'] == producto['vendedorId'];
 
     return Scaffold(
       backgroundColor: const Color(0xFF0D0A15),
@@ -155,7 +168,23 @@ class DetalleProductoWeb extends StatelessWidget {
                                 const SizedBox(height: 10),
                                 Text(descripcion, style: TextStyle(fontSize: 16, color: Colors.white.withOpacity(0.8), height: 1.6)),
                                 const Spacer(),
-                                SizedBox(width: double.infinity, height: 60, child: ElevatedButton(onPressed: () => _mostrarModalPropuesta(context), style: ElevatedButton.styleFrom(backgroundColor: TruequiColors.purpura, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))), child: const Text('Proponer Trueque', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)))),
+                                
+                                SizedBox(
+                                  width: double.infinity, height: 60, 
+                                  child: ElevatedButton(
+                                    // BLOQUEO DINÁMICO
+                                    onPressed: esMiProducto ? null : () => _mostrarModalPropuesta(context), 
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: esMiProducto ? Colors.white.withOpacity(0.1) : TruequiColors.purpura, 
+                                      foregroundColor: Colors.white, 
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))
+                                    ), 
+                                    child: Text(
+                                      esMiProducto ? 'Este es tu artículo' : 'Proponer Trueque', 
+                                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: esMiProducto ? Colors.white54 : Colors.white)
+                                    )
+                                  )
+                                ),
                               ],
                             ),
                           ),
