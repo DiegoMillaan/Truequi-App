@@ -1,6 +1,9 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'home_page.dart';
 import '/services/producto_service.dart'; // Importamos tu servicio de AWS
+import '/services/auth_service.dart'; // Para obtener el ID del usuario dinámicamente
 
 class PublicarPage extends StatefulWidget {
   const PublicarPage({super.key});
@@ -17,6 +20,10 @@ class _PublicarPageState extends State<PublicarPage> {
   final _descripcionController = TextEditingController();
   final _precioController = TextEditingController();
   
+  // Variables para la imagen
+  File? _imagenSeleccionada;
+  final ImagePicker _picker = ImagePicker();
+
   // Categorías sincronizadas con el backend
   String _categoriaSeleccionada = 'Electrónica';
   final List<String> _categorias = [
@@ -37,16 +44,81 @@ class _PublicarPageState extends State<PublicarPage> {
     super.dispose();
   }
 
-  // Enviar datos usando ProductoService hacia AWS con validación profesional
+  // Método para capturar o seleccionar la imagen
+  Future<void> _obtenerImagen(ImageSource origen) async {
+    final XFile? imagen = await _picker.pickImage(
+      source: origen,
+      imageQuality: 80, // Comprimimos para facilitar subida a AWS
+    );
+
+    if (imagen != null) {
+      setState(() {
+        _imagenSeleccionada = File(imagen.path);
+      });
+    }
+  }
+
+  // Bottom Sheet para elegir entre Cámara o Galería
+  void _mostrarOpcionesDeImagen(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Wrap(
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.camera_alt_rounded, color: TruequiColors.purpura),
+                  title: const Text('Tomar Foto', style: TextStyle(fontWeight: FontWeight.bold)),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _obtenerImagen(ImageSource.camera);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.photo_library_rounded, color: TruequiColors.purpura),
+                  title: const Text('Elegir de Galería', style: TextStyle(fontWeight: FontWeight.bold)),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _obtenerImagen(ImageSource.gallery);
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // Enviar datos hacia AWS
   Future<void> _publicarTrueque() async {
     if (!_formKey.currentState!.validate()) {
       return; 
+    }
+
+    if (_imagenSeleccionada == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Por favor, selecciona una foto de tu artículo.'), backgroundColor: Colors.redAccent),
+      );
+      return;
     }
 
     setState(() => _isPublishing = true);
 
     String textoPrecio = _precioController.text.replaceAll(RegExp(r'[^0-9.]'), '');
     double precioFinal = double.tryParse(textoPrecio) ?? 1.0;
+    
+    // Obtenemos tu ID dinámico
+    final miUsuarioId = await AuthService.obtenerMiUsuarioId();
+
+    // AQUÍ DEBERÍAS CONECTAR LA LÓGICA DE SUBIR LA IMAGEN A S3
+    // Ejemplo: final imageUrlS3 = await servicio.subirImagenAWS(_imagenSeleccionada!);
+    final String imagenUrlDummy = 'https://truequi-images-dm2026.s3.amazonaws.com/dummy/default.jpg';
 
     final productoData = {
       'id': DateTime.now().millisecondsSinceEpoch.toString(),
@@ -54,12 +126,11 @@ class _PublicarPageState extends State<PublicarPage> {
       'descripcion': _descripcionController.text.trim(),
       'precio': precioFinal,
       'categoria': _categoriaSeleccionada,
-      'vendedorId': '1',
-      'imagenUrl': 'https://truequi-images-dm2026.s3.amazonaws.com/dummy/default.jpg',
+      'vendedorId': miUsuarioId.isNotEmpty ? miUsuarioId : '1', // ID Real
+      'imagenUrl': imagenUrlDummy, // TODO: Cambiar por la URL real que te devuelva AWS S3
     };
 
     final servicio = ProductoService();
-    // Ahora recibimos un mapa con 'exito' y 'mensaje'
     final resultado = await servicio.crearProducto(productoData);
 
     if (!mounted) return;
@@ -74,8 +145,10 @@ class _PublicarPageState extends State<PublicarPage> {
       _tituloController.clear();
       _descripcionController.clear();
       _precioController.clear();
+      setState(() {
+        _imagenSeleccionada = null; // Limpiamos la imagen
+      });
     } else {
-      // Mostramos el mensaje exacto que nos devolvió el servidor
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(resultado['mensaje']), backgroundColor: Colors.redAccent),
       );
@@ -87,9 +160,6 @@ class _PublicarPageState extends State<PublicarPage> {
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
       slivers: [
-        // ==========================================
-        // HEADER: TÍTULO
-        // ==========================================
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(24, 20, 24, 15),
@@ -110,10 +180,6 @@ class _PublicarPageState extends State<PublicarPage> {
             ),
           ),
         ),
-
-        // ==========================================
-        // FORMULARIO CON GLASSMORPHISM Y FORM
-        // ==========================================
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -132,43 +198,59 @@ class _PublicarPageState extends State<PublicarPage> {
                 ],
               ),
               child: Form(
-                key: _formKey, // Enlazamos la llave global del formulario
+                key: _formKey,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Simulación de carga de foto
-                    Container(
-                      height: 120,
-                      decoration: BoxDecoration(
-                        color: TruequiColors.purpura.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(24),
-                        border: Border.all(
-                          color: TruequiColors.purpura.withValues(alpha: 0.3),
-                          style: BorderStyle.solid,
-                          width: 1.5,
+                    
+                    // ==========================================
+                    // COMPONENTE DE SELECCIÓN DE IMAGEN
+                    // ==========================================
+                    GestureDetector(
+                      onTap: () => _mostrarOpcionesDeImagen(context),
+                      child: Container(
+                        height: 160,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: TruequiColors.purpura.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(
+                            color: TruequiColors.purpura.withValues(alpha: 0.3),
+                            style: BorderStyle.solid,
+                            width: 1.5,
+                          ),
                         ),
-                      ),
-                      child: Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.camera_alt_rounded, size: 36, color: TruequiColors.purpura.withValues(alpha: 0.7)),
-                            const SizedBox(height: 6),
-                            Text(
-                              'Añadir foto del artículo',
-                              style: TextStyle(
-                                color: TruequiColors.purpura.withValues(alpha: 0.8),
-                                fontWeight: FontWeight.w600,
-                                fontSize: 13,
+                        child: _imagenSeleccionada != null
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.circular(22),
+                                child: Image.file(
+                                  _imagenSeleccionada!,
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                ),
+                              )
+                            : Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.camera_alt_rounded, size: 36, color: TruequiColors.purpura.withValues(alpha: 0.7)),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      'Añadir foto del artículo',
+                                      style: TextStyle(
+                                        color: TruequiColors.purpura.withValues(alpha: 0.8),
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
                       ),
                     ),
                     const SizedBox(height: 20),
 
-                    // Campo: Título con validador profesional
+                    // Campo: Título
                     const Text('¿Qué ofreces?', style: TextStyle(fontWeight: FontWeight.bold, color: TruequiColors.textoOscuro)),
                     const SizedBox(height: 8),
                     _buildTextFormField(
@@ -176,19 +258,14 @@ class _PublicarPageState extends State<PublicarPage> {
                       hintText: 'Ej. Calculadora Científica Casio',
                       icon: Icons.inventory_2_rounded,
                       validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Por favor ingresa un título';
-                        }
-                        // Sincronizado con la regla de AWS (5 a 80 caracteres)
-                        if (value.trim().length < 5 || value.trim().length > 80) {
-                          return 'El título debe tener entre 5 y 80 caracteres';
-                        }
+                        if (value == null || value.trim().isEmpty) return 'Por favor ingresa un título';
+                        if (value.trim().length < 5 || value.trim().length > 80) return 'El título debe tener entre 5 y 80 caracteres';
                         return null;
                       },
                     ),
                     const SizedBox(height: 16),
 
-                    // Campo: Descripción / Qué buscas con validador
+                    // Campo: Descripción
                     const Text('Descripción y qué buscas a cambio', style: TextStyle(fontWeight: FontWeight.bold, color: TruequiColors.textoOscuro)),
                     const SizedBox(height: 8),
                     _buildTextFormField(
@@ -197,18 +274,14 @@ class _PublicarPageState extends State<PublicarPage> {
                       icon: Icons.notes_rounded,
                       maxLines: 3,
                       validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Por favor ingresa una descripción';
-                        }
-                        if (value.trim().length < 10) {
-                          return 'Describe un poco mejor (mínimo 10 caracteres)';
-                        }
+                        if (value == null || value.trim().isEmpty) return 'Por favor ingresa una descripción';
+                        if (value.trim().length < 10) return 'Describe un poco mejor (mínimo 10 caracteres)';
                         return null;
                       },
                     ),
                     const SizedBox(height: 16),
 
-                    // Campo: Valor / Precio estimado con validación estricta de números y límites
+                    // Campo: Precio
                     const Text('Valor estimado (MXN)', style: TextStyle(fontWeight: FontWeight.bold, color: TruequiColors.textoOscuro)),
                     const SizedBox(height: 8),
                     _buildTextFormField(
@@ -217,24 +290,16 @@ class _PublicarPageState extends State<PublicarPage> {
                       icon: Icons.attach_money_rounded,
                       keyboardType: TextInputType.number,
                       validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Por favor ingresa un valor estimado';
-                        }
-                        final textoLimpio = value.replaceAll(RegExp(r'[^0-9.]'), '');
-                        final numero = double.tryParse(textoLimpio);
-                        
-                        if (numero == null || numero <= 0) {
-                          return 'El precio debe ser un número positivo mayor a 0';
-                        }
-                        if (numero > 1000000) {
-                          return 'El valor no puede superar 1,000,000 MXN'; // Bloquea precios absurdos
-                        }
+                        if (value == null || value.trim().isEmpty) return 'Por favor ingresa un valor estimado';
+                        final numero = double.tryParse(value.replaceAll(RegExp(r'[^0-9.]'), ''));
+                        if (numero == null || numero <= 0) return 'El precio debe ser positivo';
+                        if (numero > 1000000) return 'El valor no puede superar 1,000,000 MXN';
                         return null;
                       },
                     ),
                     const SizedBox(height: 16),
 
-                    // Selector de Categoría (Sincronizado con DynamoDB)
+                    // Categoría
                     const Text('Categoría', style: TextStyle(fontWeight: FontWeight.bold, color: TruequiColors.textoOscuro)),
                     const SizedBox(height: 8),
                     Container(
@@ -250,9 +315,7 @@ class _PublicarPageState extends State<PublicarPage> {
                           isExpanded: true,
                           dropdownColor: Colors.white,
                           style: const TextStyle(color: TruequiColors.textoOscuro, fontSize: 14, fontWeight: FontWeight.w500),
-                          items: _categorias.map((cat) {
-                            return DropdownMenuItem(value: cat, child: Text(cat));
-                          }).toList(),
+                          items: _categorias.map((cat) => DropdownMenuItem(value: cat, child: Text(cat))).toList(),
                           onChanged: (val) {
                             if (val != null) setState(() => _categoriaSeleccionada = val);
                           },
@@ -261,7 +324,7 @@ class _PublicarPageState extends State<PublicarPage> {
                     ),
                     const SizedBox(height: 24),
 
-                    // Botón de Publicar
+                    // Botón Publicar
                     SizedBox(
                       width: double.infinity,
                       height: 52,
@@ -291,14 +354,11 @@ class _PublicarPageState extends State<PublicarPage> {
             ),
           ),
         ),
-
-        // Espacio para la barra flotante inferior
         const SliverToBoxAdapter(child: SizedBox(height: 120)),
       ],
     );
   }
 
-  // Método actualizado a TextFormField para soportar validadores profesionales
   Widget _buildTextFormField({
     required TextEditingController controller,
     required String hintText,
