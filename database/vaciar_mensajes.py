@@ -5,6 +5,8 @@ dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
 def purgar_mensajes():
     print("Borrando todo el historial de chats en AWS DynamoDB...")
     tabla = dynamodb.Table('Mensajes')
+    
+    # Escanea todos los registros existentes
     scan = tabla.scan()
     items = scan.get('Items', [])
     
@@ -12,6 +14,7 @@ def purgar_mensajes():
         print("La tabla ya está vacía. ¡No hay nada que borrar!")
         return
 
+    # Borra cada registro encontrado usando un batch_writer para mayor velocidad
     with tabla.batch_writer() as batch:
         for each in items:
             batch.delete_item(Key={'id': each['id']})
