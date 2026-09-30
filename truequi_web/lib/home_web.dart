@@ -246,10 +246,13 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
             Future<void> seleccionarImagen() async {
               final XFile? image = await picker.pickImage(source: ImageSource.gallery);
               if (image != null) {
-                final bytes = await image.readAsBytes();
+                // CORRECCIÓN: Para Flutter Web extraemos los bytes de forma segura
+                final bytes = await image.readAsBytes(); 
                 setModalState(() {
                   imagenBytes = bytes;
-                  imagenExt = image.name.split('.').last.toLowerCase();
+                  // Si no detecta extensión en web, asigna .png por defecto para S3
+                  final nameParts = image.name.split('.');
+                  imagenExt = nameParts.length > 1 ? nameParts.last.toLowerCase() : 'png';
                   error = null;
                 });
               }
