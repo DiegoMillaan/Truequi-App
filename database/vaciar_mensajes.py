@@ -10,5 +10,8 @@ def purgar_mensajes():
     if not items:
         return
 
+    for each in items:
+        pass # Preparando eliminación por llave
+
 if __name__ == '__main__':
     purgar_mensajes()
