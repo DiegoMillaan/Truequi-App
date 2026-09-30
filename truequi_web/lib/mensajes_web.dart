@@ -225,8 +225,11 @@ class _MensajesWebState extends State<MensajesWeb> with SingleTickerProviderStat
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
                             color: isSelected ? Colors.white.withOpacity(0.1) : Colors.transparent,
-                            border: Border(bottom: BorderSide(color: Colors.white.withOpacity(0.05))),
-                            border: isSelected ? Border(left: BorderSide(color: colorAcento, width: 4)) : null,
+                            // CORRECCIÓN: Unificamos el borde inferior y el izquierdo en un solo parámetro
+                            border: Border(
+                              bottom: BorderSide(color: Colors.white.withOpacity(0.05)),
+                              left: isSelected ? BorderSide(color: colorAcento, width: 4) : BorderSide.none,
+                            ),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
