@@ -42,6 +42,11 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
   bool _isLoadingCatalog = true;
   Map<String, dynamic>? _usuarioActual;
 
+  // NUEVO: Variables para Exploración y Búsqueda
+  String _busqueda = '';
+  String _categoriaSeleccionadaFiltro = 'Todas';
+  final List<String> _categorias = ['Todas', 'Electrónica', 'Hogar', 'Ropa', 'Coleccionables', 'Deportes', 'Libros', 'Accesorios'];
+
   @override
   void initState() {
     super.initState();
@@ -69,6 +74,28 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
     super.dispose();
   }
 
+  // ==========================================
+  // LÓGICA DE FILTRADO DINÁMICO
+  // ==========================================
+  List<dynamic> get _productosFiltrados {
+    return _productos.where((p) {
+      final titulo = p['titulo'].toString().toLowerCase();
+      final descripcion = p['descripcion'].toString().toLowerCase();
+      final matchBusqueda = titulo.contains(_busqueda.toLowerCase()) || descripcion.contains(_busqueda.toLowerCase());
+      final matchCategoria = _categoriaSeleccionadaFiltro == 'Todas' || p['categoria'] == _categoriaSeleccionadaFiltro;
+      return matchBusqueda && matchCategoria;
+    }).toList();
+  }
+
+  List<dynamic> get _productosDestacados {
+    // Simulamos destacados tomando los 5 más recientes o de mayor valor
+    if (_productos.length <= 5) return _productos;
+    return _productos.take(5).toList(); 
+  }
+
+  // ==========================================
+  // MODALES (Mantiene tu lógica intacta)
+  // ==========================================
   void _mostrarLogin() {
     final nombreController = TextEditingController(); 
     final correoController = TextEditingController();
@@ -78,12 +105,10 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
     String? error;
 
     showDialog(
-      context: context,
-      barrierColor: Colors.black.withOpacity(0.6), 
+      context: context, barrierColor: Colors.black.withOpacity(0.6), 
       builder: (dialogContext) {
         return StatefulBuilder(
           builder: (context, setModalState) {
-
             GoogleAuthService().listenToAuthentication(
               onSuccess: (usuarioData) async {
                 if (!dialogContext.mounted) return;
@@ -99,13 +124,12 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
               final correo = correoController.text.trim();
               final password = passwordController.text;
 
-              if (esRegistro && nombre.isEmpty) { setModalState(() => error = 'Por favor ingresa tu nombre.'); return; }
+              if (esRegistro && nombre.isEmpty) { setModalState(() => error = 'Ingresa tu nombre.'); return; }
               if (correo.isEmpty || password.isEmpty) { setModalState(() => error = 'Completa todos los campos.'); return; }
-              if (!RegExp(r'^[\w\.-]+@[\w\.-]+\.\w+$').hasMatch(correo)) { setModalState(() => error = 'Ingresa un correo válido.'); return; }
+              if (!RegExp(r'^[\w\.-]+@[\w\.-]+\.\w+$').hasMatch(correo)) { setModalState(() => error = 'Correo inválido.'); return; }
               if (password.length < 5) { setModalState(() => error = 'Mínimo 5 caracteres.'); return; }
 
               setModalState(() { cargando = true; error = null; });
-
               try {
                 final urlActual = esRegistro ? _registroUrl : _loginUrl;
                 final response = await http.post(Uri.parse(urlActual), headers: {'Content-Type': 'application/json'}, body: jsonEncode({'nombre': nombre, 'correo': correo, 'password': password, 'rol': 'Usuario'}));
@@ -181,14 +205,8 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
     );
   }
 
-  // ============================================================
-  // MODAL: SUBIR ARTÍCULO (GLASSMORPHISM + CORRECCIÓN WEB)
-  // ============================================================
   void _mostrarPublicar() {
-    if (_usuarioActual == null) {
-      _mostrarLogin(); 
-      return;
-    }
+    if (_usuarioActual == null) { _mostrarLogin(); return; }
     
     final tituloController = TextEditingController();
     final descripcionController = TextEditingController();
@@ -207,36 +225,25 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
         return StatefulBuilder(
           builder: (context, setModalState) {
 
-            // CORRECCIÓN estricta para leer imágenes en Flutter Web
             Future<void> seleccionarImagen() async {
               try {
-                // 1. Limpiamos cualquier error previo
                 setModalState(() => error = null); 
-                
                 final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-                
                 if (image != null) {
-                  // 2. Extraemos los bytes de forma segura para Web
                   final bytes = await image.readAsBytes(); 
-                  
                   setModalState(() {
                     imagenBytes = bytes;
-                    
-                    // 3. Extracción de formato a prueba de fallos de navegador
                     if (image.name.contains('.')) {
                       imagenExt = image.name.split('.').last.toLowerCase();
                     } else if (image.mimeType != null && image.mimeType!.contains('/')) {
                       imagenExt = image.mimeType!.split('/').last.toLowerCase();
                     } else {
-                      imagenExt = 'png'; // Fallback por defecto para S3
+                      imagenExt = 'png'; 
                     }
                     error = null;
                   });
                 }
-              } catch (e) {
-                // 4. Si el navegador bloquea la acción, imprimimos el error EXACTO
-                setModalState(() => error = 'Fallo en navegador: $e');
-              }
+              } catch (e) { setModalState(() => error = 'Fallo en navegador: $e'); }
             }
 
             Future<void> publicarArticulo() async {
@@ -330,7 +337,7 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
                                           child: DropdownButtonHideUnderline(
                                             child: DropdownButton<String>(
                                               value: categoriaSeleccionada, isExpanded: true, dropdownColor: const Color(0xFF2A1B54), style: const TextStyle(color: Colors.white, fontSize: 16), icon: Icon(Icons.keyboard_arrow_down, color: Colors.white.withOpacity(0.7)),
-                                              items: ['Electrónica', 'Hogar', 'Ropa', 'Coleccionables', 'Deportes', 'Libros', 'Accesorios'].map((String valor) => DropdownMenuItem<String>(value: valor, child: Text(valor))).toList(),
+                                              items: _categorias.where((c) => c != 'Todas').map((String valor) => DropdownMenuItem<String>(value: valor, child: Text(valor))).toList(),
                                               onChanged: (nuevoValor) { setModalState(() { categoriaSeleccionada = nuevoValor!; }); },
                                             ),
                                           ),
@@ -359,6 +366,9 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
     );
   }
 
+  // ============================================================
+  // CONSTRUCCIÓN DE LA PANTALLA PRINCIPAL
+  // ============================================================
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -383,6 +393,7 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
           CustomScrollView(
             physics: const BouncingScrollPhysics(),
             slivers: [
+              // 1. NAVBAR
               SliverAppBar(
                 pinned: true, expandedHeight: 90, collapsedHeight: 90, backgroundColor: Colors.white.withOpacity(0.5),
                 flexibleSpace: ClipRRect(
@@ -402,8 +413,7 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
                             TextButton.icon(onPressed: _mostrarLogin, icon: const Icon(Icons.person_outline, color: TruequiColors.textoOscuro), label: const Text('Ingresar', style: TextStyle(color: TruequiColors.textoOscuro, fontWeight: FontWeight.bold))),
                             const SizedBox(width: 20),
                             ElevatedButton(onPressed: _mostrarLogin, style: ElevatedButton.styleFrom(backgroundColor: TruequiColors.purpura, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 18), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)), elevation: 10, shadowColor: TruequiColors.purpura.withOpacity(0.4)), child: const Text('Iniciar sesión', style: TextStyle(fontWeight: FontWeight.bold))),
-                          ] 
-                          else ...[
+                          ] else ...[
                             TextButton.icon(
                               onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => MensajesWeb(usuarioActual: _usuarioActual!))), 
                               icon: const Icon(Icons.chat_bubble_outline, color: TruequiColors.textoOscuro), 
@@ -412,7 +422,6 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
                             const SizedBox(width: 20),
                             OutlinedButton.icon(onPressed: _mostrarPublicar, icon: const Icon(Icons.add), label: const Text('Subir artículo'), style: OutlinedButton.styleFrom(foregroundColor: TruequiColors.purpura, side: BorderSide(color: TruequiColors.purpura.withOpacity(0.5), width: 2), padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)))),
                             const SizedBox(width: 20),
-                            
                             GestureDetector(
                               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PerfilWeb(usuario: _usuarioActual!))),
                               child: Container(
@@ -433,6 +442,7 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
                 ),
               ),
 
+              // 2. HERO BANNER + BUSCADOR INTEGRADO
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.all(50.0),
@@ -451,9 +461,25 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Container(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10), decoration: BoxDecoration(color: TruequiColors.amarillo.withOpacity(0.2), borderRadius: BorderRadius.circular(20)), child: const Text('Bienvenido al futuro del intercambio', style: TextStyle(color: Color(0xFFD48B00), fontWeight: FontWeight.bold))),
+                                  Container(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10), decoration: BoxDecoration(color: TruequiColors.amarillo.withOpacity(0.2), borderRadius: BorderRadius.circular(20)), child: const Text('El futuro del intercambio', style: TextStyle(color: Color(0xFFD48B00), fontWeight: FontWeight.bold))),
                                   const SizedBox(height: 25),
                                   const Text('Cambia lo que tienes.\nEncuentra lo que buscas.', style: TextStyle(fontSize: 54, fontWeight: FontWeight.w900, color: TruequiColors.textoOscuro, height: 1.1, letterSpacing: -2)),
+                                  const SizedBox(height: 40),
+                                  
+                                  // BARRA DE BÚSQUEDA DE CRISTAL
+                                  Container(
+                                    width: 600,
+                                    decoration: BoxDecoration(color: Colors.white.withOpacity(0.4), borderRadius: BorderRadius.circular(30), border: Border.all(color: Colors.white.withOpacity(0.8), width: 2), boxShadow: [BoxShadow(color: TruequiColors.purpura.withOpacity(0.1), blurRadius: 20, offset: const Offset(0, 10))]),
+                                    child: TextField(
+                                      onChanged: (val) => setState(() => _busqueda = val),
+                                      style: const TextStyle(fontSize: 18, color: TruequiColors.textoOscuro, fontWeight: FontWeight.w600),
+                                      decoration: InputDecoration(
+                                        hintText: 'Explora artículos, tecnología, libros...', hintStyle: TextStyle(color: TruequiColors.textoOscuro.withOpacity(0.5)),
+                                        prefixIcon: const Padding(padding: EdgeInsets.symmetric(horizontal: 20), child: Icon(Icons.search_rounded, color: TruequiColors.purpura, size: 28)),
+                                        border: InputBorder.none, contentPadding: const EdgeInsets.symmetric(vertical: 20),
+                                      ),
+                                    ),
+                                  )
                                 ],
                               ),
                             ),
@@ -465,23 +491,103 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
                 ),
               ),
 
-              _isLoadingCatalog
-                ? const SliverToBoxAdapter(child: Center(child: CircularProgressIndicator(color: TruequiColors.purpura)))
-                : SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 20),
-                    sliver: SliverGrid(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                          return GestureDetector(
-                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => DetalleProductoWeb(producto: _productos[index], usuarioActual: _usuarioActual))),
-                            child: _TarjetaProductoWeb(producto: _productos[index]),
-                          );
-                        },
-                        childCount: _productos.length
-                      ),
-                      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(maxCrossAxisExtent: 320, mainAxisExtent: 380, crossAxisSpacing: 30, mainAxisSpacing: 30),
+              // 3. VITRINA DE DESTACADOS (El "Estante de Vidrio")
+              if (!_isLoadingCatalog && _busqueda.isEmpty && _categoriaSeleccionadaFiltro == 'Todas') ...[
+                const SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 20),
+                    child: Text('Novedades', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: TruequiColors.textoOscuro, letterSpacing: -1)),
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: SizedBox(
+                    height: 420,
+                    child: Stack(
+                      children: [
+                        // ESTANTE BRILLANTE (Luz de neón proyectada en cristal)
+                        Positioned(
+                          bottom: 30, left: 50, right: 50,
+                          child: Container(
+                            height: 10,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.5), borderRadius: BorderRadius.circular(100),
+                              boxShadow: [BoxShadow(color: TruequiColors.purpura.withOpacity(0.3), blurRadius: 20, spreadRadius: 5, offset: const Offset(0, 5))],
+                            ),
+                          ),
+                        ),
+                        // OBJETOS EN LA VITRINA
+                        ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 50),
+                          scrollDirection: Axis.horizontal,
+                          itemCount: _productosDestacados.length,
+                          itemBuilder: (context, index) {
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 30, bottom: 40),
+                              child: SizedBox(
+                                width: 320,
+                                child: GestureDetector(
+                                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => DetalleProductoWeb(producto: _productosDestacados[index], usuarioActual: _usuarioActual))),
+                                  child: _TarjetaProductoWeb(producto: _productosDestacados[index], destacada: true),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
                     ),
                   ),
+                ),
+              ],
+
+              // 4. PÍLDORAS DE CATEGORÍAS (Filtros Glass)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 20),
+                  child: Row(
+                    children: [
+                      const Text('Explorar Catálogo', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: TruequiColors.textoOscuro, letterSpacing: -1)),
+                      const Spacer(),
+                      Wrap(
+                        spacing: 10,
+                        children: _categorias.map((cat) {
+                          final bool isSelected = _categoriaSeleccionadaFiltro == cat;
+                          return ChoiceChip(
+                            label: Text(cat, style: TextStyle(fontWeight: FontWeight.bold, color: isSelected ? Colors.white : TruequiColors.textoOscuro)),
+                            selected: isSelected,
+                            selectedColor: TruequiColors.purpura,
+                            backgroundColor: Colors.white.withOpacity(0.4),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: BorderSide(color: isSelected ? TruequiColors.purpura : Colors.white.withOpacity(0.8), width: 1.5)),
+                            onSelected: (selected) => setState(() => _categoriaSeleccionadaFiltro = cat),
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // 5. GRID DE PRODUCTOS FILTRADOS
+              _isLoadingCatalog
+                ? const SliverToBoxAdapter(child: SizedBox(height: 300, child: Center(child: CircularProgressIndicator(color: TruequiColors.purpura))))
+                : _productosFiltrados.isEmpty
+                    ? SliverToBoxAdapter(child: SizedBox(height: 300, child: Center(child: Text('No hay productos que coincidan con tu búsqueda 🔍', style: TextStyle(fontSize: 20, color: TruequiColors.textoOscuro.withOpacity(0.5))))))
+                    : SliverPadding(
+                        padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 20),
+                        sliver: SliverGrid(
+                          delegate: SliverChildBuilderDelegate(
+                            (context, index) {
+                              return GestureDetector(
+                                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => DetalleProductoWeb(producto: _productosFiltrados[index], usuarioActual: _usuarioActual))),
+                                child: _TarjetaProductoWeb(producto: _productosFiltrados[index], destacada: false),
+                              );
+                            },
+                            childCount: _productosFiltrados.length
+                          ),
+                          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(maxCrossAxisExtent: 320, mainAxisExtent: 380, crossAxisSpacing: 30, mainAxisSpacing: 30),
+                        ),
+                      ),
+                      
+              const SliverToBoxAdapter(child: SizedBox(height: 100)), // Espaciador final
             ],
           ),
         ],
@@ -490,9 +596,13 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
   }
 }
 
+// ==========================================
+// TARJETA DE PRODUCTO LIQUID GLASS
+// ==========================================
 class _TarjetaProductoWeb extends StatefulWidget {
   final Map<String, dynamic> producto;
-  const _TarjetaProductoWeb({required this.producto});
+  final bool destacada;
+  const _TarjetaProductoWeb({required this.producto, this.destacada = false});
   @override
   State<_TarjetaProductoWeb> createState() => _TarjetaProductoWebState();
 }
@@ -503,18 +613,29 @@ class _TarjetaProductoWebState extends State<_TarjetaProductoWeb> {
     return MouseRegion(
       onEnter: (_) => setState(() => hover = true), onExit: (_) => setState(() => hover = false),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        transform: Matrix4.translationValues(0, hover ? -15 : 0, 0),
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOutExpo,
+        transform: Matrix4.translationValues(0, hover ? -15 : 0, 0)..scale(hover ? 1.03 : 1.0),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(30),
           child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: hover ? 20 : 10, sigmaY: hover ? 20 : 10),
+            filter: ImageFilter.blur(sigmaX: widget.destacada ? 25 : 15, sigmaY: widget.destacada ? 25 : 15),
             child: Container(
-              decoration: BoxDecoration(color: Colors.white.withOpacity(hover ? 0.6 : 0.4), borderRadius: BorderRadius.circular(30), border: Border.all(color: Colors.white.withOpacity(0.8), width: 1.5), boxShadow: [BoxShadow(color: TruequiColors.purpura.withOpacity(hover ? 0.15 : 0.05), blurRadius: hover ? 40 : 20, offset: Offset(0, hover ? 20 : 10))]),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(hover ? 0.7 : (widget.destacada ? 0.5 : 0.4)), 
+                borderRadius: BorderRadius.circular(30), 
+                border: Border.all(color: Colors.white.withOpacity(0.9), width: widget.destacada ? 2 : 1.5), 
+                boxShadow: [BoxShadow(color: TruequiColors.purpura.withOpacity(hover ? 0.2 : (widget.destacada ? 0.1 : 0.05)), blurRadius: hover ? 40 : 20, offset: Offset(0, hover ? 20 : 10))]
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(flex: 5, child: Container(decoration: BoxDecoration(borderRadius: const BorderRadius.vertical(top: Radius.circular(30)), image: DecorationImage(image: NetworkImage(widget.producto['imagenUrl'] ?? 'https://via.placeholder.com/200'), fit: BoxFit.cover)))),
+                  Expanded(flex: 5, child: Stack(
+                    children: [
+                      Container(decoration: BoxDecoration(borderRadius: const BorderRadius.vertical(top: Radius.circular(30)), image: DecorationImage(image: NetworkImage(widget.producto['imagenUrl'] ?? 'https://via.placeholder.com/200'), fit: BoxFit.cover))),
+                      if (widget.destacada) Positioned(top: 15, left: 15, child: Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), decoration: BoxDecoration(color: TruequiColors.amarillo, borderRadius: BorderRadius.circular(20)), child: const Row(children: [Icon(Icons.local_fire_department_rounded, color: Colors.white, size: 16), SizedBox(width: 5), Text('HOT', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12))]))),
+                    ],
+                  )),
                   Expanded(flex: 4, child: Padding(padding: const EdgeInsets.all(24), child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), decoration: BoxDecoration(color: TruequiColors.purpura.withOpacity(0.1), borderRadius: BorderRadius.circular(10)), child: Text(widget.producto['categoria'] ?? 'General', style: const TextStyle(color: TruequiColors.purpura, fontSize: 12, fontWeight: FontWeight.bold))), Text(widget.producto['titulo'] ?? 'Sin título', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: TruequiColors.textoOscuro), maxLines: 2, overflow: TextOverflow.ellipsis), Row(children: [const Icon(Icons.attach_money_rounded, size: 20, color: TruequiColors.amarillo), const SizedBox(width: 5), Text(widget.producto['precio']?.toString() ?? '0.00', style: const TextStyle(fontSize: 16, color: Colors.black87, fontWeight: FontWeight.w900))])]))),
                 ],
               ),
