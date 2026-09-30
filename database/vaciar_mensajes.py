@@ -10,8 +10,9 @@ def purgar_mensajes():
     if not items:
         return
 
-    for each in items:
-        llave_primaria = {'id': each['id']}
+    with tabla.batch_writer() as batch:
+        for each in items:
+            batch.delete_item(Key={'id': each['id']})
 
 if __name__ == '__main__':
     purgar_mensajes()
