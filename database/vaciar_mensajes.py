@@ -2,5 +2,8 @@ import boto3
 
 dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
 
+def purgar_mensajes():
+    tabla = dynamodb.Table('Mensajes')
+
 if __name__ == '__main__':
-    pass
+    purgar_mensajes()
