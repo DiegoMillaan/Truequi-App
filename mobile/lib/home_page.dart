@@ -74,6 +74,33 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const LoginScreen()), (Route<dynamic> route) => false);
   }
 
+  // ==========================================
+  // ALGORITMO DE LAYOUT ASIMÉTRICO (ESTILO AMAZON)
+  // ==========================================
+  List<Widget> _construirGridDinamico() {
+    List<Widget> filas = [];
+    for (int i = 0; i < _productos.length; i++) {
+      // Patrón: 1 Grande, 2 Pequeñas
+      if (i % 3 == 0) {
+        filas.add(Padding(padding: const EdgeInsets.only(bottom: 20), child: _buildCardGranFormato(context, _productos[i])));
+      } else {
+        if (i + 1 < _productos.length) {
+          filas.add(Padding(padding: const EdgeInsets.only(bottom: 20), child: Row(
+            children: [
+              Expanded(child: _buildCardPequena(context, _productos[i])),
+              const SizedBox(width: 20),
+              Expanded(child: _buildCardPequena(context, _productos[i + 1])),
+            ]
+          )));
+          i++; // Saltamos el siguiente porque ya lo agrupamos en esta fila
+        } else {
+          filas.add(Padding(padding: const EdgeInsets.only(bottom: 20), child: _buildCardGranFormato(context, _productos[i])));
+        }
+      }
+    }
+    return filas;
+  }
+
   Widget _buildInicioTab(String nombreUsuario) {
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
@@ -120,37 +147,107 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             ),
           ),
         ),
-        const SliverToBoxAdapter(child: Padding(padding: EdgeInsets.symmetric(horizontal: 24, vertical: 25), child: Text('Top Matches 🔥', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)))),
+        const SliverToBoxAdapter(child: Padding(padding: EdgeInsets.symmetric(horizontal: 24, vertical: 25), child: Text('Te podria gustar...', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)))),
         
         _isLoading 
           ? const SliverToBoxAdapter(child: Center(child: CircularProgressIndicator(color: TruequiColors.amarillo)))
           : SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
-              sliver: SliverGrid(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, mainAxisSpacing: 20, crossAxisSpacing: 20, childAspectRatio: 0.65),
-                delegate: SliverChildBuilderDelegate((context, index) => _buildProductoCardGlass(context, _productos[index]), childCount: _productos.length),
-              ),
+              // Aquí inyectamos el nuevo layout asimétrico
+              sliver: SliverList(delegate: SliverChildListDelegate(_construirGridDinamico())),
             ),
         const SliverToBoxAdapter(child: SizedBox(height: 140)),
       ],
     );
   }
 
-  Widget _buildProductoCardGlass(BuildContext context, Map<String, dynamic> producto) {
+  // ==========================================
+  // TARJETA GIGANTE (MÁS INMERSIVA)
+  // ==========================================
+  Widget _buildCardGranFormato(BuildContext context, Map<String, dynamic> producto) {
+    final String heroTag = 'img_${producto['id']}';
+    
     return GestureDetector(
-      // CORRECCIÓN 1: Inyectamos el correo real a la vista del producto
-      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => DetalleProductoPage(producto: producto, miCorreo: widget.correo))),
+      onTap: () => Navigator.push(context, PageRouteBuilder(transitionDuration: const Duration(milliseconds: 600), reverseTransitionDuration: const Duration(milliseconds: 600), pageBuilder: (context, animation, secondaryAnimation) => DetalleProductoPage(producto: producto, miCorreo: widget.correo), transitionsBuilder: (context, animation, secondaryAnimation, child) { return FadeTransition(opacity: animation, child: child); })),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(32),
+        child: Container(
+          height: 320, // Altura inmersiva
+          decoration: BoxDecoration(border: Border.all(color: Colors.white.withOpacity(0.3), width: 1.5), borderRadius: BorderRadius.circular(32)),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              // IMAGEN DE FONDO CON ANIMACIÓN HERO
+              Hero(tag: heroTag, child: Image.network(producto['imagenUrl'] ?? 'https://via.placeholder.com/400', fit: BoxFit.cover)),
+              
+              // GRADIENTE DE OSCURECIMIENTO
+              Container(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, Colors.black.withOpacity(0.8)], stops: const [0.4, 1.0]))),
+              
+              // PANEL INFERIOR GLASSMORPHISM INTEGRADO
+              Positioned(
+                bottom: 0, left: 0, right: 0,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(30),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                    child: Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), border: Border(top: BorderSide(color: Colors.white.withOpacity(0.2)))),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6), decoration: BoxDecoration(color: TruequiColors.amarillo.withOpacity(0.9), borderRadius: BorderRadius.circular(12)), child: Text(producto['categoria'], style: const TextStyle(color: TruequiColors.textoOscuro, fontSize: 11, fontWeight: FontWeight.w900))),
+                          const SizedBox(height: 12),
+                          Text(producto['titulo'], style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 22, color: Colors.white, height: 1.1), maxLines: 2, overflow: TextOverflow.ellipsis),
+                          const SizedBox(height: 8),
+                          Row(children: [const Icon(Icons.attach_money_rounded, color: TruequiColors.amarillo, size: 20), Text('${producto['precio']} MXN', style: const TextStyle(color: TruequiColors.amarillo, fontSize: 18, fontWeight: FontWeight.bold))]),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ==========================================
+  // TARJETAS PEQUEÑAS (EVITANDO AMONTONAMIENTO)
+  // ==========================================
+  Widget _buildCardPequena(BuildContext context, Map<String, dynamic> producto) {
+    final String heroTag = 'img_${producto['id']}';
+    
+    return GestureDetector(
+      onTap: () => Navigator.push(context, PageRouteBuilder(transitionDuration: const Duration(milliseconds: 600), reverseTransitionDuration: const Duration(milliseconds: 600), pageBuilder: (context, animation, secondaryAnimation) => DetalleProductoPage(producto: producto, miCorreo: widget.correo), transitionsBuilder: (context, animation, secondaryAnimation, child) { return FadeTransition(opacity: animation, child: child); })),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(28),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
           child: Container(
+            height: 260,
             decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(28), border: Border.all(color: Colors.white.withOpacity(0.2), width: 1.5)),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(flex: 5, child: Container(decoration: BoxDecoration(borderRadius: const BorderRadius.vertical(top: Radius.circular(28)), image: DecorationImage(image: NetworkImage(producto['imagenUrl'] ?? 'https://via.placeholder.com/150'), fit: BoxFit.cover)))),
-                Expanded(flex: 4, child: Padding(padding: const EdgeInsets.all(16.0), child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: TruequiColors.purpura.withOpacity(0.3), borderRadius: BorderRadius.circular(8), border: Border.all(color: TruequiColors.purpura.withOpacity(0.5))), child: Text(producto['categoria'], style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold))), Text(producto['titulo'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white), maxLines: 2, overflow: TextOverflow.ellipsis), Text('\$${producto['precio']}', style: const TextStyle(color: TruequiColors.amarillo, fontSize: 16, fontWeight: FontWeight.w900))]))),
+                Expanded(flex: 5, child: Hero(tag: heroTag, child: Container(decoration: BoxDecoration(borderRadius: const BorderRadius.vertical(top: Radius.circular(26)), image: DecorationImage(image: NetworkImage(producto['imagenUrl'] ?? 'https://via.placeholder.com/150'), fit: BoxFit.cover))))),
+                Expanded(
+                  flex: 5,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: TruequiColors.purpura.withOpacity(0.4), borderRadius: BorderRadius.circular(8)), child: Text(producto['categoria'], style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                        Text(producto['titulo'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.white, height: 1.2), maxLines: 2, overflow: TextOverflow.ellipsis),
+                        Text('\$${producto['precio']}', style: const TextStyle(color: TruequiColors.amarillo, fontSize: 16, fontWeight: FontWeight.w900)),
+                      ],
+                    ),
+                  ),
+                )
               ],
             ),
           ),
@@ -163,10 +260,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     String nombreUsuario = isGuest ? 'Invitado' : widget.correo.split('@').first;
     if (!isGuest) nombreUsuario = nombreUsuario[0].toUpperCase() + nombreUsuario.substring(1);
-    
     final size = MediaQuery.of(context).size;
 
-    // CORRECCIÓN 2: Inyectamos el correo a todas las pestañas
     final List<Widget> pantallas = [
       _buildInicioTab(nombreUsuario),           
       ExplorarPage(miCorreo: widget.correo),                     
@@ -192,12 +287,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             },
           ),
           BackdropFilter(filter: ImageFilter.blur(sigmaX: 100.0, sigmaY: 100.0), child: Container(color: Colors.black.withOpacity(0.2))), 
-          
-          SafeArea(
-            bottom: false,
-            child: FadeTransition(opacity: _fadeAnimation, child: SlideTransition(position: _slideAnimation, child: IndexedStack(index: _indiceNavegacion, children: pantallas))),
-          ),
-          
+          SafeArea(bottom: false, child: FadeTransition(opacity: _fadeAnimation, child: SlideTransition(position: _slideAnimation, child: IndexedStack(index: _indiceNavegacion, children: pantallas)))),
           Positioned(
             bottom: 30, left: 24, right: 24,
             child: ClipRRect(
@@ -213,10 +303,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       _buildNavItem(Icons.home_rounded, 0),
                       _buildNavItem(Icons.explore_rounded, 1),
                       GestureDetector(
-                        onTap: () {
-                          if (isGuest) { Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginScreen())); return; }
-                          setState(() => _indiceNavegacion = 2);
-                        },
+                        onTap: () { if (isGuest) { Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginScreen())); return; } setState(() => _indiceNavegacion = 2); },
                         child: Container(width: 55, height: 55, decoration: BoxDecoration(gradient: const LinearGradient(colors: [TruequiColors.purpura, Color(0xFF8A62FF)], begin: Alignment.topLeft, end: Alignment.bottomRight), shape: BoxShape.circle, boxShadow: [BoxShadow(color: TruequiColors.purpura.withOpacity(0.5), blurRadius: 15, offset: const Offset(0, 5))]), child: const Icon(Icons.add_rounded, color: Colors.white, size: 32)),
                       ),
                       _buildNavItem(Icons.chat_bubble_rounded, 3),
@@ -235,13 +322,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Widget _buildNavItem(IconData icon, int index) {
     final isSelected = _indiceNavegacion == index;
     return GestureDetector(
-      onTap: () {
-        if (isGuest && (index == 2 || index == 3 || index == 4)) {
-          Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
-          return;
-        }
-        setState(() => _indiceNavegacion = index);
-      },
+      onTap: () { if (isGuest && (index == 2 || index == 3 || index == 4)) { Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginScreen())); return; } setState(() => _indiceNavegacion = index); },
       child: AnimatedContainer(duration: const Duration(milliseconds: 300), padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: isSelected ? Colors.white.withOpacity(0.15) : Colors.transparent, borderRadius: BorderRadius.circular(20)), child: Icon(icon, color: isSelected ? TruequiColors.amarillo : Colors.white.withOpacity(0.5), size: 28)),
     );
   }
