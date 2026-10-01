@@ -121,7 +121,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             ),
           ),
         ),
-        const SliverToBoxAdapter(child: Padding(padding: EdgeInsets.symmetric(horizontal: 24, vertical: 25), child: Text('Top Matches 🔥', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)))),
+        const SliverToBoxAdapter(child: Padding(padding: EdgeInsets.symmetric(horizontal: 24, vertical: 25), child: Text('Podria gustarte', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)))),
         
         _isLoading 
           ? const SliverToBoxAdapter(child: Center(child: CircularProgressIndicator(color: TruequiColors.amarillo)))
