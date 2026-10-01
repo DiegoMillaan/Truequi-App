@@ -16,10 +16,11 @@ class TruequiApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
         colorSchemeSeed: const Color(0xFF6B42E0),
-        scaffoldBackgroundColor: const Color(0xFFF8F9FA),
+        // CORRECCIÓN: Fondo oscuro global para evitar flashes blancos en navegación
+        scaffoldBackgroundColor: const Color(0xFF0D0A15), 
         appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.white,
-          foregroundColor: Color(0xFF101828),
+          backgroundColor: Colors.transparent,
+          foregroundColor: Colors.white,
           elevation: 0,
           centerTitle: false,
         ),
