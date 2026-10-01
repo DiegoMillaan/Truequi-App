@@ -214,3 +214,109 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       ),
     );
   }
+
+  @override
+  Widget build(BuildContext context) {
+    String nombreUsuario = widget.correo.split('@').first;
+    nombreUsuario = nombreUsuario[0].toUpperCase() + nombreUsuario.substring(1);
+    final size = MediaQuery.of(context).size;
+
+    final List<Widget> pantallas = [
+      _buildInicioTab(nombreUsuario),           
+      const ExplorarPage(),                     
+      const PublicarPage(),                     
+      const ChatsPage(),                        
+      PerfilPage(correo: widget.correo),        
+    ];
+
+    return Scaffold(
+      backgroundColor: TruequiColors.fondoClaro, // Fondo oscuro profundo
+      extendBody: true,
+      body: Stack(
+        children: [
+          // ORBES DE FONDO ANIMADOS
+          AnimatedBuilder(
+            animation: _bgController,
+            builder: (context, child) {
+              return Stack(
+                children: [
+                  Positioned(
+                    top: size.height * 0.1 + (math.sin(_bgController.value * 2 * math.pi) * 100),
+                    left: size.width * -0.2 + (math.cos(_bgController.value * 2 * math.pi) * 80),
+                    child: Container(width: size.width * 0.8, height: size.width * 0.8, decoration: BoxDecoration(shape: BoxShape.circle, color: TruequiColors.purpura.withOpacity(0.3))),
+                  ),
+                  Positioned(
+                    bottom: size.height * 0.2 + (math.cos(_bgController.value * 2 * math.pi) * 120),
+                    right: size.width * -0.2 + (math.sin(_bgController.value * 2 * math.pi) * 90),
+                    child: Container(width: size.width * 0.9, height: size.width * 0.9, decoration: BoxDecoration(shape: BoxShape.circle, color: TruequiColors.amarillo.withOpacity(0.2))),
+                  ),
+                ],
+              );
+            },
+          ),
+          // FILTRO BLUR MAESTRO PARA TODO EL FONDO
+          BackdropFilter(filter: ImageFilter.blur(sigmaX: 100.0, sigmaY: 100.0), child: Container(color: Colors.black.withOpacity(0.2))), 
+          
+          SafeArea(
+            bottom: false,
+            child: FadeTransition(opacity: _fadeAnimation, child: SlideTransition(position: _slideAnimation, child: IndexedStack(index: _indiceNavegacion, children: pantallas))),
+          ),
+          
+          // NAVBAR FLOTANTE LIQUID GLASS
+          Positioned(
+            bottom: 30, left: 24, right: 24,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(40),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+                child: Container(
+                  height: 75,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(40),
+                    border: Border.all(color: Colors.white.withOpacity(0.2), width: 1.5),
+                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 30, offset: const Offset(0, 10))],
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _buildNavItem(Icons.home_rounded, 0),
+                      _buildNavItem(Icons.explore_rounded, 1),
+                      GestureDetector(
+                        onTap: () => setState(() => _indiceNavegacion = 2),
+                        child: Container(
+                          width: 55, height: 55,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(colors: [TruequiColors.purpura, Color(0xFF8A62FF)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                            shape: BoxShape.circle,
+                            boxShadow: [BoxShadow(color: TruequiColors.purpura.withOpacity(0.5), blurRadius: 15, offset: const Offset(0, 5))],
+                          ),
+                          child: const Icon(Icons.add_rounded, color: Colors.white, size: 32),
+                        ),
+                      ),
+                      _buildNavItem(Icons.chat_bubble_rounded, 3),
+                      _buildNavItem(Icons.person_rounded, 4),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNavItem(IconData icon, int index) {
+    final isSelected = _indiceNavegacion == index;
+    return GestureDetector(
+      onTap: () => setState(() => _indiceNavegacion = index),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(color: isSelected ? Colors.white.withOpacity(0.15) : Colors.transparent, borderRadius: BorderRadius.circular(20)),
+        child: Icon(icon, color: isSelected ? TruequiColors.amarillo : Colors.white.withOpacity(0.5), size: 28),
+      ),
+    );
+  }
+}
