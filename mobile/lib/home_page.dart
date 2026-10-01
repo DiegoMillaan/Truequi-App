@@ -20,7 +20,7 @@ class TruequiColors {
 
 class HomePage extends StatefulWidget {
   final String correo;
-  const HomePage({super.key, this.correo = ''}); // Si está vacío, es modo Invitado
+  const HomePage({super.key, this.correo = ''}); 
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -36,7 +36,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   List<dynamic> _productos = [];
   bool _isLoading = true;
 
-  bool get isGuest => widget.correo.isEmpty; // 🛡️ BANDERA DE SEGURIDAD
+  bool get isGuest => widget.correo.isEmpty;
 
   @override
   void initState() {
@@ -92,7 +92,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   ],
                 ),
                 GestureDetector(
-                  // 🛡️ Si es invitado, el botón manda a Login. Si es usuario, cierra sesión.
                   onTap: isGuest ? () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginScreen())) : _cerrarSesion,
                   child: Container(
                     padding: const EdgeInsets.all(4),
@@ -121,7 +120,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             ),
           ),
         ),
-        const SliverToBoxAdapter(child: Padding(padding: EdgeInsets.symmetric(horizontal: 24, vertical: 25), child: Text('Podria gustarte', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)))),
+        const SliverToBoxAdapter(child: Padding(padding: EdgeInsets.symmetric(horizontal: 24, vertical: 25), child: Text('Top Matches 🔥', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)))),
         
         _isLoading 
           ? const SliverToBoxAdapter(child: Center(child: CircularProgressIndicator(color: TruequiColors.amarillo)))
@@ -139,7 +138,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   Widget _buildProductoCardGlass(BuildContext context, Map<String, dynamic> producto) {
     return GestureDetector(
-      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => DetalleProductoPage(producto: producto))),
+      // CORRECCIÓN 1: Inyectamos el correo real a la vista del producto
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => DetalleProductoPage(producto: producto, miCorreo: widget.correo))),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(28),
         child: BackdropFilter(
@@ -166,11 +166,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     
     final size = MediaQuery.of(context).size;
 
+    // CORRECCIÓN 2: Inyectamos el correo a todas las pestañas
     final List<Widget> pantallas = [
       _buildInicioTab(nombreUsuario),           
-      const ExplorarPage(),                     
-      const PublicarPage(),                     
-      const ChatsPage(),                        
+      ExplorarPage(miCorreo: widget.correo),                     
+      PublicarPage(miCorreo: widget.correo),                     
+      ChatsPage(miCorreo: widget.correo),                        
       PerfilPage(correo: widget.correo),        
     ];
 
@@ -235,7 +236,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     final isSelected = _indiceNavegacion == index;
     return GestureDetector(
       onTap: () {
-        // 🛡️ BLOQUEO DE SEGURIDAD PARA INVITADOS EN PESTAÑAS PRIVADAS
         if (isGuest && (index == 2 || index == 3 || index == 4)) {
           Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
           return;
