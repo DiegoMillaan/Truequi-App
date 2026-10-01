@@ -5,11 +5,11 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
-import 'home_page.dart'; // Para TruequiColors
-import '/services/auth_service.dart';
+import 'home_page.dart'; 
 
 class PublicarPage extends StatefulWidget {
-  const PublicarPage({super.key});
+  final String miCorreo; // RECIBIMOS LA IDENTIDAD REAL
+  const PublicarPage({super.key, required this.miCorreo});
 
   @override
   State<PublicarPage> createState() => _PublicarPageState();
@@ -84,9 +84,6 @@ class _PublicarPageState extends State<PublicarPage> with TickerProviderStateMix
     );
   }
 
-  // =======================================================
-  // LÓGICA DE SUBIDA A AWS S3 Y DYNAMODB
-  // =======================================================
   Future<void> _publicarTrueque() async {
     if (!_formKey.currentState!.validate()) return;
     if (_imagenSeleccionada == null) {
@@ -97,11 +94,9 @@ class _PublicarPageState extends State<PublicarPage> with TickerProviderStateMix
     setState(() => _isPublishing = true);
 
     try {
-      final miUsuarioId = await AuthService.obtenerMiUsuarioId();
       String textoPrecio = _precioController.text.replaceAll(RegExp(r'[^0-9.]'), '');
       double precioFinal = double.tryParse(textoPrecio) ?? 1.0;
 
-      // 1. Obtener URL firmada de S3
       final extensionArchivo = _imagenSeleccionada!.path.split('.').last.toLowerCase();
       final extensionValida = ['jpg', 'jpeg', 'png', 'webp'].contains(extensionArchivo) ? extensionArchivo : 'jpg';
       
@@ -112,12 +107,10 @@ class _PublicarPageState extends State<PublicarPage> with TickerProviderStateMix
       final uploadUrl = urlData['uploadUrl'];
       final publicUrl = urlData['publicUrl'];
 
-      // 2. Subir imagen a S3
       final bytes = await _imagenSeleccionada!.readAsBytes();
       final resS3 = await http.put(Uri.parse(uploadUrl), body: bytes);
       if (resS3.statusCode != 200) throw Exception('Fallo al subir la imagen');
 
-      // 3. Guardar registro en DynamoDB
       final responseDb = await http.post(
         Uri.parse('https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/productos'),
         headers: {'Content-Type': 'application/json'},
@@ -126,8 +119,8 @@ class _PublicarPageState extends State<PublicarPage> with TickerProviderStateMix
           'descripcion': _descripcionController.text.trim(),
           'precio': precioFinal,
           'categoria': _categoriaSeleccionada,
-          'vendedorId': miUsuarioId,
-          'vendedorNombre': miUsuarioId.split('@')[0], 
+          'vendedorId': widget.miCorreo, // USAMOS LA IDENTIDAD REAL
+          'vendedorNombre': widget.miCorreo.split('@')[0], 
           'imagenUrl': publicUrl,
         }),
       );
@@ -152,10 +145,9 @@ class _PublicarPageState extends State<PublicarPage> with TickerProviderStateMix
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      backgroundColor: Colors.transparent, // Hereda del stack principal
+      backgroundColor: Colors.transparent, 
       body: Stack(
         children: [
-          // ORBES DE FONDO ANIMADOS
           AnimatedBuilder(
             animation: _bgController,
             builder: (context, child) {
@@ -199,7 +191,6 @@ class _PublicarPageState extends State<PublicarPage> with TickerProviderStateMix
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // ZONA DE FOTO
                               GestureDetector(
                                 onTap: () => _mostrarOpcionesDeImagen(context),
                                 child: Container(
@@ -249,7 +240,6 @@ class _PublicarPageState extends State<PublicarPage> with TickerProviderStateMix
                               ),
                               const SizedBox(height: 35),
 
-                              // BOTÓN DE PUBLICAR
                               SizedBox(
                                 width: double.infinity, height: 55,
                                 child: ElevatedButton(
