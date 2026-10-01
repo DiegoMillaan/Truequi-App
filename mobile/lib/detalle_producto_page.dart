@@ -2,7 +2,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'home_page.dart'; // Para TruequiColors
 import 'chat_page.dart';
-import 'services/auth_service.dart'; 
+import 'services/auth_service.dart';
+import 'login_screen.dart';
 
 class DetalleProductoPage extends StatelessWidget {
   final Map<String, dynamic> producto;
@@ -109,12 +110,29 @@ class DetalleProductoPage extends StatelessWidget {
                               height: 60,
                               child: ElevatedButton(
                                 onPressed: () async {
-                                  final miId = await AuthService.obtenerMiUsuarioId();
+                                  final miIdRaw = await AuthService.obtenerMiUsuarioId();
+                                  final miId = miIdRaw.trim().toLowerCase();
+                                  final vendedorNormalizado = vendedorId.trim().toLowerCase();
+
                                   if (!context.mounted) return;
                                   
-                                  // BLOQUEO: Evitar que te compres a ti mismo
-                                  if (miId == vendedorId) {
-                                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Este es tu propio artículo.'), backgroundColor: TruequiColors.amarillo));
+                                  // 🛡️️ CANDADO 1: Bloqueo a Invitados
+                                  if (miId.isEmpty || miId == 'invitado') {
+                                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                                      content: Text('Debes iniciar sesión para proponer un trueque.', style: TextStyle(fontWeight: FontWeight.bold, color: TruequiColors.textoOscuro)), 
+                                      backgroundColor: TruequiColors.amarillo
+                                    ));
+                                    // Redirigimos al Login usando el import de login_screen.dart (asegúrate de tenerlo importado arriba si no lo está)
+                                    Navigator.push(context, MaterialPageRoute(builder: (context) => const LoginScreen()));
+                                    return;
+                                  }
+
+                                  // 🛡️ CANDADO 2: Bloqueo de Auto-Trueque
+                                  if (miId == vendedorNormalizado) {
+                                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                                      content: Text('No puedes proponerte un trueque a ti mismo.', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)), 
+                                      backgroundColor: Colors.redAccent
+                                    ));
                                     return;
                                   }
 
@@ -123,10 +141,10 @@ class DetalleProductoPage extends StatelessWidget {
                                     return;
                                   }
 
-                                  final participantes = [miId.toLowerCase(), vendedorId.toLowerCase()]..sort();
+                                  final participantes = [miId, vendedorNormalizado]..sort();
                                   final conversacionId = "${producto['id']}_${participantes[0]}_${participantes[1]}";
 
-                                  Navigator.push(context, MaterialPageRoute(builder: (context) => ChatPage(miCorreo: miId, otroCorreo: vendedorId, productoId: producto['id'].toString(), productoTitulo: titulo, conversacionId: conversacionId, esMiArticulo: false, estadoPropuesta: 'Pendiente')));
+                                  Navigator.push(context, MaterialPageRoute(builder: (context) => ChatPage(miCorreo: miId, otroCorreo: vendedorNormalizado, productoId: producto['id'].toString(), productoTitulo: titulo, conversacionId: conversacionId, esMiArticulo: false, estadoPropuesta: 'Pendiente')));
                                 },
                                 style: ElevatedButton.styleFrom(backgroundColor: TruequiColors.purpura, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)), elevation: 10, shadowColor: TruequiColors.purpura.withOpacity(0.5)),
                                 child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.swap_horiz_rounded, color: Colors.white, size: 28), SizedBox(width: 12), Text('Proponer Trueque', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white))]),
