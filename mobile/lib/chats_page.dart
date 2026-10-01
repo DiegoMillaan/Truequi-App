@@ -184,8 +184,21 @@ class _ChatsPageState extends State<ChatsPage> with SingleTickerProviderStateMix
               ],
             ),
             onTap: () {
-              // TODO: En el siguiente paso actualizaremos chat_page.dart para recibir el "hilo"
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Pronto abriremos la sala de chat')));
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ChatPage(
+                    miCorreo: _miCorreo,
+                    otroCorreo: otroUsuario,
+                    productoId: primerMsj['productoId'],
+                    productoTitulo: primerMsj['productoTitulo'],
+                    conversacionId: primerMsj['conversacionId'],
+                    esMiArticulo: esRecibido,
+                    estadoPropuesta: estado,
+                    idPrimerMensaje: primerMsj['id'],
+                  ),
+                ),
+              ).then((_) => _cargarMensajes());
             },
           ),
         );
