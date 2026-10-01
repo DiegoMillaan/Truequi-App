@@ -2,19 +2,18 @@ import 'dart:ui';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'home_page.dart'; // Para TruequiColors
+import 'home_page.dart'; 
 import 'chat_page.dart';
-import 'services/auth_service.dart';
 
 class ChatsPage extends StatefulWidget {
-  const ChatsPage({super.key});
+  final String miCorreo; // RECIBIMOS LA IDENTIDAD REAL
+  const ChatsPage({super.key, required this.miCorreo});
 
   @override
   State<ChatsPage> createState() => _ChatsPageState();
 }
 
 class _ChatsPageState extends State<ChatsPage> with SingleTickerProviderStateMixin {
-  String _miCorreo = '';
   bool _isLoading = true;
   List<dynamic> _mensajesBrutos = [];
   late TabController _tabController;
@@ -23,7 +22,7 @@ class _ChatsPageState extends State<ChatsPage> with SingleTickerProviderStateMix
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _inicializarPantalla();
+    _cargarMensajes();
   }
 
   @override
@@ -32,17 +31,10 @@ class _ChatsPageState extends State<ChatsPage> with SingleTickerProviderStateMix
     super.dispose();
   }
 
-  Future<void> _inicializarPantalla() async {
-    final id = await AuthService.obtenerMiUsuarioId();
-    if (!mounted) return;
-    setState(() => _miCorreo = id);
-    _cargarMensajes();
-  }
-
   Future<void> _cargarMensajes() async {
     setState(() => _isLoading = true);
     try {
-      final url = Uri.parse('https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/mensajes?usuario=$_miCorreo');
+      final url = Uri.parse('https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/mensajes?usuario=${widget.miCorreo}');
       final response = await http.get(url);
 
       if (response.statusCode == 200) {
@@ -58,7 +50,6 @@ class _ChatsPageState extends State<ChatsPage> with SingleTickerProviderStateMix
 
   @override
   Widget build(BuildContext context) {
-    // 1. Agrupar mensajes exactamente como en Web
     Map<String, List<dynamic>> mapaHilos = {};
     for (var m in _mensajesBrutos) {
       final cid = m['conversacionId'] ?? 'desconocido';
@@ -70,8 +61,7 @@ class _ChatsPageState extends State<ChatsPage> with SingleTickerProviderStateMix
 
     for (var hilo in mapaHilos.values) {
       hilo.sort((a, b) => a['fecha'].compareTo(b['fecha']));
-      // El primer mensaje define de quién es el artículo
-      if (hilo.first['destinatario'] == _miCorreo) {
+      if (hilo.first['destinatario'] == widget.miCorreo) {
         hilosRecibidos.add(hilo);
       } else {
         hilosEnviados.add(hilo);
@@ -79,20 +69,16 @@ class _ChatsPageState extends State<ChatsPage> with SingleTickerProviderStateMix
     }
 
     return Scaffold(
-      backgroundColor: Colors.transparent, // Hereda el fondo de HomePage
+      backgroundColor: Colors.transparent, 
       body: Column(
         children: [
-          // CABECERA Y TABS DE CRISTAL
           ClipRRect(
             borderRadius: const BorderRadius.vertical(bottom: Radius.circular(40)),
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
               child: Container(
                 padding: const EdgeInsets.fromLTRB(24, 50, 24, 10),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.08),
-                  border: Border(bottom: BorderSide(color: Colors.white.withOpacity(0.2), width: 1.5)),
-                ),
+                decoration: BoxDecoration(color: Colors.white.withOpacity(0.08), border: Border(bottom: BorderSide(color: Colors.white.withOpacity(0.2), width: 1.5))),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -101,15 +87,10 @@ class _ChatsPageState extends State<ChatsPage> with SingleTickerProviderStateMix
                     Container(
                       decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.white.withOpacity(0.2))),
                       child: TabBar(
-                        controller: _tabController,
-                        indicator: BoxDecoration(color: TruequiColors.purpura, borderRadius: BorderRadius.circular(20)),
+                        controller: _tabController, indicator: BoxDecoration(color: TruequiColors.purpura, borderRadius: BorderRadius.circular(20)),
                         labelColor: Colors.white, unselectedLabelColor: Colors.white.withOpacity(0.5),
-                        labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                        dividerColor: Colors.transparent,
-                        tabs: const [
-                          Tab(text: 'Recibidas (Tus artículos)'),
-                          Tab(text: 'Tus Propuestas'),
-                        ],
+                        labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15), dividerColor: Colors.transparent,
+                        tabs: const [Tab(text: 'Recibidas (Tus artículos)'), Tab(text: 'Tus Propuestas')],
                       ),
                     ),
                   ],
@@ -117,8 +98,6 @@ class _ChatsPageState extends State<ChatsPage> with SingleTickerProviderStateMix
               ),
             ),
           ),
-
-          // VISTAS DE LAS LISTAS
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator(color: TruequiColors.amarillo))
@@ -150,7 +129,7 @@ class _ChatsPageState extends State<ChatsPage> with SingleTickerProviderStateMix
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(24, 20, 24, 120), // Padding inferior por la navbar
+      padding: const EdgeInsets.fromLTRB(24, 20, 24, 120),
       itemCount: hilos.length,
       itemBuilder: (context, index) {
         final hilo = hilos[index];
@@ -188,7 +167,7 @@ class _ChatsPageState extends State<ChatsPage> with SingleTickerProviderStateMix
                 context,
                 MaterialPageRoute(
                   builder: (context) => ChatPage(
-                    miCorreo: _miCorreo,
+                    miCorreo: widget.miCorreo, // USAMOS LA IDENTIDAD REAL
                     otroCorreo: otroUsuario,
                     productoId: primerMsj['productoId'],
                     productoTitulo: primerMsj['productoTitulo'],
