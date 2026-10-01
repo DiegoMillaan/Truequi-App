@@ -108,28 +108,28 @@ class DetalleProductoPage extends StatelessWidget {
                     height: 56,
                     child: ElevatedButton(
                       onPressed: () async {
-                        // 1. Obtener mi ID de usuario en sesión desde AuthService
                         final miId = await AuthService.obtenerMiUsuarioId();
-
                         if (!context.mounted) return;
-
-                        // Validar si tenemos el ID del vendedor para abrir la conversación
                         if (vendedorId.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('No se encontró el identificador del usuario para iniciar el chat.')),
-                          );
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No se encontró al vendedor.')));
                           return;
                         }
 
-                        // 2. Abrir la pantalla del chat con los datos obtenidos dinámicamente
+                        // Lógica para crear un ID de sala único
+                        final participantes = [miId.toLowerCase(), vendedorId.toLowerCase()]..sort();
+                        final conversacionId = "${producto['id']}_${participantes[0]}_${participantes[1]}";
+
                         Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (context) => ChatPage(
-                              miUsuarioId: miId,
-                              destinatarioId: vendedorId,
-                              nombreDestinatario: vendedorNombre,
+                              miCorreo: miId,
+                              otroCorreo: vendedorId,
+                              productoId: producto['id'].toString(),
                               productoTitulo: titulo,
+                              conversacionId: conversacionId,
+                              esMiArticulo: false,
+                              estadoPropuesta: 'Pendiente',
                             ),
                           ),
                         );
