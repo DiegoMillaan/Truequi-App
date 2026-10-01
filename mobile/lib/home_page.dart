@@ -114,3 +114,50 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             ),
           ),
         ),
+
+        // Píldora Glass de ubicación
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.08), borderRadius: BorderRadius.circular(30),
+                border: Border.all(color: Colors.white.withOpacity(0.2), width: 1.5),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.location_on_rounded, size: 18, color: TruequiColors.amarillo),
+                  const SizedBox(width: 8),
+                  Text('UAQ - Querétaro', style: TextStyle(fontSize: 14, color: Colors.white.withOpacity(0.9), fontWeight: FontWeight.w600)),
+                ],
+              ),
+            ),
+          ),
+        ),
+
+        const SliverToBoxAdapter(
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 24, vertical: 25),
+            child: Text('Top Matches 🔥', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+          ),
+        ),
+        
+        // CUADRÍCULA DE CRISTAL
+        _isLoading 
+          ? const SliverToBoxAdapter(child: Center(child: CircularProgressIndicator(color: TruequiColors.amarillo)))
+          : SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              sliver: SliverGrid(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, mainAxisSpacing: 20, crossAxisSpacing: 20, childAspectRatio: 0.65),
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) => _buildProductoCardGlass(context, _productos[index]),
+                  childCount: _productos.length,
+                ),
+              ),
+            ),
+        const SliverToBoxAdapter(child: SizedBox(height: 140)),
+      ],
+    );
+  }
