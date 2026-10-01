@@ -260,19 +260,25 @@ def crear_mensaje(event, context):
             return respuesta(400, {"error": "El cuerpo de la petición está vacío."})
         
         body = json.loads(event['body'])
-        remitente = str(body.get('remitente', '')).strip()
-        destinatario = str(body.get('destinatario', '')).strip()
+        
+        # Normalizamos los correos para evitar fallos por mayúsculas/minúsculas
+        remitente = str(body.get('remitente', '')).strip().lower()
+        destinatario = str(body.get('destinatario', '')).strip().lower()
         producto_id = str(body.get('productoId', 'general')).strip()
         producto_titulo = str(body.get('productoTitulo', 'Artículo en Truequi')).strip()
         contenido = str(body.get('contenido', '')).strip()
 
-        if not remitente or not destinatario:
-            return respuesta(400, {"error": "Remitente y destinatario son obligatorios."})
+        # 🛡️ BLINDAJE DE NEGOCIO EN AWS
+        if not remitente or not destinatario or remitente == 'invitado':
+            return respuesta(401, {"error": "Debes iniciar sesión para enviar mensajes."})
+            
+        if remitente == destinatario:
+            return respuesta(400, {"error": "No puedes enviarte propuestas a ti mismo."})
+
         if len(contenido) < 2:
             return respuesta(400, {"error": "El mensaje o propuesta es demasiado corto."})
 
-        # Genera un ID de sala único entre ambos usuarios para ese producto
-        participantes = sorted([remitente.lower(), destinatario.lower()])
+        participantes = sorted([remitente, destinatario])
         conversacion_id = body.get('conversacionId') or f"{producto_id}_{participantes[0]}_{participantes[1]}"
 
         item = {
