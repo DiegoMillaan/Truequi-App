@@ -1,7 +1,8 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'home_page.dart';
+import 'home_page.dart'; // Para TruequiColors
 import 'chat_page.dart';
-import 'services/auth_service.dart'; // Importamos el servicio de autenticación para obtener el ID dinámico
+import 'services/auth_service.dart'; 
 
 class DetalleProductoPage extends StatelessWidget {
   final Map<String, dynamic> producto;
@@ -10,150 +11,137 @@ class DetalleProductoPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Extraemos los datos dinámicos de AWS
     final titulo = producto['titulo'] ?? 'Sin título';
     final descripcion = producto['descripcion'] ?? 'Sin descripción';
     final precio = producto['precio']?.toString() ?? '0.0';
     final categoria = producto['categoria'] ?? 'General';
     final ubicacion = producto['ubicacion'] ?? 'Querétaro';
     final imagenUrl = producto['imagenUrl'];
-    
-    // Obtenemos dinámicamente el ID y Nombre del dueño del producto desde AWS
-    final vendedorId = producto['vendedorId']?.toString() ?? producto['usuarioId']?.toString() ?? '';
-    final vendedorNombre = producto['vendedorNombre']?.toString() ?? producto['usuarioNombre']?.toString() ?? 'Propietario';
+    final vendedorId = producto['vendedorId']?.toString() ?? '';
+    final vendedorNombre = producto['vendedorNombre']?.toString() ?? 'Propietario';
+
+    final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
+      backgroundColor: TruequiColors.fondoClaro, // Nuestro fondo oscuro
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: TruequiColors.purpura),
-          onPressed: () => Navigator.pop(context),
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 10),
+          child: Container(
+            margin: const EdgeInsets.all(4),
+            decoration: BoxDecoration(color: Colors.black.withOpacity(0.4), shape: BoxShape.circle),
+            child: IconButton(icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20), onPressed: () => Navigator.pop(context)),
+          ),
         ),
       ),
-      extendBodyBehindAppBar: true,
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Imagen del producto
-            Container(
-              height: 350,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: TruequiColors.purpura.withValues(alpha: 0.1),
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(40),
-                  bottomRight: Radius.circular(40),
-                ),
-              ),
-              child: SafeArea(
-                child: Center(
+      body: Stack(
+        children: [
+          // ORBES LUMINOSOS DE FONDO
+          Positioned(top: -50, right: -50, child: Container(width: 300, height: 300, decoration: BoxDecoration(shape: BoxShape.circle, color: TruequiColors.purpura.withOpacity(0.3)), child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 80, sigmaY: 80), child: const SizedBox()))),
+          Positioned(bottom: -50, left: -50, child: Container(width: 300, height: 300, decoration: BoxDecoration(shape: BoxShape.circle, color: TruequiColors.amarillo.withOpacity(0.2)), child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 80, sigmaY: 80), child: const SizedBox()))),
+          
+          SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: Column(
+              children: [
+                // IMAGEN DEL PRODUCTO (A pantalla completa en la parte superior)
+                SizedBox(
+                  height: size.height * 0.45,
+                  width: double.infinity,
                   child: imagenUrl != null && imagenUrl.startsWith('http')
-                      ? Image.network(
-                          imagenUrl,
-                          fit: BoxFit.cover,
-                          errorBuilder: (c, e, s) => const Icon(Icons.inventory_2_rounded, size: 100, color: TruequiColors.purpura),
-                        )
-                      : const Icon(Icons.inventory_2_rounded, size: 100, color: TruequiColors.purpura),
+                      ? Image.network(imagenUrl, fit: BoxFit.cover)
+                      : Container(color: TruequiColors.purpura.withOpacity(0.2), child: const Center(child: Icon(Icons.inventory_2_rounded, size: 100, color: Colors.white54))),
                 ),
-              ),
-            ),
-            
-            // Detalles del producto
-            Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Categoría y Ubicación
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(color: TruequiColors.purpura, borderRadius: BorderRadius.circular(20)),
-                        child: Text(categoria, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
-                      ),
-                      Row(
-                        children: [
-                          const Icon(Icons.location_on_rounded, color: Colors.grey, size: 16),
-                          const SizedBox(width: 4),
-                          Text(ubicacion, style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
-                        ],
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  // Título
-                  Text(titulo, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: TruequiColors.textoOscuro, height: 1.1)),
-                  const SizedBox(height: 8),
-                  
-                  // Precio Estimado
-                  Text('Valor est: \$ $precio MXN', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: TruequiColors.amarillo)),
-                  const SizedBox(height: 24),
-                  
-                  // Descripción
-                  const Text('Descripción', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: TruequiColors.textoOscuro)),
-                  const SizedBox(height: 8),
-                  Text(descripcion, style: TextStyle(fontSize: 15, color: Colors.grey.shade700, height: 1.5)),
-                  const SizedBox(height: 40),
-                  
-                  // Botón de Acción Dinámico
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        final miId = await AuthService.obtenerMiUsuarioId();
-                        if (!context.mounted) return;
-                        if (vendedorId.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No se encontró al vendedor.')));
-                          return;
-                        }
-
-                        // Lógica para crear un ID de sala único
-                        final participantes = [miId.toLowerCase(), vendedorId.toLowerCase()]..sort();
-                        final conversacionId = "${producto['id']}_${participantes[0]}_${participantes[1]}";
-
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ChatPage(
-                              miCorreo: miId,
-                              otroCorreo: vendedorId,
-                              productoId: producto['id'].toString(),
-                              productoTitulo: titulo,
-                              conversacionId: conversacionId,
-                              esMiArticulo: false,
-                              estadoPropuesta: 'Pendiente',
+                
+                // PANEL DE DETALLES DE CRISTAL (Solapa que sube sobre la imagen)
+                Transform.translate(
+                  offset: const Offset(0, -40),
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(40)),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.fromLTRB(30, 40, 30, 80),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.08),
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(40)),
+                          border: Border(top: BorderSide(color: Colors.white.withOpacity(0.3), width: 1.5)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Container(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), decoration: BoxDecoration(color: TruequiColors.amarillo.withOpacity(0.2), borderRadius: BorderRadius.circular(20), border: Border.all(color: TruequiColors.amarillo.withOpacity(0.5))), child: Text(categoria, style: const TextStyle(color: TruequiColors.amarillo, fontWeight: FontWeight.bold, fontSize: 12))),
+                                Row(children: [const Icon(Icons.location_on_rounded, color: Colors.white54, size: 16), const SizedBox(width: 4), Text(ubicacion, style: const TextStyle(color: Colors.white54, fontWeight: FontWeight.bold))]),
+                              ],
                             ),
-                          ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: TruequiColors.purpura,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                        elevation: 0,
-                      ),
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.chat_rounded, color: Colors.white),
-                          SizedBox(width: 8),
-                          Text('Proponer Trueque', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
-                        ],
+                            const SizedBox(height: 20),
+                            Text(titulo, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Colors.white, height: 1.1)),
+                            const SizedBox(height: 10),
+                            Text('Valor est: \$ $precio MXN', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: TruequiColors.purpura)),
+                            const SizedBox(height: 30),
+                            
+                            const Text('Descripción', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+                            const SizedBox(height: 10),
+                            Text(descripcion, style: TextStyle(fontSize: 15, color: Colors.white.withOpacity(0.7), height: 1.5)),
+                            const SizedBox(height: 30),
+                            Divider(color: Colors.white.withOpacity(0.1)),
+                            const SizedBox(height: 20),
+                            
+                            Row(
+                              children: [
+                                CircleAvatar(radius: 24, backgroundColor: TruequiColors.purpura.withOpacity(0.5), child: const Icon(Icons.person, color: Colors.white)),
+                                const SizedBox(width: 15),
+                                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text('Publicado por:', style: TextStyle(color: Colors.white54, fontSize: 13)), Text(vendedorNombre, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 17))])
+                              ],
+                            ),
+                            const SizedBox(height: 40),
+                            
+                            // BOTÓN DE ACCIÓN (Proponer Trueque)
+                            SizedBox(
+                              width: double.infinity,
+                              height: 60,
+                              child: ElevatedButton(
+                                onPressed: () async {
+                                  final miId = await AuthService.obtenerMiUsuarioId();
+                                  if (!context.mounted) return;
+                                  
+                                  // BLOQUEO: Evitar que te compres a ti mismo
+                                  if (miId == vendedorId) {
+                                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Este es tu propio artículo.'), backgroundColor: TruequiColors.amarillo));
+                                    return;
+                                  }
+
+                                  if (vendedorId.isEmpty) {
+                                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No se encontró al vendedor.')));
+                                    return;
+                                  }
+
+                                  final participantes = [miId.toLowerCase(), vendedorId.toLowerCase()]..sort();
+                                  final conversacionId = "${producto['id']}_${participantes[0]}_${participantes[1]}";
+
+                                  Navigator.push(context, MaterialPageRoute(builder: (context) => ChatPage(miCorreo: miId, otroCorreo: vendedorId, productoId: producto['id'].toString(), productoTitulo: titulo, conversacionId: conversacionId, esMiArticulo: false, estadoPropuesta: 'Pendiente')));
+                                },
+                                style: ElevatedButton.styleFrom(backgroundColor: TruequiColors.purpura, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)), elevation: 10, shadowColor: TruequiColors.purpura.withOpacity(0.5)),
+                                child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.swap_horiz_rounded, color: Colors.white, size: 28), SizedBox(width: 12), Text('Proponer Trueque', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white))]),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
