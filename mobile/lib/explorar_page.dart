@@ -5,7 +5,8 @@ import '/services/producto_service.dart';
 import 'detalle_producto_page.dart';
 
 class ExplorarPage extends StatefulWidget {
-  const ExplorarPage({super.key});
+  final String miCorreo; // RECIBIMOS LA IDENTIDAD
+  const ExplorarPage({super.key, required this.miCorreo});
 
   @override
   State<ExplorarPage> createState() => _ExplorarPageState();
@@ -13,8 +14,7 @@ class ExplorarPage extends StatefulWidget {
 
 class _ExplorarPageState extends State<ExplorarPage> {
   String _categoriaSeleccionada = 'Todos';
-  String _busqueda = ''; // NUEVO: Estado del buscador
-  
+  String _busqueda = '';
   List<dynamic> _articulos = []; 
   bool _isLoading = true; 
   final List<String> _categorias = ['Todos', 'Electrónica', 'Accesorios', 'Libros', 'Hogar y Cocina', 'Mascotas'];
@@ -32,16 +32,12 @@ class _ExplorarPageState extends State<ExplorarPage> {
 
   @override
   Widget build(BuildContext context) {
-    // FILTRO INTELIGENTE (Cruza Categoría + Título + Descripción)
     final articulosFiltrados = _articulos.where((item) {
       final matchCategoria = _categoriaSeleccionada == 'Todos' || item['categoria'] == _categoriaSeleccionada;
-      
       final query = _busqueda.toLowerCase();
       final titulo = (item['titulo'] ?? '').toString().toLowerCase();
       final descripcion = (item['descripcion'] ?? '').toString().toLowerCase();
-      
       final matchBusqueda = query.isEmpty || titulo.contains(query) || descripcion.contains(query);
-      
       return matchCategoria && matchBusqueda;
     }).toList();
 
@@ -61,7 +57,6 @@ class _ExplorarPageState extends State<ExplorarPage> {
           ),
         ),
 
-        // BUSCADOR INTELIGENTE EN LIQUID GLASS
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
@@ -89,7 +84,6 @@ class _ExplorarPageState extends State<ExplorarPage> {
         ),
         const SliverToBoxAdapter(child: SizedBox(height: 10)),
 
-        // PÍLDORAS DE CATEGORÍA
         SliverToBoxAdapter(
           child: SizedBox(
             height: 45,
@@ -113,7 +107,6 @@ class _ExplorarPageState extends State<ExplorarPage> {
         ),
         const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
-        // RENDERIZADO DEL CATÁLOGO
         if (_isLoading)
           const SliverToBoxAdapter(child: Padding(padding: EdgeInsets.only(top: 60), child: Center(child: CircularProgressIndicator(color: TruequiColors.purpura))))
         else if (articulosFiltrados.isEmpty)
@@ -139,7 +132,8 @@ class _ExplorarPageState extends State<ExplorarPage> {
                   final item = articulosFiltrados[index];
                   return _buildArticuloCardGlass(
                     titulo: item['titulo'] ?? 'Sin título', precio: item['precio']?.toString() ?? '0.0', imagenUrl: item['imagenUrl'] ?? '',
-                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => DetalleProductoPage(producto: item))),
+                    // CORRECCIÓN: Inyectamos el correo real de la sesión
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => DetalleProductoPage(producto: item, miCorreo: widget.miCorreo))),
                   );
                 },
                 childCount: articulosFiltrados.length,
