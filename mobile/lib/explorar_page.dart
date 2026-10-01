@@ -13,9 +13,11 @@ class ExplorarPage extends StatefulWidget {
 
 class _ExplorarPageState extends State<ExplorarPage> {
   String _categoriaSeleccionada = 'Todos';
+  String _busqueda = ''; // NUEVO: Estado del buscador
+  
   List<dynamic> _articulos = []; 
   bool _isLoading = true; 
-  final List<String> _categorias = ['Todos', 'Electrónica', 'Accesorios', 'Libros'];
+  final List<String> _categorias = ['Todos', 'Electrónica', 'Accesorios', 'Libros', 'Hogar y Cocina', 'Mascotas'];
 
   @override
   void initState() {
@@ -30,7 +32,18 @@ class _ExplorarPageState extends State<ExplorarPage> {
 
   @override
   Widget build(BuildContext context) {
-    final articulosFiltrados = _categoriaSeleccionada == 'Todos' ? _articulos : _articulos.where((item) => item['categoria'] == _categoriaSeleccionada).toList();
+    // FILTRO INTELIGENTE (Cruza Categoría + Título + Descripción)
+    final articulosFiltrados = _articulos.where((item) {
+      final matchCategoria = _categoriaSeleccionada == 'Todos' || item['categoria'] == _categoriaSeleccionada;
+      
+      final query = _busqueda.toLowerCase();
+      final titulo = (item['titulo'] ?? '').toString().toLowerCase();
+      final descripcion = (item['descripcion'] ?? '').toString().toLowerCase();
+      
+      final matchBusqueda = query.isEmpty || titulo.contains(query) || descripcion.contains(query);
+      
+      return matchCategoria && matchBusqueda;
+    }).toList();
 
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
@@ -47,6 +60,36 @@ class _ExplorarPageState extends State<ExplorarPage> {
             ),
           ),
         ),
+
+        // BUSCADOR INTELIGENTE EN LIQUID GLASS
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                child: Container(
+                  decoration: BoxDecoration(color: Colors.white.withOpacity(0.08), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.white.withOpacity(0.2))),
+                  child: TextField(
+                    onChanged: (val) => setState(() => _busqueda = val),
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+                    decoration: InputDecoration(
+                      hintText: 'Buscar tecnología, libros, objetos...',
+                      hintStyle: TextStyle(color: Colors.white.withOpacity(0.4)),
+                      prefixIcon: const Icon(Icons.search_rounded, color: TruequiColors.purpura),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SliverToBoxAdapter(child: SizedBox(height: 10)),
+
+        // PÍLDORAS DE CATEGORÍA
         SliverToBoxAdapter(
           child: SizedBox(
             height: 45,
@@ -59,9 +102,7 @@ class _ExplorarPageState extends State<ExplorarPage> {
                 return GestureDetector(
                   onTap: () => setState(() => _categoriaSeleccionada = categoria),
                   child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
-                    margin: const EdgeInsets.only(right: 12),
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    duration: const Duration(milliseconds: 300), margin: const EdgeInsets.only(right: 12), padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                     decoration: BoxDecoration(color: isSelected ? TruequiColors.purpura : Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(20), border: Border.all(color: isSelected ? TruequiColors.purpura : Colors.white.withOpacity(0.2), width: 1.5)),
                     child: Center(child: Text(categoria, style: TextStyle(color: Colors.white, fontWeight: isSelected ? FontWeight.bold : FontWeight.w500, fontSize: 15))),
                   ),
@@ -72,10 +113,22 @@ class _ExplorarPageState extends State<ExplorarPage> {
         ),
         const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
+        // RENDERIZADO DEL CATÁLOGO
         if (_isLoading)
           const SliverToBoxAdapter(child: Padding(padding: EdgeInsets.only(top: 60), child: Center(child: CircularProgressIndicator(color: TruequiColors.purpura))))
         else if (articulosFiltrados.isEmpty)
-          SliverToBoxAdapter(child: Padding(padding: const EdgeInsets.only(top: 60), child: Center(child: Text('No hay artículos', style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 18)))))
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 80),
+              child: Column(
+                children: [
+                  Icon(Icons.search_off_rounded, size: 80, color: Colors.white.withOpacity(0.2)),
+                  const SizedBox(height: 16),
+                  Text('No encontramos nada coincidente', style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 16, fontWeight: FontWeight.bold)),
+                ],
+              ),
+            ),
+          )
         else
           SliverPadding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
