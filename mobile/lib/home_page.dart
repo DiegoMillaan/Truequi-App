@@ -69,3 +69,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
+  @override
+  void dispose() {
+    _bgController.dispose();
+    _entranceController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _cerrarSesion() async {
+    await GoogleAuthService().signOut();
+    if (!mounted) return;
+    Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const LoginScreen()), (Route<dynamic> route) => false);
+  }
