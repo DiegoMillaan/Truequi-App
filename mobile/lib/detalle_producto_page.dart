@@ -1,14 +1,14 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'home_page.dart'; // Para TruequiColors
+import 'home_page.dart'; 
 import 'chat_page.dart';
-import 'services/auth_service.dart';
 import 'login_screen.dart';
 
 class DetalleProductoPage extends StatelessWidget {
   final Map<String, dynamic> producto;
+  final String miCorreo; // RECIBIMOS LA VERDADERA IDENTIDAD
 
-  const DetalleProductoPage({super.key, required this.producto});
+  const DetalleProductoPage({super.key, required this.producto, required this.miCorreo});
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +24,7 @@ class DetalleProductoPage extends StatelessWidget {
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      backgroundColor: TruequiColors.fondoClaro, // Nuestro fondo oscuro
+      backgroundColor: TruequiColors.fondoClaro, 
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -40,7 +40,6 @@ class DetalleProductoPage extends StatelessWidget {
       ),
       body: Stack(
         children: [
-          // ORBES LUMINOSOS DE FONDO
           Positioned(top: -50, right: -50, child: Container(width: 300, height: 300, decoration: BoxDecoration(shape: BoxShape.circle, color: TruequiColors.purpura.withOpacity(0.3)), child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 80, sigmaY: 80), child: const SizedBox()))),
           Positioned(bottom: -50, left: -50, child: Container(width: 300, height: 300, decoration: BoxDecoration(shape: BoxShape.circle, color: TruequiColors.amarillo.withOpacity(0.2)), child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 80, sigmaY: 80), child: const SizedBox()))),
           
@@ -48,7 +47,6 @@ class DetalleProductoPage extends StatelessWidget {
             physics: const BouncingScrollPhysics(),
             child: Column(
               children: [
-                // IMAGEN DEL PRODUCTO (A pantalla completa en la parte superior)
                 SizedBox(
                   height: size.height * 0.45,
                   width: double.infinity,
@@ -57,7 +55,6 @@ class DetalleProductoPage extends StatelessWidget {
                       : Container(color: TruequiColors.purpura.withOpacity(0.2), child: const Center(child: Icon(Icons.inventory_2_rounded, size: 100, color: Colors.white54))),
                 ),
                 
-                // PANEL DE DETALLES DE CRISTAL (Solapa que sube sobre la imagen)
                 Transform.translate(
                   offset: const Offset(0, -40),
                   child: ClipRRect(
@@ -104,35 +101,25 @@ class DetalleProductoPage extends StatelessWidget {
                             ),
                             const SizedBox(height: 40),
                             
-                            // BOTÓN DE ACCIÓN (Proponer Trueque)
+                            // BOTÓN DE ACCIÓN (BLINDADO CON CORREO REAL)
                             SizedBox(
                               width: double.infinity,
                               height: 60,
                               child: ElevatedButton(
-                                onPressed: () async {
-                                  final miIdRaw = await AuthService.obtenerMiUsuarioId();
-                                  final miId = miIdRaw.trim().toLowerCase();
+                                onPressed: () {
+                                  final miId = miCorreo.trim().toLowerCase();
                                   final vendedorNormalizado = vendedorId.trim().toLowerCase();
-
-                                  if (!context.mounted) return;
                                   
-                                  // 🛡️️ CANDADO 1: Bloqueo a Invitados
-                                  if (miId.isEmpty || miId == 'invitado') {
-                                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                                      content: Text('Debes iniciar sesión para proponer un trueque.', style: TextStyle(fontWeight: FontWeight.bold, color: TruequiColors.textoOscuro)), 
-                                      backgroundColor: TruequiColors.amarillo
-                                    ));
-                                    // Redirigimos al Login usando el import de login_screen.dart (asegúrate de tenerlo importado arriba si no lo está)
+                                  // BLOQUEO: Invitados (No tienen correo asociado en la sesión)
+                                  if (miId.isEmpty) {
+                                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Debes iniciar sesión para proponer un trueque.', style: TextStyle(fontWeight: FontWeight.bold, color: TruequiColors.textoOscuro)), backgroundColor: TruequiColors.amarillo));
                                     Navigator.push(context, MaterialPageRoute(builder: (context) => const LoginScreen()));
                                     return;
                                   }
 
-                                  // 🛡️ CANDADO 2: Bloqueo de Auto-Trueque
+                                  // BLOQUEO: Evitar auto-trueques reales multiplataforma
                                   if (miId == vendedorNormalizado) {
-                                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                                      content: Text('No puedes proponerte un trueque a ti mismo.', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)), 
-                                      backgroundColor: Colors.redAccent
-                                    ));
+                                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Este es tu propio artículo.', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)), backgroundColor: Colors.redAccent));
                                     return;
                                   }
 
