@@ -6,7 +6,7 @@ import 'login_screen.dart';
 
 class DetalleProductoPage extends StatelessWidget {
   final Map<String, dynamic> producto;
-  final String miCorreo; // RECIBIMOS LA VERDADERA IDENTIDAD
+  final String miCorreo; 
 
   const DetalleProductoPage({super.key, required this.producto, required this.miCorreo});
 
@@ -21,6 +21,8 @@ class DetalleProductoPage extends StatelessWidget {
     final vendedorId = producto['vendedorId']?.toString() ?? '';
     final vendedorNombre = producto['vendedorNombre']?.toString() ?? 'Propietario';
 
+    // Etiqueta única para la animación inmersiva
+    final String heroTag = 'img_${producto['id']}';
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
@@ -47,12 +49,16 @@ class DetalleProductoPage extends StatelessWidget {
             physics: const BouncingScrollPhysics(),
             child: Column(
               children: [
-                SizedBox(
-                  height: size.height * 0.45,
-                  width: double.infinity,
-                  child: imagenUrl != null && imagenUrl.startsWith('http')
-                      ? Image.network(imagenUrl, fit: BoxFit.cover)
-                      : Container(color: TruequiColors.purpura.withOpacity(0.2), child: const Center(child: Icon(Icons.inventory_2_rounded, size: 100, color: Colors.white54))),
+                // ANIMACIÓN HERO: La imagen "vuela" desde la tarjeta principal
+                Hero(
+                  tag: heroTag,
+                  child: SizedBox(
+                    height: size.height * 0.45,
+                    width: double.infinity,
+                    child: imagenUrl != null && imagenUrl.startsWith('http')
+                        ? Image.network(imagenUrl, fit: BoxFit.cover)
+                        : Container(color: TruequiColors.purpura.withOpacity(0.2), child: const Center(child: Icon(Icons.inventory_2_rounded, size: 100, color: Colors.white54))),
+                  ),
                 ),
                 
                 Transform.translate(
@@ -101,7 +107,6 @@ class DetalleProductoPage extends StatelessWidget {
                             ),
                             const SizedBox(height: 40),
                             
-                            // BOTÓN DE ACCIÓN (BLINDADO CON CORREO REAL)
                             SizedBox(
                               width: double.infinity,
                               height: 60,
@@ -110,14 +115,12 @@ class DetalleProductoPage extends StatelessWidget {
                                   final miId = miCorreo.trim().toLowerCase();
                                   final vendedorNormalizado = vendedorId.trim().toLowerCase();
                                   
-                                  // BLOQUEO: Invitados (No tienen correo asociado en la sesión)
-                                  if (miId.isEmpty) {
+                                  if (miId.isEmpty || miId == 'invitado') {
                                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Debes iniciar sesión para proponer un trueque.', style: TextStyle(fontWeight: FontWeight.bold, color: TruequiColors.textoOscuro)), backgroundColor: TruequiColors.amarillo));
                                     Navigator.push(context, MaterialPageRoute(builder: (context) => const LoginScreen()));
                                     return;
                                   }
 
-                                  // BLOQUEO: Evitar auto-trueques reales multiplataforma
                                   if (miId == vendedorNormalizado) {
                                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Este es tu propio artículo.', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)), backgroundColor: Colors.redAccent));
                                     return;
