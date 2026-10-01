@@ -81,3 +81,36 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     if (!mounted) return;
     Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const LoginScreen()), (Route<dynamic> route) => false);
   }
+
+  // ==========================================
+  // FEED DINÁMICO: VITRINA LIQUID GLASS
+  // ==========================================
+  Widget _buildInicioTab(String nombreUsuario) {
+    return CustomScrollView(
+      physics: const BouncingScrollPhysics(),
+      slivers: [
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 40, 24, 20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Descubre,', style: TextStyle(fontSize: 16, color: Colors.white.withOpacity(0.7), fontWeight: FontWeight.w500)),
+                    Text(nombreUsuario, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: -0.5)),
+                  ],
+                ),
+                GestureDetector(
+                  onTap: _cerrarSesion,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), shape: BoxShape.circle, border: Border.all(color: Colors.white.withOpacity(0.3), width: 1.5)),
+                    child: const CircleAvatar(radius: 22, backgroundColor: TruequiColors.purpura, child: Icon(Icons.person_rounded, color: Colors.white)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
