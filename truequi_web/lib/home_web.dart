@@ -42,7 +42,6 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
   bool _isLoadingCatalog = true;
   Map<String, dynamic>? _usuarioActual;
 
-  // NUEVO: Variables para Exploración y Búsqueda
   String _busqueda = '';
   String _categoriaSeleccionadaFiltro = 'Todas';
   final List<String> _categorias = ['Todas', 'Electrónica', 'Hogar', 'Ropa', 'Coleccionables', 'Deportes', 'Libros', 'Accesorios'];
@@ -75,8 +74,64 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
   }
 
   // ==========================================
-  // LÓGICA DE FILTRADO DINÁMICO
+  // NOTIFICADOR LIQUID GLASS (SOPHISTICADO)
   // ==========================================
+  void _mostrarAlertaLiquid(BuildContext context, String mensaje, {String tipo = 'exito'}) {
+    Color colorBase;
+    IconData icono;
+
+    if (tipo == 'exito') {
+      colorBase = TruequiColors.purpura;
+      icono = Icons.check_circle_rounded;
+    } else if (tipo == 'error') {
+      colorBase = Colors.redAccent;
+      icono = Icons.error_rounded;
+    } else {
+      colorBase = TruequiColors.amarillo;
+      icono = Icons.info_rounded;
+    }
+
+    final double anchuraPantalla = MediaQuery.of(context).size.width;
+    final double margenLateral = math.max(20, (anchuraPantalla / 2) - 250); // Máximo 500px de ancho y centrado
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        elevation: 0,
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: Colors.transparent,
+        margin: EdgeInsets.only(bottom: 40, left: margenLateral, right: margenLateral),
+        duration: const Duration(seconds: 5), // Tiempo amplio para leer
+        content: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E143A).withOpacity(0.85), // Fondo oscuro inmersivo
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: colorBase.withOpacity(0.6), width: 2),
+                boxShadow: [BoxShadow(color: colorBase.withOpacity(0.25), blurRadius: 25, offset: const Offset(0, 10))],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(color: colorBase.withOpacity(0.2), shape: BoxShape.circle),
+                    child: Icon(icono, color: colorBase, size: 28),
+                  ),
+                  const SizedBox(width: 18),
+                  Expanded(child: Text(mensaje, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16))),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   List<dynamic> get _productosFiltrados {
     return _productos.where((p) {
       final titulo = p['titulo'].toString().toLowerCase();
@@ -88,14 +143,10 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
   }
 
   List<dynamic> get _productosDestacados {
-    // Simulamos destacados tomando los 5 más recientes o de mayor valor
     if (_productos.length <= 5) return _productos;
     return _productos.take(5).toList(); 
   }
 
-  // ==========================================
-  // MODALES (Mantiene tu lógica intacta)
-  // ==========================================
   void _mostrarLogin() {
     final nombreController = TextEditingController(); 
     final correoController = TextEditingController();
@@ -114,7 +165,7 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
                 if (!dialogContext.mounted) return;
                 Navigator.pop(dialogContext);
                 setState(() { _usuarioActual = { 'nombre': usuarioData['correo'].split('@')[0], 'correo': usuarioData['correo'], 'foto': null }; });
-                if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Acceso exitoso'), backgroundColor: Colors.green));
+                if (mounted) _mostrarAlertaLiquid(context, '¡Acceso exitoso! Bienvenido a Truequi.', tipo: 'exito');
               },
               onError: (mensaje) { setModalState(() { error = mensaje; cargando = false; }); }
             );
@@ -138,7 +189,7 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
                   if (!dialogContext.mounted) return;
                   Navigator.pop(dialogContext);
                   setState(() { _usuarioActual = { 'nombre': nombre.isNotEmpty ? nombre : correo.split('@')[0], 'correo': correo }; });
-                  if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Acceso exitoso'), backgroundColor: Colors.green));
+                  if (mounted) _mostrarAlertaLiquid(context, '¡Acceso exitoso! Bienvenido de vuelta.', tipo: 'exito');
                   return;
                 }
                 setModalState(() { error = jsonDecode(response.body)['error'] ?? 'Credenciales incorrectas.'; cargando = false; });
@@ -274,7 +325,7 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
                 if (resDB.statusCode == 201) {
                   if (!dialogContext.mounted) return;
                   Navigator.pop(dialogContext); 
-                  if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('¡Artículo publicado!'), backgroundColor: Colors.green));
+                  if (mounted) _mostrarAlertaLiquid(context, '¡Artículo publicado con éxito! 🚀', tipo: 'exito');
                   _cargarProductos(); 
                 } else throw Exception('Fallo en DB');
               } catch (e) {
@@ -366,9 +417,6 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
     );
   }
 
-  // ============================================================
-  // CONSTRUCCIÓN DE LA PANTALLA PRINCIPAL
-  // ============================================================
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -393,7 +441,6 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
           CustomScrollView(
             physics: const BouncingScrollPhysics(),
             slivers: [
-              // 1. NAVBAR
               SliverAppBar(
                 pinned: true, expandedHeight: 90, collapsedHeight: 90, backgroundColor: Colors.white.withOpacity(0.5),
                 flexibleSpace: ClipRRect(
@@ -442,7 +489,6 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
                 ),
               ),
 
-              // 2. HERO BANNER + BUSCADOR INTEGRADO
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.all(50.0),
@@ -466,7 +512,6 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
                                   const Text('Cambia lo que tienes.\nEncuentra lo que buscas.', style: TextStyle(fontSize: 54, fontWeight: FontWeight.w900, color: TruequiColors.textoOscuro, height: 1.1, letterSpacing: -2)),
                                   const SizedBox(height: 40),
                                   
-                                  // BARRA DE BÚSQUEDA DE CRISTAL
                                   Container(
                                     width: 600,
                                     decoration: BoxDecoration(color: Colors.white.withOpacity(0.4), borderRadius: BorderRadius.circular(30), border: Border.all(color: Colors.white.withOpacity(0.8), width: 2), boxShadow: [BoxShadow(color: TruequiColors.purpura.withOpacity(0.1), blurRadius: 20, offset: const Offset(0, 10))]),
@@ -491,7 +536,6 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
                 ),
               ),
 
-              // 3. VITRINA DE DESTACADOS (El "Estante de Vidrio")
               if (!_isLoadingCatalog && _busqueda.isEmpty && _categoriaSeleccionadaFiltro == 'Todas') ...[
                 const SliverToBoxAdapter(
                   child: Padding(
@@ -504,7 +548,6 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
                     height: 420,
                     child: Stack(
                       children: [
-                        // ESTANTE BRILLANTE (Luz de neón proyectada en cristal)
                         Positioned(
                           bottom: 30, left: 50, right: 50,
                           child: Container(
@@ -515,7 +558,6 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
                             ),
                           ),
                         ),
-                        // OBJETOS EN LA VITRINA
                         ListView.builder(
                           padding: const EdgeInsets.symmetric(horizontal: 50),
                           scrollDirection: Axis.horizontal,
@@ -539,7 +581,6 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
                 ),
               ],
 
-              // 4. PÍLDORAS DE CATEGORÍAS (Filtros Glass)
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 20),
@@ -566,7 +607,6 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
                 ),
               ),
 
-              // 5. GRID DE PRODUCTOS FILTRADOS
               _isLoadingCatalog
                 ? const SliverToBoxAdapter(child: SizedBox(height: 300, child: Center(child: CircularProgressIndicator(color: TruequiColors.purpura))))
                 : _productosFiltrados.isEmpty
@@ -587,7 +627,7 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
                         ),
                       ),
                       
-              const SliverToBoxAdapter(child: SizedBox(height: 100)), // Espaciador final
+              const SliverToBoxAdapter(child: SizedBox(height: 100)),
             ],
           ),
         ],
@@ -596,9 +636,6 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
   }
 }
 
-// ==========================================
-// TARJETA DE PRODUCTO LIQUID GLASS
-// ==========================================
 class _TarjetaProductoWeb extends StatefulWidget {
   final Map<String, dynamic> producto;
   final bool destacada;

@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'dart:convert';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
@@ -40,25 +41,105 @@ class _PerfilWebState extends State<PerfilWeb> {
     } catch (e) { setState(() => _isLoading = false); }
   }
 
-  Future<void> _borrarProducto(String id) async {
+  // ==========================================
+  // NOTIFICADOR LIQUID GLASS (SOPHISTICADO)
+  // ==========================================
+  void _mostrarAlertaLiquid(BuildContext context, String mensaje, {String tipo = 'exito'}) {
+    Color colorBase;
+    IconData icono;
+
+    if (tipo == 'exito') {
+      colorBase = TruequiColors.purpura;
+      icono = Icons.check_circle_rounded;
+    } else if (tipo == 'error') {
+      colorBase = Colors.redAccent;
+      icono = Icons.error_rounded;
+    } else {
+      colorBase = TruequiColors.amarillo;
+      icono = Icons.info_rounded;
+    }
+
+    final double anchuraPantalla = MediaQuery.of(context).size.width;
+    final double margenLateral = math.max(20, (anchuraPantalla / 2) - 250); 
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        elevation: 0,
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: Colors.transparent,
+        margin: EdgeInsets.only(bottom: 40, left: margenLateral, right: margenLateral),
+        duration: const Duration(seconds: 4), 
+        content: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E143A).withOpacity(0.85),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: colorBase.withOpacity(0.6), width: 2),
+                boxShadow: [BoxShadow(color: colorBase.withOpacity(0.25), blurRadius: 25, offset: const Offset(0, 10))],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(color: colorBase.withOpacity(0.2), shape: BoxShape.circle),
+                    child: Icon(icono, color: colorBase, size: 28),
+                  ),
+                  const SizedBox(width: 18),
+                  Expanded(child: Text(mensaje, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16))),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _borrarProductoConfirmado(String id) async {
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1E143A),
+        title: const Text('Eliminar artículo', style: TextStyle(color: Colors.white)),
+        content: const Text('¿Estás seguro de que deseas retirar este artículo de la plataforma? Esta acción no se puede deshacer.', style: TextStyle(color: Colors.white70)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar', style: TextStyle(color: Colors.white54))),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+            onPressed: () => Navigator.pop(context, true), 
+            child: const Text('Sí, eliminar', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))
+          ),
+        ],
+      ),
+    );
+
+    if (confirmar != true) return;
+
     try {
       final res = await http.delete(Uri.parse('https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/productos/$id'));
       if (res.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Artículo eliminado'), backgroundColor: Colors.green));
+        if (mounted) _mostrarAlertaLiquid(context, 'Artículo retirado de la plataforma.', tipo: 'exito');
         _cargarPerfil();
       }
     } catch (e) { debugPrint('Error al borrar'); }
   }
 
-  Future<void> _editarPerfil() async {
+  Future<void> _editarFotoPerfil() async {
     final image = await ImagePicker().pickImage(source: ImageSource.gallery);
     if (image == null) return;
     
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Subiendo nueva foto...')));
+    if (mounted) _mostrarAlertaLiquid(context, 'Subiendo nueva foto...', tipo: 'info');
     try {
       final bytes = await image.readAsBytes();
       final ext = image.name.split('.').last.toLowerCase();
-      final resUrl = await http.get(Uri.parse('https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/productos/upload-url?ext=$ext'));
+      final validExt = ['jpg', 'jpeg', 'png', 'webp'].contains(ext) ? ext : 'jpg';
+      
+      final resUrl = await http.get(Uri.parse('https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/productos/upload-url?ext=$validExt'));
       final urlData = jsonDecode(resUrl.body);
       
       await http.put(Uri.parse(urlData['uploadUrl']), body: bytes);
@@ -70,13 +151,92 @@ class _PerfilWebState extends State<PerfilWeb> {
       );
       
       if (resUpdate.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Perfil Actualizado'), backgroundColor: Colors.green));
+        if (mounted) _mostrarAlertaLiquid(context, '¡Foto de perfil actualizada!', tipo: 'exito');
         _cargarPerfil();
       }
     } catch (e) { debugPrint('Error editando perfil'); }
   }
 
+  Future<void> _editarNombreDialog() async {
+    final nombreActual = _perfilData?['nombre'] ?? widget.usuario['nombre'] ?? '';
+    final controller = TextEditingController(text: nombreActual);
+    bool guardando = false;
+
+    await showDialog(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.7),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setStateModal) {
+            return Dialog(
+              backgroundColor: Colors.transparent,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(30),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                  child: Container(
+                    width: 400, padding: const EdgeInsets.all(30),
+                    decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(30), border: Border.all(color: Colors.white.withOpacity(0.2))),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text('Editar Nombre', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 20),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+                          decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(15), border: Border.all(color: Colors.white.withOpacity(0.3))),
+                          child: TextField(
+                            controller: controller,
+                            style: const TextStyle(color: Colors.white, fontSize: 18),
+                            decoration: InputDecoration(hintText: 'Escribe tu nuevo nombre', hintStyle: TextStyle(color: Colors.white.withOpacity(0.4)), border: InputBorder.none),
+                          ),
+                        ),
+                        const SizedBox(height: 30),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar', style: TextStyle(color: Colors.white54, fontWeight: FontWeight.bold))),
+                            const SizedBox(width: 10),
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(backgroundColor: TruequiColors.purpura, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                              onPressed: guardando ? null : () async {
+                                if (controller.text.trim().isEmpty) return;
+                                setStateModal(() => guardando = true);
+                                try {
+                                  final res = await http.put(
+                                    Uri.parse('https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/usuario/perfil'),
+                                    headers: {'Content-Type': 'application/json'},
+                                    body: jsonEncode({'correo': widget.usuario['correo'], 'nombre': controller.text.trim()}),
+                                  );
+                                  if (res.statusCode == 200) {
+                                    if (!context.mounted) return;
+                                    Navigator.pop(context);
+                                    _cargarPerfil();
+                                    _mostrarAlertaLiquid(context, 'Nombre actualizado correctamente.', tipo: 'exito');
+                                  }
+                                } finally {
+                                  setStateModal(() => guardando = false);
+                                }
+                              },
+                              child: guardando ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : const Text('Guardar', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                            )
+                          ],
+                        )
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }
+        );
+      }
+    );
+  }
+
   Future<void> _cerrarSesion() async {
+    _mostrarAlertaLiquid(context, 'Cerrando sesión de forma segura...', tipo: 'info');
+    await Future.delayed(const Duration(seconds: 1)); // Pequeña pausa para que se lea la alerta
     await GoogleAuthService().signOut(); 
     if (!mounted) return;
     Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const HomeWeb()), (route) => false);
@@ -112,19 +272,45 @@ class _PerfilWebState extends State<PerfilWeb> {
                         decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(40), border: Border.all(color: Colors.white.withOpacity(0.2))),
                         child: Column(
                           children: [
-                            Stack(
-                              alignment: Alignment.bottomRight,
-                              children: [
-                                CircleAvatar(radius: 60, backgroundColor: TruequiColors.purpura.withOpacity(0.2), backgroundImage: foto != null ? NetworkImage(foto) : null, child: foto == null ? const Icon(Icons.person, size: 60, color: Colors.white) : null),
-                                GestureDetector(
-                                  onTap: _editarPerfil,
-                                  child: Container(padding: const EdgeInsets.all(8), decoration: const BoxDecoration(color: TruequiColors.amarillo, shape: BoxShape.circle), child: const Icon(Icons.camera_alt, color: Colors.white, size: 20)),
-                                )
-                              ],
+                            MouseRegion(
+                              cursor: SystemMouseCursors.click,
+                              child: GestureDetector(
+                                onTap: _editarFotoPerfil,
+                                child: Stack(
+                                  alignment: Alignment.center,
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 70, backgroundColor: TruequiColors.purpura.withOpacity(0.2), 
+                                      backgroundImage: foto != null ? NetworkImage(foto) : null, 
+                                      child: foto == null ? const Icon(Icons.person, size: 70, color: Colors.white) : null
+                                    ),
+                                    Container(
+                                      width: 140, height: 140,
+                                      decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.black.withOpacity(0.5)),
+                                      child: const Column(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(Icons.camera_alt_rounded, color: Colors.white, size: 36),
+                                          SizedBox(height: 5),
+                                          Text('Cambiar', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12))
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
                             const SizedBox(height: 20),
-                            Text(nombre, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Colors.white)),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(nombre, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Colors.white)),
+                                const SizedBox(width: 10),
+                                IconButton(onPressed: _editarNombreDialog, icon: const Icon(Icons.edit_rounded, color: TruequiColors.amarillo, size: 24), tooltip: 'Editar nombre')
+                              ],
+                            ),
                             Text(widget.usuario['correo'], style: TextStyle(fontSize: 16, color: Colors.white.withOpacity(0.5))),
+                            
                             const SizedBox(height: 25),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -148,22 +334,43 @@ class _PerfilWebState extends State<PerfilWeb> {
                 const SizedBox(height: 20),
                 
                 _misProductos.isEmpty 
-                  ? const Center(child: Text('No tienes artículos publicados.', style: TextStyle(color: Colors.grey)))
-                  : GridView.builder(
-                      shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(maxCrossAxisExtent: 400, mainAxisExtent: 100, crossAxisSpacing: 20, mainAxisSpacing: 20),
+                  ? const Center(child: Text('No tienes artículos publicados.', style: TextStyle(color: Colors.grey, fontSize: 16)))
+                  : ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
                       itemCount: _misProductos.length,
                       itemBuilder: (context, index) {
                         final prod = _misProductos[index];
                         return Container(
+                          margin: const EdgeInsets.only(bottom: 20),
+                          padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.white.withOpacity(0.2))),
-                          child: Center(
-                            child: ListTile(
-                              leading: ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.network(prod['imagenUrl'] ?? 'https://via.placeholder.com/50', width: 50, height: 50, fit: BoxFit.cover)),
-                              title: Text(prod['titulo'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold), maxLines: 1),
-                              subtitle: Text(prod['estado'], style: TextStyle(color: prod['estado'] == 'Disponible' ? Colors.greenAccent : Colors.orange)),
-                              trailing: IconButton(icon: const Icon(Icons.delete_outline, color: Colors.redAccent), onPressed: () => _borrarProducto(prod['id'])),
-                            ),
+                          child: Row(
+                            children: [
+                              ClipRRect(borderRadius: BorderRadius.circular(12), child: Image.network(prod['imagenUrl'] ?? 'https://via.placeholder.com/80', width: 80, height: 80, fit: BoxFit.cover)),
+                              const SizedBox(width: 20),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(prod['titulo'], style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
+                                    const SizedBox(height: 8),
+                                    Row(
+                                      children: [
+                                        Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: TruequiColors.purpura.withOpacity(0.2), borderRadius: BorderRadius.circular(10)), child: Text(prod['categoria'], style: const TextStyle(color: TruequiColors.purpura, fontSize: 12, fontWeight: FontWeight.bold))),
+                                        const SizedBox(width: 10),
+                                        Text('Estado: ${prod['estado']}', style: TextStyle(color: prod['estado'] == 'Disponible' ? Colors.greenAccent : Colors.orange, fontWeight: FontWeight.w600)),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent.withOpacity(0.15), foregroundColor: Colors.redAccent, elevation: 0, padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15)),
+                                icon: const Icon(Icons.delete_forever_rounded), label: const Text('Eliminar', style: TextStyle(fontWeight: FontWeight.bold)),
+                                onPressed: () => _borrarProductoConfirmado(prod['id']),
+                              )
+                            ],
                           ),
                         );
                       },
