@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'dart:convert';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'home_web.dart';
@@ -10,9 +11,66 @@ class DetalleProductoWeb extends StatelessWidget {
 
   const DetalleProductoWeb({super.key, required this.producto, this.usuarioActual});
 
+  // ==========================================
+  // NOTIFICADOR LIQUID GLASS
+  // ==========================================
+  void _mostrarAlertaLiquid(BuildContext context, String mensaje, {String tipo = 'exito'}) {
+    Color colorBase;
+    IconData icono;
+
+    if (tipo == 'exito') {
+      colorBase = TruequiColors.purpura;
+      icono = Icons.check_circle_rounded;
+    } else if (tipo == 'error') {
+      colorBase = Colors.redAccent;
+      icono = Icons.error_rounded;
+    } else {
+      colorBase = TruequiColors.amarillo;
+      icono = Icons.info_rounded;
+    }
+
+    final double anchuraPantalla = MediaQuery.of(context).size.width;
+    final double margenLateral = math.max(20, (anchuraPantalla / 2) - 250); 
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        elevation: 0, behavior: SnackBarBehavior.floating, backgroundColor: Colors.transparent,
+        margin: EdgeInsets.only(bottom: 40, left: margenLateral, right: margenLateral),
+        duration: const Duration(seconds: 4), 
+        content: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E143A).withOpacity(0.85),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: colorBase.withOpacity(0.6), width: 2),
+                boxShadow: [BoxShadow(color: colorBase.withOpacity(0.25), blurRadius: 25, offset: const Offset(0, 10))],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(color: colorBase.withOpacity(0.2), shape: BoxShape.circle),
+                    child: Icon(icono, color: colorBase, size: 28),
+                  ),
+                  const SizedBox(width: 18),
+                  Expanded(child: Text(mensaje, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16))),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   void _mostrarModalPropuesta(BuildContext context) {
     if (usuarioActual == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Inicia sesión para proponer un trueque.'), backgroundColor: TruequiColors.amarillo));
+      _mostrarAlertaLiquid(context, 'Inicia sesión para proponer un trueque.', tipo: 'info');
       return;
     }
 
@@ -24,11 +82,11 @@ class DetalleProductoWeb extends StatelessWidget {
       barrierColor: Colors.black.withOpacity(0.6),
       builder: (dialogContext) {
         return StatefulBuilder(
-          builder: (context, setModalState) {
+          builder: (contextModal, setModalState) {
             Future<void> enviarPropuesta() async {
               final texto = mensajeController.text.trim();
               if (texto.length < 5) {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Escribe una propuesta más detallada.')));
+                _mostrarAlertaLiquid(context, 'Escribe una propuesta más detallada.', tipo: 'info');
                 return;
               }
 
@@ -54,14 +112,14 @@ class DetalleProductoWeb extends StatelessWidget {
                 Navigator.pop(dialogContext);
 
                 if (response.statusCode == 201 || response.statusCode == 200) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('¡Propuesta enviada al vendedor! 🤝'), backgroundColor: Colors.green));
+                  _mostrarAlertaLiquid(context, '¡Propuesta enviada al vendedor! 🤝', tipo: 'exito');
                 } else {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error al enviar la propuesta'), backgroundColor: Colors.red));
+                  _mostrarAlertaLiquid(context, 'Error al enviar la propuesta', tipo: 'error');
                 }
               } catch (e) {
                 if (!dialogContext.mounted) return;
                 Navigator.pop(dialogContext);
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error de red: $e'), backgroundColor: Colors.red));
+                _mostrarAlertaLiquid(context, 'Error de red: $e', tipo: 'error');
               }
             }
 
@@ -69,7 +127,7 @@ class DetalleProductoWeb extends StatelessWidget {
               tween: Tween<double>(begin: 0, end: 1),
               duration: const Duration(milliseconds: 500),
               curve: Curves.easeOutExpo,
-              builder: (context, double val, child) {
+              builder: (contextAnim, double val, child) {
                 return Transform.scale(
                   scale: val,
                   child: Dialog(
@@ -118,7 +176,6 @@ class DetalleProductoWeb extends StatelessWidget {
     final imagenUrl = producto['imagenUrl'];
     final vendedor = producto['vendedorNombre'] ?? producto['vendedorId'] ?? 'Comunidad UAQ';
 
-    // VALIDACIÓN: ¿Es mi propio artículo?
     final bool esMiProducto = usuarioActual != null && usuarioActual!['correo'] == producto['vendedorId'];
 
     return Scaffold(
@@ -172,7 +229,6 @@ class DetalleProductoWeb extends StatelessWidget {
                                 SizedBox(
                                   width: double.infinity, height: 60, 
                                   child: ElevatedButton(
-                                    // BLOQUEO DINÁMICO
                                     onPressed: esMiProducto ? null : () => _mostrarModalPropuesta(context), 
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: esMiProducto ? Colors.white.withOpacity(0.1) : TruequiColors.purpura, 
