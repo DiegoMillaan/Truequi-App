@@ -156,18 +156,6 @@ resources:
               ProjectionType: ALL
         BillingMode: PAY_PER_REQUEST
         
-    UsuariosTable:
-      Type: AWS::DynamoDB::Table
-      Properties:
-        TableName: Usuarios
-        AttributeDefinitions:
-          - AttributeName: correo
-            AttributeType: S
-        KeySchema:
-          - AttributeName: correo
-            KeyType: HASH
-        BillingMode: PAY_PER_REQUEST
-
     ImagesBucket:
       Type: AWS::S3::Bucket
       Properties:
