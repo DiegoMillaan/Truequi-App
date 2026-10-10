@@ -75,6 +75,13 @@ functions:
           path: /usuario/perfil
           method: put
           cors: true
+  calificarUsuario:
+    handler: handler.calificar_usuario
+    events:
+      - http:
+          path: /usuario/calificar
+          method: put
+          cors: true
   crearMensaje:
     handler: handler.crear_mensaje
     events:
@@ -149,6 +156,18 @@ resources:
               ProjectionType: ALL
         BillingMode: PAY_PER_REQUEST
         
+    UsuariosTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: Usuarios
+        AttributeDefinitions:
+          - AttributeName: correo
+            AttributeType: S
+        KeySchema:
+          - AttributeName: correo
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+
     ImagesBucket:
       Type: AWS::S3::Bucket
       Properties:

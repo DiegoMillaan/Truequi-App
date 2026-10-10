@@ -15,358 +15,155 @@ BUCKET_NAME = os.environ.get('BUCKET_NAME', 'truequi-images-dm2026')
 def respuesta(status_code, body):
     return {
         "statusCode": status_code,
-        "headers": {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Headers": "Content-Type",
-            "Access-Control-Allow-Methods": "OPTIONS,POST,GET,PUT,DELETE",
-            "Content-Type": "application/json"
-        },
+        "headers": {"Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Content-Type", "Access-Control-Allow-Methods": "OPTIONS,POST,GET,PUT,DELETE"},
         "body": json.dumps(body)
     }
 
 # ==========================================
-# 1. PUBLICAR PRODUCTO (BLINDAJE DE NEGOCIO)
+# 1. PUBLICAR PRODUCTO
 # ==========================================
 def crear_producto(event, context):
     try:
-        if not event.get('body'):
-            return respuesta(400, {"error": "El cuerpo de la petición está vacío."})
-        
-        try:
-            body = json.loads(event['body'])
-        except json.JSONDecodeError:
-            return respuesta(400, {"error": "Formato JSON inválido."})
-        
-        titulo = body.get('titulo')
-        precio = body.get('precio')
-        descripcion = body.get('descripcion', '')
-        categoria = body.get('categoria', 'General')
-        vendedorId = body.get('vendedorId')
-        vendedorNombre = body.get('vendedorNombre', str(vendedorId).split('@')[0] if vendedorId else 'Usuario')
-        ubicacion = body.get('ubicacion', 'Querétaro')
-        imagenUrl = body.get('imagenUrl', '')
-
-        if not titulo or not isinstance(titulo, str) or len(titulo.strip()) < 5 or len(titulo) > 80:
-            return respuesta(400, {"error": "El título debe tener entre 5 y 80 caracteres."})
-        
-        if not descripcion or not isinstance(descripcion, str) or len(descripcion.strip()) < 15:
-            return respuesta(400, {"error": "La descripción es muy corta. Añade al menos 15 caracteres."})
-        
-        try:
-            precio_num = float(precio)
-        except (ValueError, TypeError):
-            return respuesta(400, {"error": "El precio debe ser un número válido."})
-
-        if precio_num <= 0 or precio_num > 100000:
-            return respuesta(400, {"error": "El valor estimado debe ser mayor a $0 y menor a $100,000 MXN."})
-            
-        if not vendedorId or not isinstance(vendedorId, (int, str)):
-            return respuesta(400, {"error": "El identificador del vendedor es inválido."})
-
+        body = json.loads(event['body'])
         item = {
-            'id': str(uuid.uuid4()),
-            'titulo': titulo.strip(),
-            'descripcion': str(descripcion).strip()[:500],
-            'precio': str(precio_num), 
-            'categoria': str(categoria)[:50],
-            'vendedorId': str(vendedorId),
-            'vendedorNombre': str(vendedorNombre),
-            'ubicacion': str(ubicacion),
-            'imagenUrl': str(imagenUrl),
-            'estado': 'Disponible',
-            'fechaCreacion': datetime.now(timezone.utc).isoformat()
+            'id': str(uuid.uuid4()), 'titulo': body.get('titulo').strip(), 'descripcion': str(body.get('descripcion')).strip()[:500],
+            'precio': str(float(body.get('precio'))), 'categoria': str(body.get('categoria'))[:50], 'vendedorId': str(body.get('vendedorId')),
+            'vendedorNombre': str(body.get('vendedorNombre')), 'ubicacion': str(body.get('ubicacion', 'Querétaro')),
+            'imagenUrl': str(body.get('imagenUrl', '')), 'estado': 'Disponible', 'fechaCreacion': datetime.now(timezone.utc).isoformat()
         }
-        
         tabla_productos.put_item(Item=item)
-        return respuesta(201, {"message": "Producto publicado exitosamente", "producto": item})
-
-    except Exception as e:
-        return respuesta(500, {"error": f"Error interno del servidor: {str(e)}"})
+        return respuesta(201, {"message": "Producto publicado", "producto": item})
+    except Exception as e: return respuesta(500, {"error": str(e)})
 
 # ==========================================
-# 2. FEED DE PRODUCTOS (BÚSQUEDA, FILTRO Y PAGINACIÓN REAL)
+# 2. FEED DE PRODUCTOS (SOLO DISPONIBLES)
 # ==========================================
 def obtener_productos(event, context):
     try:
         query_params = event.get('queryStringParameters') or {}
-        categoria = query_params.get('categoria')
-        busqueda = query_params.get('q', '').strip().lower()
+        categoria, busqueda = query_params.get('categoria'), query_params.get('q', '').strip().lower()
+        response = tabla_productos.scan(Limit=300)
         
-        try:
-            page = max(1, int(query_params.get('page', 1)))
-            limit = max(1, min(100, int(query_params.get('limit', 50))))
-        except ValueError:
-            page, limit = 1, 50
+        # FILTRO CRÍTICO: Solo mostrar productos con estado "Disponible"
+        items = [i for i in response.get('Items', []) if i.get('estado', 'Disponible') == 'Disponible']
 
-        response = tabla_productos.scan(Limit=200)
-        items = response.get('Items', [])
-
-        if categoria and categoria != 'Todos':
-            items = [i for i in items if i.get('categoria', '').lower() == categoria.lower()]
-
-        if busqueda:
-            items = [
-                i for i in items 
-                if busqueda in i.get('titulo', '').lower() or busqueda in i.get('descripcion', '').lower()
-            ]
-
-        # Ordenar por fecha de creación (más recientes primero)
+        if categoria and categoria != 'Todas': items = [i for i in items if i.get('categoria', '').lower() == categoria.lower()]
+        if busqueda: items = [i for i in items if busqueda in i.get('titulo', '').lower() or busqueda in i.get('descripcion', '').lower()]
         items.sort(key=lambda x: x.get('fechaCreacion', ''), reverse=True)
 
-        total_items = len(items)
-        total_pages = max(1, math.ceil(total_items / limit))
-        start_index = (page - 1) * limit
-        end_index = start_index + limit
-        paginated_items = items[start_index:end_index]
-
-        return respuesta(200, {
-            "status": "success",
-            "total": total_items,
-            "page": page,
-            "limit": limit,
-            "totalPages": total_pages,
-            "hasMore": page < total_pages,
-            "productos": paginated_items
-        })
-    except Exception as e:
-        return respuesta(500, {"error": f"Error al consultar base de datos: {str(e)}"})
+        return respuesta(200, {"status": "success", "total": len(items), "productos": items})
+    except Exception as e: return respuesta(500, {"error": str(e)})
 
 # ==========================================
-# 3. ELIMINAR / DAR DE BAJA PRODUCTO
+# 3. ELIMINAR PRODUCTO PROPIO
 # ==========================================
 def eliminar_producto(event, context):
     try:
-        path_params = event.get('pathParameters') or {}
-        producto_id = path_params.get('id')
-
-        if not producto_id:
-            return respuesta(400, {"error": "El ID del producto es obligatorio."})
-
+        producto_id = (event.get('pathParameters') or {}).get('id')
+        if not producto_id: return respuesta(400, {"error": "Falta ID."})
         tabla_productos.delete_item(Key={'id': str(producto_id)})
-        return respuesta(200, {"status": "success", "message": "Producto eliminado del catálogo."})
-    except Exception as e:
-        return respuesta(500, {"error": f"Error al eliminar producto: {str(e)}"})
+        return respuesta(200, {"message": "Producto eliminado del catálogo."})
+    except Exception as e: return respuesta(500, {"error": str(e)})
 
 # ==========================================
-# 4. URL PARA SUBIR IMÁGENES A S3 (PRODUCTOS Y PERFILES)
+# 4. URL S3
 # ==========================================
 def obtener_upload_url(event, context):
     try:
-        query_params = event.get('queryStringParameters') or {}
-        extension = query_params.get('ext', 'jpg').replace('.', '').lower()
-        carpeta = query_params.get('folder', '').strip('/')
-        
-        if extension not in ['jpg', 'jpeg', 'png', 'webp']:
-            return respuesta(400, {"error": "Formato de imagen no permitido (solo JPG, PNG, WEBP)."})
-
-        unique_name = f"{uuid.uuid4()}.{extension}"
-        file_name = f"{carpeta}/{unique_name}" if carpeta else unique_name
-
-        url = s3_client.generate_presigned_url(
-            'put_object', 
-            Params={'Bucket': BUCKET_NAME, 'Key': file_name}, 
-            ExpiresIn=300
-        )
-        
-        imagen_publica_url = f"https://{BUCKET_NAME}.s3.amazonaws.com/{file_name}"
-        return respuesta(200, {"uploadUrl": url, "fileName": file_name, "publicUrl": imagen_publica_url})
-    except Exception as e:
-        return respuesta(500, {"error": str(e)})
+        ext = (event.get('queryStringParameters') or {}).get('ext', 'jpg').replace('.', '').lower()
+        file_name = f"{uuid.uuid4()}.{ext}"
+        url = s3_client.generate_presigned_url('put_object', Params={'Bucket': BUCKET_NAME, 'Key': file_name}, ExpiresIn=300)
+        return respuesta(200, {"uploadUrl": url, "publicUrl": f"https://{BUCKET_NAME}.s3.amazonaws.com/{file_name}"})
+    except Exception as e: return respuesta(500, {"error": str(e)})
 
 # ==========================================
-# 5. PERFIL DE USUARIO (LECTURA Y ACTUALIZACIÓN)
+# 5. PERFIL DE USUARIO
 # ==========================================
 def obtener_perfil(event, context):
     try:
-        path_params = event.get('pathParameters') or {}
-        vendedor_id = path_params.get('id')
-        
-        if not vendedor_id:
-            return respuesta(400, {"error": "Falta el ID del usuario en la ruta."})
-
-        response = tabla_productos.query(
-            IndexName='VendedorIndex',
-            KeyConditionExpression='vendedorId = :vid',
-            ExpressionAttributeValues={':vid': str(vendedor_id)}
-        )
-
-        datos_usuario = {}
-        try:
-            res_user = tabla_usuarios.get_item(Key={'correo': str(vendedor_id)})
-            datos_usuario = res_user.get('Item', {})
-            datos_usuario.pop('password', None)
-        except Exception:
-            pass
-        
-        return respuesta(200, {
-            "usuarioId": vendedor_id,
-            "usuario": datos_usuario,
-            "totalProductos": response['Count'],
-            "misProductos": response.get('Items', [])
-        })
-    except Exception as e:
-        return respuesta(500, {"error": str(e)})
+        vendedor_id = (event.get('pathParameters') or {}).get('id')
+        response = tabla_productos.query(IndexName='VendedorIndex', KeyConditionExpression='vendedorId = :vid', ExpressionAttributeValues={':vid': str(vendedor_id)})
+        user = tabla_usuarios.get_item(Key={'correo': str(vendedor_id)}).get('Item', {})
+        user.pop('password', None)
+        return respuesta(200, {"usuario": user, "misProductos": response.get('Items', [])})
+    except Exception as e: return respuesta(500, {"error": str(e)})
 
 def actualizar_perfil(event, context):
     try:
-        if not event.get('body'):
-            return respuesta(400, {"error": "El cuerpo de la petición está vacío."})
         body = json.loads(event['body'])
         correo = body.get('correo')
-        nombre = body.get('nombre')
-        foto_url = body.get('fotoUrl')
+        update_expr, expr_values, expr_names = [], {}, {}
 
-        if not correo:
-            return respuesta(400, {"error": "El correo del usuario es obligatorio."})
-
-        update_expr = []
-        expr_values = {}
-        expr_names = {}
-
-        if nombre:
+        if body.get('nombre'):
             update_expr.append("#n = :nom")
-            expr_values[":nom"] = str(nombre).strip()
-            expr_names["#n"] = "nombre"
-        if foto_url:
+            expr_values[":nom"], expr_names["#n"] = str(body['nombre']).strip(), "nombre"
+        if body.get('fotoUrl'):
             update_expr.append("foto = :foto")
-            expr_values[":foto"] = str(foto_url).strip()
+            expr_values[":foto"] = str(body['fotoUrl']).strip()
 
-        if not update_expr:
-            return respuesta(400, {"error": "No se enviaron campos para actualizar."})
-
-        kwargs = {
-            "Key": {'correo': str(correo)},
-            "UpdateExpression": "SET " + ", ".join(update_expr),
-            "ExpressionAttributeValues": expr_values,
-            "ReturnValues": "ALL_NEW"
-        }
-        if expr_names:
-            kwargs["ExpressionAttributeNames"] = expr_names
+        if not update_expr: return respuesta(400, {"error": "Sin datos"})
+        kwargs = {"Key": {'correo': str(correo)}, "UpdateExpression": "SET " + ", ".join(update_expr), "ExpressionAttributeValues": expr_values, "ReturnValues": "ALL_NEW"}
+        if expr_names: kwargs["ExpressionAttributeNames"] = expr_names
 
         res = tabla_usuarios.update_item(**kwargs)
-        atributos = res.get('Attributes', {})
-        atributos.pop('password', None)
+        user = res.get('Attributes', {})
+        user.pop('password', None)
+        return respuesta(200, {"usuario": user})
+    except Exception as e: return respuesta(500, {"error": str(e)})
 
-        return respuesta(200, {"message": "Perfil actualizado correctamente", "usuario": atributos})
-    except Exception as e:
-        return respuesta(500, {"error": f"Error al actualizar perfil: {str(e)}"})
+def calificar_usuario(event, context):
+    try:
+        body = json.loads(event['body'])
+        correo, nueva_estrellas = body.get('correo'), float(body.get('estrellas', 5.0))
+
+        user = tabla_usuarios.get_item(Key={'correo': str(correo)}).get('Item', {})
+        total, promedio = int(user.get('totalCalificaciones', 0)), float(user.get('promedio', 5.0))
+
+        nuevo_total = total + 1
+        nuevo_promedio = ((promedio * total) + nueva_estrellas) / nuevo_total
+
+        tabla_usuarios.update_item(Key={'correo': str(correo)}, UpdateExpression="SET promedio = :p, totalCalificaciones = :t", ExpressionAttributeValues={':p': str(round(nuevo_promedio, 1)), ':t': nuevo_total})
+        return respuesta(200, {"message": "Calificación guardada"})
+    except Exception as e: return respuesta(500, {"error": str(e)})
 
 # ==========================================
-# 6. MENSAJERÍA, SALAS DE CHAT Y PROPUESTAS DE TRUEQUE
+# 6. MENSAJERÍA
 # ==========================================
 def crear_mensaje(event, context):
     try:
-        if not event.get('body'):
-            return respuesta(400, {"error": "El cuerpo de la petición está vacío."})
-        
         body = json.loads(event['body'])
-        
-        # Normalizamos los correos para evitar fallos por mayúsculas/minúsculas
-        remitente = str(body.get('remitente', '')).strip().lower()
-        destinatario = str(body.get('destinatario', '')).strip().lower()
-        producto_id = str(body.get('productoId', 'general')).strip()
-        producto_titulo = str(body.get('productoTitulo', 'Artículo en Truequi')).strip()
-        contenido = str(body.get('contenido', '')).strip()
+        remitente, destinatario = str(body.get('remitente', '')).strip().lower(), str(body.get('destinatario', '')).strip().lower()
+        if remitente == 'invitado' or remitente == destinatario: return respuesta(400, {"error": "Acción no permitida."})
+        conversacion_id = body.get('conversacionId') or f"{body.get('productoId')}_{sorted([remitente, destinatario])[0]}_{sorted([remitente, destinatario])[1]}"
 
-        # 🛡️ BLINDAJE DE NEGOCIO EN AWS
-        if not remitente or not destinatario or remitente == 'invitado':
-            return respuesta(401, {"error": "Debes iniciar sesión para enviar mensajes."})
-            
-        if remitente == destinatario:
-            return respuesta(400, {"error": "No puedes enviarte propuestas a ti mismo."})
-
-        if len(contenido) < 2:
-            return respuesta(400, {"error": "El mensaje o propuesta es demasiado corto."})
-
-        participantes = sorted([remitente, destinatario])
-        conversacion_id = body.get('conversacionId') or f"{producto_id}_{participantes[0]}_{participantes[1]}"
-
-        item = {
-            'id': str(uuid.uuid4()),
-            'conversacionId': str(conversacion_id),
-            'remitente': remitente,
-            'destinatario': destinatario,
-            'productoId': producto_id,
-            'productoTitulo': producto_titulo,
-            'contenido': contenido[:500],
-            'fecha': datetime.now(timezone.utc).isoformat(),
-            'estado': body.get('estado', 'Pendiente')
-        }
-
+        item = {'id': str(uuid.uuid4()), 'conversacionId': conversacion_id, 'remitente': remitente, 'destinatario': destinatario, 'productoId': body.get('productoId'), 'productoTitulo': body.get('productoTitulo'), 'contenido': body.get('contenido')[:500], 'fecha': datetime.now(timezone.utc).isoformat(), 'estado': body.get('estado', 'Pendiente')}
         tabla_mensajes.put_item(Item=item)
-        return respuesta(201, {"message": "Propuesta enviada con éxito", "mensaje": item})
-    except Exception as e:
-        return respuesta(500, {"error": f"Error al enviar mensaje: {str(e)}"})
+        return respuesta(201, {"mensaje": item})
+    except Exception as e: return respuesta(500, {"error": str(e)})
 
 def obtener_mensajes(event, context):
     try:
-        query_params = event.get('queryStringParameters') or {}
-        usuario = query_params.get('usuario')
-        conversacion_id = query_params.get('conversacionId')
-
-        if not usuario:
-            response = tabla_mensajes.scan(Limit=100)
-            mensajes = response.get('Items', [])
-        else:
-            res_recibidos = tabla_mensajes.query(
-                IndexName='DestinatarioIndex',
-                KeyConditionExpression='destinatario = :u',
-                ExpressionAttributeValues={':u': str(usuario)}
-            )
-            res_enviados = tabla_mensajes.query(
-                IndexName='RemitenteIndex',
-                KeyConditionExpression='remitente = :u',
-                ExpressionAttributeValues={':u': str(usuario)}
-            )
-            
-            mapa_mensajes = {}
-            for m in res_recibidos.get('Items', []) + res_enviados.get('Items', []):
-                mapa_mensajes[m['id']] = m
-            mensajes = list(mapa_mensajes.values())
-
-        if conversacion_id:
-            mensajes = [m for m in mensajes if m.get('conversacionId') == conversacion_id]
-            # En vista de sala de chat ordenamos cronológicamente (antiguos -> nuevos)
-            mensajes.sort(key=lambda x: x.get('fecha', ''))
-        else:
-            # En bandeja de entrada ordenamos por más recientes primero
-            mensajes.sort(key=lambda x: x.get('fecha', ''), reverse=True)
-
-        return respuesta(200, {
-            "status": "success",
-            "total": len(mensajes),
-            "mensajes": mensajes
-        })
-    except Exception as e:
-        return respuesta(500, {"error": f"Error al obtener mensajes: {str(e)}"})
+        usuario = (event.get('queryStringParameters') or {}).get('usuario')
+        res_rec = tabla_mensajes.query(IndexName='DestinatarioIndex', KeyConditionExpression='destinatario = :u', ExpressionAttributeValues={':u': str(usuario)})
+        res_env = tabla_mensajes.query(IndexName='RemitenteIndex', KeyConditionExpression='remitente = :u', ExpressionAttributeValues={':u': str(usuario)})
+        mapa = {m['id']: m for m in res_rec.get('Items', []) + res_env.get('Items', [])}
+        mensajes = list(mapa.values())
+        mensajes.sort(key=lambda x: x.get('fecha', ''), reverse=True)
+        return respuesta(200, {"mensajes": mensajes})
+    except Exception as e: return respuesta(500, {"error": str(e)})
 
 def actualizar_estado_mensaje(event, context):
     try:
-        path_params = event.get('pathParameters') or {}
-        mensaje_id = path_params.get('id')
+        mensaje_id = (event.get('pathParameters') or {}).get('id')
+        nuevo_estado = json.loads(event['body']).get('estado')
+
+        res = tabla_mensajes.update_item(Key={'id': str(mensaje_id)}, UpdateExpression="SET estado = :est", ExpressionAttributeValues={':est': nuevo_estado}, ReturnValues="ALL_NEW")
         
-        if not mensaje_id:
-            return respuesta(400, {"error": "El ID del mensaje es obligatorio."})
-        if not event.get('body'):
-            return respuesta(400, {"error": "El cuerpo de la petición está vacío."})
+        # SI SE ACEPTA O COMPLETA, EL PRODUCTO DESAPARECE DEL CATÁLOGO (ESTADO = COMPLETADO)
+        if nuevo_estado in ['Aceptado', 'Completado']:
+            msg = tabla_mensajes.get_item(Key={'id': str(mensaje_id)}).get('Item', {})
+            if msg and 'productoId' in msg:
+                tabla_productos.update_item(Key={'id': msg['productoId']}, UpdateExpression="SET estado = :e", ExpressionAttributeValues={':e': 'Completado'})
 
-        body = json.loads(event['body'])
-        nuevo_estado = body.get('estado')
-
-        if nuevo_estado not in ['Pendiente', 'Aceptado', 'Rechazado']:
-            return respuesta(400, {"error": "Estado inválido. Usa: Pendiente, Aceptado o Rechazado."})
-
-        res = tabla_mensajes.update_item(
-            Key={'id': str(mensaje_id)},
-            UpdateExpression="SET estado = :est",
-            ExpressionAttributeValues={':est': nuevo_estado},
-            ReturnValues="ALL_NEW"
-        )
-
-        return respuesta(200, {
-            "status": "success",
-            "message": f"Propuesta marcada como {nuevo_estado}",
-            "mensaje": res.get('Attributes', {})
-        })
-    except Exception as e:
-        return respuesta(500, {"error": f"Error al actualizar propuesta: {str(e)}"})
+        return respuesta(200, {"mensaje": res.get('Attributes', {})})
+    except Exception as e: return respuesta(500, {"error": str(e)})
