@@ -11,24 +11,22 @@ def poblar_mensajes():
     mensajes_prueba = [
         {
             "remitente": "admin@gmail.com",
-            "destinatario": "diegomillan999@gmail.com",
+            "destinatario": "diegomillan999@gmail.com", # Correos válidos y reales
             "productoId": "prod-demo-1",
             "productoTitulo": "Calculadora Científica Casio",
             "contenido": "¡Hola! Me interesa tu calculadora Casio. Te ofrezco a cambio el libro de Cálculo de Stewart en excelente estado."
-        },
-        {
-            "remitente": "maxsurf01@hotmail.com",
-            "destinatario": "1",
-            "productoId": "prod-demo-2",
-            "productoTitulo": "Audífonos Inalámbricos Bluetooth",
-            "contenido": "¿Aceptas cambio por un mouse inalámbrico Logitech nuevo en caja? Podemos vernos en la explanada de la UAQ."
         }
     ]
 
     try:
         for m in mensajes_prueba:
+            # Construcción dinámica del conversacionId
+            participantes = sorted([m['remitente'], m['destinatario']])
+            conversacion_id = f"{m['productoId']}_{participantes[0]}_{participantes[1]}"
+
             item = {
                 'id': str(uuid.uuid4()),
+                'conversacionId': conversacion_id, # <--- OBLIGATORIO PARA AGRUPAR EL CHAT
                 'remitente': m['remitente'],
                 'destinatario': m['destinatario'],
                 'productoId': m['productoId'],

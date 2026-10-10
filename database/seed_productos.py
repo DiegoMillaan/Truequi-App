@@ -38,16 +38,6 @@ def poblar_catalogo():
             "vendedorNombre": "Admin Truequi",
             "ubicacion": "Centro Histórico - Querétaro",
             "imagenUrl": "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?q=80&w=800&auto=format&fit=crop"
-        },
-        {
-            "titulo": "Audífonos Inalámbricos Bluetooth",
-            "descripcion": "Audífonos de diadema con cancelación de ruido básica. Tienen 10 horas de batería. Busco un mouse inalámbrico a cambio.",
-            "precio": "800.0",
-            "categoria": "Electrónica",
-            "vendedorId": "diegomillan999@gmail.com",
-            "vendedorNombre": "Diego Millán",
-            "ubicacion": "Juriquilla - Querétaro",
-            "imagenUrl": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=800&auto=format&fit=crop"
         }
     ]
 
@@ -63,6 +53,7 @@ def poblar_catalogo():
                 'vendedorNombre': p["vendedorNombre"],
                 'ubicacion': p["ubicacion"],
                 'imagenUrl': p["imagenUrl"],
+                'estado': 'Disponible', # <--- OBLIGATORIO PARA QUE SE VEA EN EL HOME
                 'fechaCreacion': datetime.now(timezone.utc).isoformat()
             }
             tabla.put_item(Item=item)
