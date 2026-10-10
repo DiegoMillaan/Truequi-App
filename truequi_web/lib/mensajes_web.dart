@@ -329,4 +329,42 @@ class _MensajesWebState extends State<MensajesWeb> with SingleTickerProviderStat
             decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), border: Border(top: BorderSide(color: Colors.white.withOpacity(0.2)))),
             child: Row(
               children: [
-                Expanded(child: Container(decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(30), border: Border.all(color: Colors.white.withOpacity(0.3))), child: TextField(
+                Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.1), 
+                      borderRadius: BorderRadius.circular(30), 
+                      border: Border.all(color: Colors.white.withOpacity(0.3))
+                    ), 
+                    child: TextField(
+                      controller: _respuestaController, 
+                      style: const TextStyle(color: Colors.white), 
+                      decoration: InputDecoration(
+                        hintText: 'Escribe tu respuesta...', 
+                        hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)), 
+                        border: InputBorder.none, 
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 25, vertical: 18)
+                      )
+                    )
+                  )
+                ),
+                const SizedBox(width: 15),
+                Container(
+                  decoration: BoxDecoration(
+                    color: TruequiColors.purpura, 
+                    shape: BoxShape.circle, 
+                    boxShadow: [BoxShadow(color: TruequiColors.purpura.withOpacity(0.5), blurRadius: 20)]
+                  ), 
+                  child: IconButton(
+                    onPressed: _enviando ? null : () => _enviarMensaje(hilo), 
+                    icon: _enviando ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : const Icon(Icons.send_rounded, color: Colors.white), 
+                    padding: const EdgeInsets.all(15)
+                  )
+                )
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+}
