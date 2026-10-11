@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'home_web.dart';
+import 'perfil_publico_dialog.dart'; // Import agregado
 
 class DetalleProductoWeb extends StatelessWidget {
   final Map<String, dynamic> producto;
@@ -213,7 +214,30 @@ class DetalleProductoWeb extends StatelessWidget {
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
                                     Container(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), decoration: BoxDecoration(color: TruequiColors.amarillo.withOpacity(0.2), borderRadius: BorderRadius.circular(20), border: Border.all(color: TruequiColors.amarillo.withOpacity(0.5))), child: Text(categoria, style: const TextStyle(color: TruequiColors.amarillo, fontWeight: FontWeight.bold))),
-                                    Text('Publicado por: $vendedor', style: TextStyle(color: Colors.white.withOpacity(0.6), fontStyle: FontStyle.italic)),
+                                    MouseRegion(
+                                      cursor: SystemMouseCursors.click,
+                                      child: GestureDetector(
+                                        onTap: () {
+                                          if (producto['vendedorId'] != null) {
+                                            PerfilPublicoDialog.mostrar(context, producto['vendedorId']);
+                                          }
+                                        },
+                                        child: Row(
+                                          children: [
+                                            CircleAvatar(
+                                              radius: 16,
+                                              backgroundColor: TruequiColors.purpura.withOpacity(0.5),
+                                              child: const Icon(Icons.person, size: 18, color: Colors.white),
+                                            ),
+                                            const SizedBox(width: 10),
+                                            Text(
+                                              'Vendedor: $vendedor', 
+                                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, decoration: TextDecoration.underline)
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
                                   ],
                                 ),
                                 const SizedBox(height: 20),

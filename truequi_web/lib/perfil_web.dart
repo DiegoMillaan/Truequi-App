@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 
-import 'services/google_auth_service.dart'; // Restaurado a tu servicio original
+import 'services/google_auth_service.dart'; 
 import 'home_web.dart';
 
 class PerfilWeb extends StatefulWidget {
@@ -38,7 +38,6 @@ class _PerfilWebState extends State<PerfilWeb> with SingleTickerProviderStateMix
 
   Future<void> _cargarPerfil() async {
     try {
-      // 1. Obtener datos del Usuario
       final urlUsuario = Uri.parse('https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/usuario/perfil/${widget.usuario['correo']}');
       final resUsuario = await http.get(urlUsuario);
       
@@ -47,7 +46,6 @@ class _PerfilWebState extends State<PerfilWeb> with SingleTickerProviderStateMix
         if (mounted) setState(() { _perfilData = data['usuario']; });
       }
 
-      // 2. Obtener TODOS los productos y filtrar los tuyos
       final urlProductos = Uri.parse('https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/productos');
       final resProductos = await http.get(urlProductos);
 
@@ -57,7 +55,6 @@ class _PerfilWebState extends State<PerfilWeb> with SingleTickerProviderStateMix
         
         if (mounted) {
           setState(() {
-            // Filtramos la lista global para mostrar SOLO los que tengan tu correo
             _misProductos = todosLosProductos.where((p) => p['vendedorId'] == widget.usuario['correo']).toList();
             _isLoading = false;
           });
@@ -65,9 +62,7 @@ class _PerfilWebState extends State<PerfilWeb> with SingleTickerProviderStateMix
       } else {
         if (mounted) setState(() => _isLoading = false);
       }
-      
     } catch (e) { 
-      // Si hay error en cualquier petición, apaga la carga.
       if (mounted) setState(() => _isLoading = false); 
     }
   }
@@ -139,15 +134,27 @@ class _PerfilWebState extends State<PerfilWeb> with SingleTickerProviderStateMix
     if (image == null) return;
     
     if (mounted) _mostrarAlertaLiquid(context, 'Subiendo foto...', tipo: 'info');
+    
     try {
       final bytes = await image.readAsBytes();
       final ext = image.name.split('.').last.toLowerCase();
       final validExt = ['jpg', 'jpeg', 'png', 'webp'].contains(ext) ? ext : 'jpg';
       
       final resUrl = await http.get(Uri.parse('https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/productos/upload-url?ext=$validExt'));
+      
+      if (resUrl.statusCode != 200) {
+        if (mounted) _mostrarAlertaLiquid(context, 'Error al conectar con el servidor de AWS.', tipo: 'error');
+        return;
+      }
+      
       final urlData = jsonDecode(resUrl.body);
       
-      await http.put(Uri.parse(urlData['uploadUrl']), body: bytes);
+      final uploadRes = await http.put(Uri.parse(urlData['uploadUrl']), body: bytes);
+      
+      if (uploadRes.statusCode >= 400) {
+        if (mounted) _mostrarAlertaLiquid(context, 'AWS S3 rechazó la subida de la imagen. Código: ${uploadRes.statusCode}', tipo: 'error');
+        return;
+      }
       
       final resUpdate = await http.put(
         Uri.parse('https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/usuario/perfil'),
@@ -158,8 +165,12 @@ class _PerfilWebState extends State<PerfilWeb> with SingleTickerProviderStateMix
       if (resUpdate.statusCode == 200) {
         if (mounted) _mostrarAlertaLiquid(context, '¡Foto actualizada!', tipo: 'exito');
         _cargarPerfil();
+      } else {
+        if (mounted) _mostrarAlertaLiquid(context, 'Error al guardar en base de datos. Código: ${resUpdate.statusCode}', tipo: 'error');
       }
-    } catch (e) { debugPrint('Error editando perfil'); }
+    } catch (e) { 
+      if (mounted) _mostrarAlertaLiquid(context, 'Error inesperado o de red: $e', tipo: 'error');
+    }
   }
 
   Future<void> _editarNombreDialog() async {
@@ -241,7 +252,7 @@ class _PerfilWebState extends State<PerfilWeb> with SingleTickerProviderStateMix
 
   Future<void> _cerrarSesion() async {
     try {
-      await GoogleAuthService().signOut(); // Corrección aplicada aquí
+      await GoogleAuthService().signOut(); 
     } catch (e) {
       debugPrint('Limpiando sesión: $e');
     }
@@ -255,7 +266,16 @@ class _PerfilWebState extends State<PerfilWeb> with SingleTickerProviderStateMix
     if (_isLoading) return const Scaffold(backgroundColor: Color(0xFFF0F2F5), body: Center(child: CircularProgressIndicator(color: TruequiColors.purpura)));
 
     final nombre = _perfilData?['nombre'] ?? widget.usuario['nombre'] ?? 'Usuario';
-    final foto = _perfilData?['foto'] ?? widget.usuario['foto'];
+    final foto = _perfilData?['fotoUrl'] ?? _perfilData?['foto'] ?? widget.usuario['fotoUrl'] ?? widget.usuario['foto'];
+    
+    // CORRECCIÓN EXACTA DE CACHÉ Y URLs DE GOOGLE
+    String? fotoConCacheKiller = foto;
+    if (foto != null && foto.isNotEmpty) {
+      fotoConCacheKiller = foto.contains('?') 
+          ? '$foto&v=${DateTime.now().millisecondsSinceEpoch}' 
+          : '$foto?v=${DateTime.now().millisecondsSinceEpoch}';
+    }
+
     final promedio = _perfilData?['promedio'] ?? '5.0';
     final size = MediaQuery.of(context).size;
     final anchoContenido = math.min(size.width * 0.85, 1200.0);
@@ -324,7 +344,7 @@ class _PerfilWebState extends State<PerfilWeb> with SingleTickerProviderStateMix
                                   shape: BoxShape.circle,
                                   border: Border.all(color: Colors.white, width: 4),
                                   boxShadow: [BoxShadow(color: TruequiColors.purpura.withOpacity(_isHoveringFoto ? 0.3 : 0.1), blurRadius: _isHoveringFoto ? 30 : 15, spreadRadius: 5)],
-                                  image: foto != null ? DecorationImage(image: NetworkImage(foto), fit: BoxFit.cover) : null,
+                                  image: fotoConCacheKiller != null ? DecorationImage(image: NetworkImage(fotoConCacheKiller), fit: BoxFit.cover) : null,
                                   color: foto == null ? TruequiColors.purpura.withOpacity(0.1) : null,
                                 ),
                                 child: Stack(
@@ -490,7 +510,6 @@ class _PerfilWebState extends State<PerfilWeb> with SingleTickerProviderStateMix
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
                   child: Image.network(prod['imagenUrl'] ?? 'https://via.placeholder.com/300', fit: BoxFit.cover),
                 ),
-                // Corrección aplicada aquí (ClipRRect + BackdropFilter)
                 Positioned(
                   top: 15, right: 15,
                   child: ClipRRect(

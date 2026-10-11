@@ -5,6 +5,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'home_web.dart';
+import 'perfil_publico_dialog.dart'; // Import agregado
 
 class MensajesWeb extends StatefulWidget {
   final Map<String, dynamic> usuarioActual;
@@ -422,8 +423,37 @@ class _MensajesWebState extends State<MensajesWeb> with SingleTickerProviderStat
           decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), border: Border(bottom: BorderSide(color: Colors.white.withOpacity(0.2)))),
           child: Row(
             children: [
-              CircleAvatar(backgroundColor: TruequiColors.purpura.withOpacity(0.5), child: const Icon(Icons.person, color: Colors.white)), const SizedBox(width: 15),
-              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(primerMsj['productoTitulo'], style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis), Text(otroUsuario, style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 14))])),
+              MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onTap: () => PerfilPublicoDialog.mostrar(context, otroUsuario),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 25,
+                        backgroundColor: TruequiColors.purpura.withOpacity(0.5), 
+                        child: const Icon(Icons.person, color: Colors.white)
+                      ), 
+                      const SizedBox(width: 15),
+                    ],
+                  ),
+                ),
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start, 
+                  children: [
+                    Text(primerMsj['productoTitulo'], style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis), 
+                    MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: GestureDetector(
+                        onTap: () => PerfilPublicoDialog.mostrar(context, otroUsuario),
+                        child: Text('Ver perfil de $otroUsuario', style: TextStyle(color: TruequiColors.amarillo, fontSize: 14, fontWeight: FontWeight.bold, decoration: TextDecoration.underline))
+                      ),
+                    )
+                  ]
+                )
+              ),
               
               // 🛡️ LÓGICA DE DOBLE CANDADO
               if (estado == 'Pendiente') ...[
