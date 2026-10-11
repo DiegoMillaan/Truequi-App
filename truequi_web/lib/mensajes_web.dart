@@ -30,7 +30,7 @@ class _MensajesWebState extends State<MensajesWeb> with SingleTickerProviderStat
     super.initState();
     _bgController = AnimationController(vsync: this, duration: const Duration(seconds: 25))..repeat();
     _cargarMensajes(silencioso: false);
-    _pollingTimer = Timer.periodic(const Duration(seconds: 3), (_) => _cargarMensajes(silencioso: true));
+    _pollingTimer = Timer.periodic(const Duration(seconds: 1), (_) => _cargarMensajes(silencioso: true));
   }
 
   @override
