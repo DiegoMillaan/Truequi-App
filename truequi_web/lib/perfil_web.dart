@@ -22,6 +22,9 @@ class _PerfilWebState extends State<PerfilWeb> with SingleTickerProviderStateMix
   bool _isLoading = true;
   bool _isHoveringFoto = false; 
   late AnimationController _bgController;
+  
+  // NUEVO: Variable para controlar qué vista se muestra en el panel derecho
+  int _menuSeleccionado = 0; 
 
   @override
   void initState() {
@@ -166,13 +169,8 @@ class _PerfilWebState extends State<PerfilWeb> with SingleTickerProviderStateMix
         if (mounted) _mostrarAlertaLiquid(context, '¡Foto actualizada!', tipo: 'exito');
         _cargarPerfil();
       } else {
-        // Extraemos el error exacto que nos manda Python desde AWS
         String errorBackend = resUpdate.statusCode.toString();
-        try {
-          errorBackend = jsonDecode(resUpdate.body)['error'] ?? 'Desconocido';
-        } catch(_) {
-          errorBackend = resUpdate.body;
-        }
+        try { errorBackend = jsonDecode(resUpdate.body)['error'] ?? 'Desconocido'; } catch(_) { errorBackend = resUpdate.body; }
         if (mounted) _mostrarAlertaLiquid(context, 'AWS Error: $errorBackend', tipo: 'error');
       }
     } catch (e) { 
@@ -263,7 +261,6 @@ class _PerfilWebState extends State<PerfilWeb> with SingleTickerProviderStateMix
     } catch (e) {
       debugPrint('Limpiando sesión: $e');
     }
-    
     if (!mounted) return;
     Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const HomeWeb()), (route) => false);
   }
@@ -272,198 +269,90 @@ class _PerfilWebState extends State<PerfilWeb> with SingleTickerProviderStateMix
   Widget build(BuildContext context) {
     if (_isLoading) return const Scaffold(backgroundColor: Color(0xFFF0F2F5), body: Center(child: CircularProgressIndicator(color: TruequiColors.purpura)));
 
+    final size = MediaQuery.of(context).size;
     final nombre = _perfilData?['nombre'] ?? widget.usuario['nombre'] ?? 'Usuario';
     final foto = _perfilData?['fotoUrl'] ?? _perfilData?['foto'] ?? widget.usuario['fotoUrl'] ?? widget.usuario['foto'];
     
-    // CORRECCIÓN EXACTA DE CACHÉ Y URLs DE GOOGLE
     String? fotoConCacheKiller = foto;
     if (foto != null && foto.isNotEmpty) {
-      fotoConCacheKiller = foto.contains('?') 
-          ? '$foto&v=${DateTime.now().millisecondsSinceEpoch}' 
-          : '$foto?v=${DateTime.now().millisecondsSinceEpoch}';
+      fotoConCacheKiller = foto.contains('?') ? '$foto&v=${DateTime.now().millisecondsSinceEpoch}' : '$foto?v=${DateTime.now().millisecondsSinceEpoch}';
     }
 
-    final promedio = _perfilData?['promedio'] ?? '5.0';
-    final size = MediaQuery.of(context).size;
-    final anchoContenido = math.min(size.width * 0.85, 1200.0);
+    // CONEXIÓN CON VALORES REALES
+    final promedio = _perfilData?['promedio']?.toString() ?? '5.0';
+    final totalCalificaciones = _perfilData?['totalCalificaciones']?.toString() ?? '0';
 
     return Scaffold(
       backgroundColor: const Color(0xFFF0F2F5),
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        backgroundColor: Colors.white.withOpacity(0.7), 
-        elevation: 0, 
-        iconTheme: const IconThemeData(color: TruequiColors.purpura),
-        title: const Text('Mi Perfil', style: TextStyle(color: TruequiColors.purpura, fontWeight: FontWeight.bold)),
-        centerTitle: true,
-        flexibleSpace: ClipRRect(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            child: Container(color: Colors.transparent),
+        backgroundColor: Colors.transparent, elevation: 0, 
+        iconTheme: const IconThemeData(color: TruequiColors.textoOscuro),
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 20.0),
+          child: Container(
+            margin: const EdgeInsets.all(8),
+            decoration: BoxDecoration(color: Colors.white.withOpacity(0.5), shape: BoxShape.circle, border: Border.all(color: Colors.white)),
+            child: IconButton(icon: const Icon(Icons.arrow_back_rounded, size: 20), onPressed: () => Navigator.pop(context)),
           ),
         ),
       ),
-      extendBodyBehindAppBar: true,
       body: Stack(
         children: [
+          // ANIMACIÓN HIPNÓTICA DE FONDO (Igual a Home Page)
           AnimatedBuilder(
             animation: _bgController,
             builder: (context, child) {
               return Stack(
                 children: [
-                  Positioned(top: -100 + (math.sin(_bgController.value * 2 * math.pi) * 50), left: -100 + (math.cos(_bgController.value * 2 * math.pi) * 50), child: Container(width: 400, height: 400, decoration: BoxDecoration(shape: BoxShape.circle, color: TruequiColors.purpura.withOpacity(0.1)))),
-                  Positioned(bottom: -50 + (math.cos(_bgController.value * 2 * math.pi) * 50), right: -50 + (math.sin(_bgController.value * 2 * math.pi) * 50), child: Container(width: 500, height: 500, decoration: BoxDecoration(shape: BoxShape.circle, color: TruequiColors.amarillo.withOpacity(0.1)))),
+                  Positioned(top: -100 + (math.sin(_bgController.value * 2 * math.pi) * 50), left: -100 + (math.cos(_bgController.value * 2 * math.pi) * 50), child: Container(width: 500, height: 500, decoration: BoxDecoration(shape: BoxShape.circle, color: TruequiColors.purpura.withOpacity(0.15)))),
+                  Positioned(bottom: -50 + (math.cos(_bgController.value * 2 * math.pi) * 50), right: -50 + (math.sin(_bgController.value * 2 * math.pi) * 50), child: Container(width: 600, height: 600, decoration: BoxDecoration(shape: BoxShape.circle, color: TruequiColors.amarillo.withOpacity(0.12)))),
                 ],
               );
             },
           ),
-          BackdropFilter(filter: ImageFilter.blur(sigmaX: 80.0, sigmaY: 80.0), child: Container(color: Colors.white.withOpacity(0.5))),
+          BackdropFilter(filter: ImageFilter.blur(sigmaX: 80.0, sigmaY: 80.0), child: Container(color: Colors.white.withOpacity(0.3))),
 
-          SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            padding: EdgeInsets.only(top: 120, bottom: 50, left: (size.width - anchoContenido) / 2, right: (size.width - anchoContenido) / 2),
-            child: Column(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(40),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(50),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.7), 
-                        borderRadius: BorderRadius.circular(40), 
-                        border: Border.all(color: Colors.white, width: 2),
-                        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 40, offset: const Offset(0, 10))]
-                      ),
-                      child: Column(
-                        children: [
-                          MouseRegion(
-                            onEnter: (_) => setState(() => _isHoveringFoto = true),
-                            onExit: (_) => setState(() => _isHoveringFoto = false),
-                            cursor: SystemMouseCursors.click,
-                            child: GestureDetector(
-                              onTap: _editarFotoPerfil,
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 200),
-                                width: 160, height: 160,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(color: Colors.white, width: 4),
-                                  boxShadow: [BoxShadow(color: TruequiColors.purpura.withOpacity(_isHoveringFoto ? 0.3 : 0.1), blurRadius: _isHoveringFoto ? 30 : 15, spreadRadius: 5)],
-                                  image: fotoConCacheKiller != null ? DecorationImage(image: NetworkImage(fotoConCacheKiller), fit: BoxFit.cover) : null,
-                                  color: foto == null ? TruequiColors.purpura.withOpacity(0.1) : null,
-                                ),
-                                child: Stack(
-                                  alignment: Alignment.center,
-                                  children: [
-                                    if (foto == null) const Icon(Icons.person, size: 80, color: TruequiColors.purpura),
-                                    AnimatedOpacity(
-                                      duration: const Duration(milliseconds: 200),
-                                      opacity: _isHoveringFoto ? 1.0 : 0.0,
-                                      child: Container(
-                                        decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.black.withOpacity(0.5)),
-                                        child: const Center(
-                                          child: Column(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Icon(Icons.camera_alt_rounded, color: Colors.white, size: 36),
-                                              SizedBox(height: 4),
-                                              Text('Actualizar', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 25),
-                          
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
+          // ESTRUCTURA DE PANELES DASHBOARD
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(40, 10, 40, 40),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(40),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.6), 
+                      borderRadius: BorderRadius.circular(40), 
+                      border: Border.all(color: Colors.white, width: 2),
+                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 40, offset: const Offset(0, 10))]
+                    ),
+                    child: Row(
+                      children: [
+                        // PANEL IZQUIERDO (SIDEBAR MENU)
+                        _buildMenuIzquierdo(nombre, fotoConCacheKiller, promedio, totalCalificaciones),
+                        
+                        // SEPARADOR DE VIDRIO
+                        Container(width: 2, color: Colors.white.withOpacity(0.5)),
+                        
+                        // PANEL DERECHO (CONTENIDO DINÁMICO)
+                        Expanded(
+                          child: IndexedStack(
+                            index: _menuSeleccionado,
                             children: [
-                              Text(nombre, style: const TextStyle(fontSize: 36, fontWeight: FontWeight.w900, color: TruequiColors.textoOscuro, letterSpacing: -1)),
-                              const SizedBox(width: 10),
-                              Container(
-                                decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)]),
-                                child: IconButton(onPressed: _editarNombreDialog, icon: const Icon(Icons.edit_rounded, color: TruequiColors.amarillo, size: 20), tooltip: 'Editar nombre'),
-                              )
+                              _buildVistaGaleria(),
+                              _buildVistaConfiguracion(),
+                              _buildVistaPrivacidad(),
+                              _buildVistaAyuda()
                             ],
                           ),
-                          Text(widget.usuario['correo'], style: TextStyle(fontSize: 16, color: Colors.grey.shade600, fontWeight: FontWeight.w500)),
-                          
-                          const SizedBox(height: 30),
-                          
-                          Wrap(
-                            spacing: 20, runSpacing: 15, alignment: WrapAlignment.center,
-                            children: [
-                              _buildMetricaGlass(Icons.star_rounded, '$promedio', 'Calificación', TruequiColors.amarillo),
-                              _buildMetricaGlass(Icons.inventory_2_rounded, '${_misProductos.length}', 'Publicaciones', TruequiColors.purpura),
-                              _buildMetricaGlass(Icons.handshake_rounded, '12', 'Trueques Exitosos', Colors.teal),
-                            ],
-                          ),
-                          
-                          const SizedBox(height: 40),
-                          OutlinedButton.icon(
-                            onPressed: _cerrarSesion, 
-                            icon: const Icon(Icons.logout, size: 20), 
-                            label: const Text('Cerrar Sesión', style: TextStyle(fontWeight: FontWeight.bold)), 
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: Colors.redAccent, 
-                              side: BorderSide(color: Colors.redAccent.withOpacity(0.3), width: 2),
-                              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                              backgroundColor: Colors.white
-                            )
-                          )
-                        ],
-                      ),
+                        )
+                      ],
                     ),
                   ),
                 ),
-                
-                const SizedBox(height: 60),
-                
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('Mi Galería', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: TruequiColors.textoOscuro, letterSpacing: -1)),
-                    Container(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), decoration: BoxDecoration(color: TruequiColors.purpura.withOpacity(0.1), borderRadius: BorderRadius.circular(20)), child: Text('${_misProductos.length} artículos', style: const TextStyle(color: TruequiColors.purpura, fontWeight: FontWeight.bold))),
-                  ],
-                ),
-                const SizedBox(height: 30),
-                
-                _misProductos.isEmpty 
-                  ? Container(
-                      width: double.infinity, padding: const EdgeInsets.all(50),
-                      decoration: BoxDecoration(color: Colors.white.withOpacity(0.5), borderRadius: BorderRadius.circular(30), border: Border.all(color: Colors.white, width: 2)),
-                      child: Column(
-                        children: [
-                          Icon(Icons.inventory_2_outlined, size: 60, color: Colors.grey.shade400),
-                          const SizedBox(height: 15),
-                          Text('Aún no tienes artículos en tu galería', style: TextStyle(fontSize: 18, color: Colors.grey.shade600, fontWeight: FontWeight.w600)),
-                        ],
-                      ),
-                    )
-                  : GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                        maxCrossAxisExtent: 400,
-                        mainAxisSpacing: 25,
-                        crossAxisSpacing: 25,
-                        childAspectRatio: 0.8,
-                      ),
-                      itemCount: _misProductos.length,
-                      itemBuilder: (context, index) {
-                        final prod = _misProductos[index];
-                        return _buildTarjetaProductoGaleria(prod);
-                      },
-                    )
-              ],
+              ),
             ),
           ),
         ],
@@ -471,28 +360,265 @@ class _PerfilWebState extends State<PerfilWeb> with SingleTickerProviderStateMix
     );
   }
 
-  Widget _buildMetricaGlass(IconData icon, String valor, String titulo, Color color) {
+  // ==========================================
+  // PANEL IZQUIERDO (SIDEBAR)
+  // ==========================================
+  Widget _buildMenuIzquierdo(String nombre, String? fotoUrl, String promedio, String totalCalificaciones) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: color.withOpacity(0.2), width: 1.5),
-        boxShadow: [BoxShadow(color: color.withOpacity(0.05), blurRadius: 15, offset: const Offset(0, 5))]
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
+      width: 340,
+      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 25),
+      child: Column(
         children: [
-          Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: color.withOpacity(0.1), shape: BoxShape.circle), child: Icon(icon, color: color, size: 24)),
-          const SizedBox(width: 15),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          // FOTO CON HOVER
+          MouseRegion(
+            onEnter: (_) => setState(() => _isHoveringFoto = true),
+            onExit: (_) => setState(() => _isHoveringFoto = false),
+            cursor: SystemMouseCursors.click,
+            child: GestureDetector(
+              onTap: _editarFotoPerfil,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                width: 130, height: 130,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 4),
+                  boxShadow: [BoxShadow(color: TruequiColors.purpura.withOpacity(_isHoveringFoto ? 0.3 : 0.1), blurRadius: _isHoveringFoto ? 30 : 15, spreadRadius: 5)],
+                  image: fotoUrl != null ? DecorationImage(image: NetworkImage(fotoUrl), fit: BoxFit.cover) : null,
+                  color: fotoUrl == null ? TruequiColors.purpura.withOpacity(0.1) : null,
+                ),
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    if (fotoUrl == null) const Icon(Icons.person, size: 60, color: TruequiColors.purpura),
+                    AnimatedOpacity(
+                      duration: const Duration(milliseconds: 200),
+                      opacity: _isHoveringFoto ? 1.0 : 0.0,
+                      child: Container(
+                        decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.black.withOpacity(0.5)),
+                        child: const Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.camera_alt_rounded, color: Colors.white, size: 28),
+                              SizedBox(height: 4),
+                              Text('Actualizar', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11)),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          
+          // NOMBRE E INFO
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(valor, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: TruequiColors.textoOscuro)),
-              Text(titulo, style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontWeight: FontWeight.w600)),
+              Flexible(child: Text(nombre, style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: TruequiColors.textoOscuro, letterSpacing: -0.5), overflow: TextOverflow.ellipsis)),
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: _editarNombreDialog,
+                child: Container(padding: const EdgeInsets.all(4), decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 5)]), child: const Icon(Icons.edit_rounded, color: TruequiColors.amarillo, size: 16)),
+              )
             ],
+          ),
+          const SizedBox(height: 5),
+          Text(widget.usuario['correo'], style: TextStyle(fontSize: 14, color: Colors.grey.shade600, fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis),
+          
+          const SizedBox(height: 25),
+          
+          // MÉTRICAS REALES
+          Container(
+            padding: const EdgeInsets.all(15),
+            decoration: BoxDecoration(color: Colors.white.withOpacity(0.5), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.white)),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildMetricaMini(Icons.star_rounded, promedio, 'Reputación', TruequiColors.amarillo),
+                Container(width: 1, height: 30, color: Colors.grey.shade300),
+                _buildMetricaMini(Icons.reviews_rounded, totalCalificaciones, 'Reseñas', Colors.teal),
+                Container(width: 1, height: 30, color: Colors.grey.shade300),
+                _buildMetricaMini(Icons.inventory_2_rounded, '${_misProductos.length}', 'Catálogo', TruequiColors.purpura),
+              ],
+            ),
+          ),
+          
+          const SizedBox(height: 30),
+          Expanded(
+            child: ListView(
+              physics: const BouncingScrollPhysics(),
+              children: [
+                _buildBotonMenu(0, Icons.grid_view_rounded, 'Mis Publicaciones'),
+                _buildBotonMenu(1, Icons.settings_rounded, 'Configuración'),
+                _buildBotonMenu(2, Icons.privacy_tip_rounded, 'Aviso de Privacidad'),
+                _buildBotonMenu(3, Icons.report_problem_rounded, 'Ayuda y Denuncias'),
+              ],
+            ),
+          ),
+          
+          const SizedBox(height: 10),
+          OutlinedButton.icon(
+            onPressed: _cerrarSesion, 
+            icon: const Icon(Icons.logout, size: 18), 
+            label: const Text('Cerrar Sesión', style: TextStyle(fontWeight: FontWeight.bold)), 
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.redAccent, 
+              side: BorderSide(color: Colors.redAccent.withOpacity(0.3), width: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              backgroundColor: Colors.white
+            )
           )
         ],
+      ),
+    );
+  }
+
+  Widget _buildMetricaMini(IconData icon, String valor, String titulo, Color color) {
+    return Column(
+      children: [
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: color, size: 16),
+            const SizedBox(width: 4),
+            Text(valor, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: TruequiColors.textoOscuro)),
+          ],
+        ),
+        Text(titulo, style: TextStyle(fontSize: 10, color: Colors.grey.shade600, fontWeight: FontWeight.bold)),
+      ],
+    );
+  }
+
+  Widget _buildBotonMenu(int index, IconData icon, String titulo) {
+    final isSelected = _menuSeleccionado == index;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: ListTile(
+        onTap: () => setState(() => _menuSeleccionado = index),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        tileColor: isSelected ? Colors.white : Colors.transparent,
+        leading: Icon(icon, color: isSelected ? TruequiColors.purpura : Colors.grey.shade600),
+        title: Text(titulo, style: TextStyle(color: isSelected ? TruequiColors.purpura : Colors.grey.shade700, fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600)),
+        trailing: isSelected ? const Icon(Icons.chevron_right_rounded, color: TruequiColors.purpura) : null,
+      ),
+    );
+  }
+
+  // ==========================================
+  // PANELES DERECHOS (CONTENIDOS)
+  // ==========================================
+  
+  // VISTA 0: GALERÍA (La lógica original)
+  Widget _buildVistaGaleria() {
+    return Padding(
+      padding: const EdgeInsets.all(40),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Mi Galería de Trueques', style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: TruequiColors.textoOscuro, letterSpacing: -1)),
+              Container(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), decoration: BoxDecoration(color: TruequiColors.purpura.withOpacity(0.1), borderRadius: BorderRadius.circular(20)), child: Text('${_misProductos.length} artículos activos', style: const TextStyle(color: TruequiColors.purpura, fontWeight: FontWeight.bold))),
+            ],
+          ),
+          const SizedBox(height: 30),
+          Expanded(
+            child: _misProductos.isEmpty 
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.inventory_2_outlined, size: 80, color: Colors.grey.shade400),
+                      const SizedBox(height: 20),
+                      Text('Aún no tienes artículos en tu galería', style: TextStyle(fontSize: 20, color: Colors.grey.shade600, fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                )
+              : GridView.builder(
+                  physics: const BouncingScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                    maxCrossAxisExtent: 350,
+                    mainAxisSpacing: 25,
+                    crossAxisSpacing: 25,
+                    childAspectRatio: 0.8,
+                  ),
+                  itemCount: _misProductos.length,
+                  itemBuilder: (context, index) {
+                    return _buildTarjetaProductoGaleria(_misProductos[index]);
+                  },
+                ),
+          )
+        ],
+      ),
+    );
+  }
+
+  // VISTA 1: CONFIGURACIÓN
+  Widget _buildVistaConfiguracion() {
+    return Padding(
+      padding: const EdgeInsets.all(40),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Configuración del Perfil', style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: TruequiColors.textoOscuro, letterSpacing: -1)),
+          const SizedBox(height: 40),
+          _buildTarjetaAccion(Icons.badge_rounded, 'Editar mi nombre público', 'Cambia cómo te ven otros usuarios en la plataforma.', _editarNombreDialog),
+          const SizedBox(height: 20),
+          _buildTarjetaAccion(Icons.face_retouching_natural_rounded, 'Actualizar fotografía', 'Sube una nueva foto desde tus archivos locales.', _editarFotoPerfil),
+        ],
+      ),
+    );
+  }
+
+  // VISTA 2: PRIVACIDAD
+  Widget _buildVistaPrivacidad() {
+    return const Padding(
+      padding: EdgeInsets.all(40),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Aviso de Privacidad', style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: TruequiColors.textoOscuro, letterSpacing: -1)),
+          SizedBox(height: 40),
+          Text('En Truequi, valoramos tu privacidad.', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: TruequiColors.purpura)),
+          SizedBox(height: 15),
+          Text('Toda tu información personal, imágenes y mensajes están encriptados y protegidos por la infraestructura segura de Amazon Web Services (AWS).\n\nLos datos que proporcionas se utilizan exclusivamente para conectar a la comunidad de la UAQ y facilitar los intercambios. No vendemos ni compartimos tu información con terceros bajo ninguna circunstancia.', style: TextStyle(fontSize: 16, color: Colors.black87, height: 1.6)),
+        ],
+      ),
+    );
+  }
+
+  // VISTA 3: AYUDA
+  Widget _buildVistaAyuda() {
+    return Padding(
+      padding: const EdgeInsets.all(40),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Centro de Ayuda y Denuncias', style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: TruequiColors.textoOscuro, letterSpacing: -1)),
+          const SizedBox(height: 40),
+          _buildTarjetaAccion(Icons.report_gmailerrorred_rounded, 'Denunciar un perfil o publicación', 'Si detectas comportamiento indebido o artículos prohibidos.', () => _mostrarAlertaLiquid(context, 'Función de denuncia en desarrollo.', tipo: 'info')),
+          const SizedBox(height: 20),
+          _buildTarjetaAccion(Icons.support_agent_rounded, 'Contactar soporte técnico', '¿Tienes problemas con la plataforma? Escríbenos.', () => _mostrarAlertaLiquid(context, 'Envía un correo a soporte@truequi.com.mx', tipo: 'info')),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTarjetaAccion(IconData icono, String titulo, String subtitulo, VoidCallback accion) {
+    return Container(
+      decoration: BoxDecoration(color: Colors.white.withOpacity(0.8), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.white, width: 2), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 15)]),
+      child: ListTile(
+        contentPadding: const EdgeInsets.all(20),
+        leading: Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: TruequiColors.purpura.withOpacity(0.1), shape: BoxShape.circle), child: Icon(icono, color: TruequiColors.purpura, size: 28)),
+        title: Text(titulo, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: TruequiColors.textoOscuro)),
+        subtitle: Padding(padding: const EdgeInsets.only(top: 8), child: Text(subtitulo, style: TextStyle(color: Colors.grey.shade700))),
+        trailing: ElevatedButton(onPressed: accion, style: ElevatedButton.styleFrom(backgroundColor: TruequiColors.purpura, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), child: const Text('Gestionar')),
       ),
     );
   }
@@ -500,7 +626,7 @@ class _PerfilWebState extends State<PerfilWeb> with SingleTickerProviderStateMix
   Widget _buildTarjetaProductoGaleria(Map<String, dynamic> prod) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.8),
+        color: Colors.white.withOpacity(0.9),
         borderRadius: BorderRadius.circular(30),
         border: Border.all(color: Colors.white, width: 2),
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, 10))]
@@ -543,13 +669,13 @@ class _PerfilWebState extends State<PerfilWeb> with SingleTickerProviderStateMix
                 children: [
                   Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: TruequiColors.purpura.withOpacity(0.1), borderRadius: BorderRadius.circular(8)), child: Text(prod['categoria'] ?? 'General', style: const TextStyle(color: TruequiColors.purpura, fontSize: 11, fontWeight: FontWeight.bold))),
                   const SizedBox(height: 10),
-                  Text(prod['titulo'], style: const TextStyle(color: TruequiColors.textoOscuro, fontSize: 18, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
+                  Text(prod['titulo'], style: const TextStyle(color: TruequiColors.textoOscuro, fontSize: 16, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
                   const Spacer(),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent.withOpacity(0.1), foregroundColor: Colors.redAccent, elevation: 0, padding: const EdgeInsets.symmetric(vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                      icon: const Icon(Icons.delete_outline_rounded, size: 18), 
+                      icon: const Icon(Icons.delete_outline_rounded, size: 16), 
                       label: const Text('Retirar', style: TextStyle(fontWeight: FontWeight.bold)),
                       onPressed: () => _borrarProductoConfirmado(prod['id']),
                     ),

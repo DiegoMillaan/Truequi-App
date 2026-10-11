@@ -155,7 +155,7 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
                 if (!dialogContext.mounted) return;
                 Navigator.pop(dialogContext);
                 setState(() { _usuarioActual = { 'nombre': usuarioData['correo'].split('@')[0], 'correo': usuarioData['correo'], 'foto': null }; });
-                _recargarUsuarioActual(); // Trae la foto real de la base de datos
+                _recargarUsuarioActual(); 
                 if (mounted) _mostrarAlertaLiquid(context, '¡Acceso exitoso con Google!', tipo: 'exito');
               },
               onError: (mensaje) { setModalState(() { error = mensaje; cargando = false; }); }
@@ -180,7 +180,7 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
                   if (!dialogContext.mounted) return;
                   Navigator.pop(dialogContext);
                   setState(() { _usuarioActual = { 'nombre': nombre.isNotEmpty ? nombre : correo.split('@')[0], 'correo': correo }; });
-                  _recargarUsuarioActual(); // Trae la foto real de la base de datos
+                  _recargarUsuarioActual(); 
                   if (mounted) _mostrarAlertaLiquid(context, '¡Acceso exitoso! Bienvenido de vuelta.', tipo: 'exito');
                   return;
                 }
@@ -377,17 +377,24 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
     );
   }
 
+  // ==========================================
+  // FUNCIÓN CORREGIDA
+  // ==========================================
   List<Widget> _construirBentoGrid(List<dynamic> itemsFiltrados) {
     List<Widget> filas = [];
     for (int i = 0; i < itemsFiltrados.length; i++) {
       if (i % 3 == 0) {
-        filas.add(Padding(padding: const EdgeInsets.only(bottom: 30), child: SizedBox(width: double.infinity, height: 380, child: GestureDetector(onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => DetalleProductoWeb(producto: itemsFiltrados[i], usuarioActual: _usuarioActual))), child: _TarjetaProductoWeb(producto: itemsFiltrados[i], tipoBento: 'Hero')))));
+        final prod = itemsFiltrados[i];
+        filas.add(Padding(padding: const EdgeInsets.only(bottom: 30), child: SizedBox(width: double.infinity, height: 380, child: GestureDetector(onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => DetalleProductoWeb(producto: prod, usuarioActual: _usuarioActual))), child: _TarjetaProductoWeb(producto: prod, tipoBento: 'Hero')))));
       } else {
         if (i + 1 < itemsFiltrados.length) {
-          filas.add(Padding(padding: const EdgeInsets.only(bottom: 30), child: Row(children: [Expanded(child: SizedBox(height: 380, child: GestureDetector(onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => DetalleProductoWeb(producto: itemsFiltrados[i], usuarioActual: _usuarioActual))), child: _TarjetaProductoWeb(producto: itemsFiltrados[i], tipoBento: 'Regular')))), const SizedBox(width: 30), Expanded(child: SizedBox(height: 380, child: GestureDetector(onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => DetalleProductoWeb(producto: itemsFiltrados[i+1], usuarioActual: _usuarioActual))), child: _TarjetaProductoWeb(producto: itemsFiltrados[i+1], tipoBento: 'Regular'))))])));
+          final prod1 = itemsFiltrados[i];
+          final prod2 = itemsFiltrados[i + 1];
+          filas.add(Padding(padding: const EdgeInsets.only(bottom: 30), child: Row(children: [Expanded(child: SizedBox(height: 380, child: GestureDetector(onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => DetalleProductoWeb(producto: prod1, usuarioActual: _usuarioActual))), child: _TarjetaProductoWeb(producto: prod1, tipoBento: 'Regular')))), const SizedBox(width: 30), Expanded(child: SizedBox(height: 380, child: GestureDetector(onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => DetalleProductoWeb(producto: prod2, usuarioActual: _usuarioActual))), child: _TarjetaProductoWeb(producto: prod2, tipoBento: 'Regular'))))])));
           i++; 
         } else {
-          filas.add(Padding(padding: const EdgeInsets.only(bottom: 30), child: SizedBox(width: double.infinity, height: 380, child: GestureDetector(onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => DetalleProductoWeb(producto: itemsFiltrados[i], usuarioActual: _usuarioActual))), child: _TarjetaProductoWeb(producto: itemsFiltrados[i], tipoBento: 'Hero')))));
+          final prod = itemsFiltrados[i];
+          filas.add(Padding(padding: const EdgeInsets.only(bottom: 30), child: SizedBox(width: double.infinity, height: 380, child: GestureDetector(onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => DetalleProductoWeb(producto: prod, usuarioActual: _usuarioActual))), child: _TarjetaProductoWeb(producto: prod, tipoBento: 'Hero')))));
         }
       }
     }
@@ -399,7 +406,6 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
     final size = MediaQuery.of(context).size;
     final anchoContenido = math.min(size.width * 0.85, 1400.0);
     
-    // CACHÉ KILLER PARA EL AVATAR DEL HEADER
     String? fotoUrlLimpia;
     if (_usuarioActual != null) {
       final fotoOriginal = _usuarioActual!['fotoUrl'] ?? _usuarioActual!['foto'];
@@ -431,7 +437,6 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
           CustomScrollView(
             physics: const BouncingScrollPhysics(),
             slivers: [
-              // 1. REDISEÑO DEL NAVBAR HEADER CENTRADO
               SliverAppBar(
                 pinned: true, expandedHeight: 110, collapsedHeight: 110, backgroundColor: Colors.white.withOpacity(0.65),
                 flexibleSpace: ClipRRect(
@@ -444,7 +449,7 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 50),
                           child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center, // ALINEACIÓN VERTICAL PERFECTA
+                            crossAxisAlignment: CrossAxisAlignment.center, 
                             children: [
                               const Icon(Icons.sync_rounded, color: TruequiColors.purpura, size: 50), 
                               const SizedBox(width: 15),
@@ -521,7 +526,6 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
                                   child: GestureDetector(
                                     onTap: () async {
                                       await Navigator.push(context, MaterialPageRoute(builder: (_) => PerfilWeb(usuario: _usuarioActual!)));
-                                      // Al cerrar el perfil, descargamos la foto nueva si se editó
                                       _recargarUsuarioActual();
                                     },
                                     child: Container(
@@ -546,7 +550,6 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
                 ),
               ),
 
-              // 2. HERO TEXTO (TUS FRASES ORIGINALES)
               SliverToBoxAdapter(
                 child: Center(
                   child: SizedBox(
@@ -576,13 +579,11 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
                 ),
               ),
 
-              // 3. BARRA DE BÚSQUEDA HIPNÓTICA (STICKY)
               SliverPersistentHeader(
                 pinned: true,
                 delegate: _BuscadorDelegate(onChanged: (val) => setState(() => _busqueda = val)),
               ),
 
-              // 4. MENÚ DE CATEGORÍAS
               SliverToBoxAdapter(
                 child: Center(
                   child: SizedBox(
@@ -619,7 +620,6 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
                 ),
               ),
 
-              // 5. GRID DE PRODUCTOS TIPO BENTO
               _isLoadingCatalog
                 ? const SliverToBoxAdapter(child: SizedBox(height: 300, child: Center(child: CircularProgressIndicator(color: TruequiColors.purpura))))
                 : _productosFiltrados.isEmpty
@@ -647,9 +647,6 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
   }
 }
 
-// =========================================================
-// DELEGADO MAGICO DE LA BARRA DE BUSQUEDA (Efecto Sticky)
-// =========================================================
 class _BuscadorDelegate extends SliverPersistentHeaderDelegate {
   final ValueChanged<String> onChanged;
   _BuscadorDelegate({required this.onChanged});
@@ -700,9 +697,6 @@ class _BuscadorDelegate extends SliverPersistentHeaderDelegate {
   bool shouldRebuild(covariant SliverPersistentHeaderDelegate oldDelegate) => true;
 }
 
-// ==========================================
-// TARJETA DE PRODUCTO BENTO GRID
-// ==========================================
 class _TarjetaProductoWeb extends StatefulWidget {
   final Map<String, dynamic> producto;
   final String tipoBento; 
