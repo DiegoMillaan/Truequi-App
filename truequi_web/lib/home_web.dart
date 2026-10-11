@@ -33,7 +33,6 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
   static const String _productosUrl = 'https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/productos';
   static const String _uploadUrlEndpoint = 'https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/productos/upload-url';
 
-  // RESTAURACIÓN EXACTA DE TU CÓDIGO ORIGINAL QUE FUNCIONABA
   final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
   
   late AnimationController _bgController;
@@ -55,13 +54,12 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    _inicializarGoogle(); // RESTAURADO PARA QUE EL BOTÓN CARGUE
+    _inicializarGoogle(); 
     _cargarProductos();
     _bgController = AnimationController(vsync: this, duration: const Duration(seconds: 25))..repeat();
     _floatController = AnimationController(vsync: this, duration: const Duration(seconds: 4))..repeat(reverse: true);
   }
 
-  // RESTAURACIÓN DEL INICIALIZADOR DE GOOGLE
   Future<void> _inicializarGoogle() async {
     try { await _googleSignIn.initialize(); } catch (e) { debugPrint('ERROR GOOGLE: $e'); }
   }
@@ -71,6 +69,23 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
       final response = await http.get(Uri.parse(_productosUrl));
       if (response.statusCode == 200) setState(() { _productos = jsonDecode(response.body)['productos']; _isLoadingCatalog = false; });
     } catch (e) { setState(() => _isLoadingCatalog = false); }
+  }
+
+  // ==========================================
+  // FUNCIÓN PARA SINCRONIZAR LA FOTO DE PERFIL
+  // ==========================================
+  Future<void> _recargarUsuarioActual() async {
+    if (_usuarioActual == null) return;
+    try {
+      final url = Uri.parse('https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/usuario/perfil/${_usuarioActual!['correo']}');
+      final res = await http.get(url);
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        if (mounted) setState(() { _usuarioActual = data['usuario']; });
+      }
+    } catch (e) {
+      debugPrint('Error recargando usuario: $e');
+    }
   }
 
   @override
@@ -88,11 +103,6 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
       final matchCategoria = _categoriaSeleccionadaFiltro == 'Todas' || p['categoria'] == _categoriaSeleccionadaFiltro;
       return matchBusqueda && matchCategoria;
     }).toList();
-  }
-
-  List<dynamic> get _productosDestacados {
-    if (_productos.length <= 5) return _productos;
-    return _productos.take(5).toList(); 
   }
 
   void _mostrarAlertaLiquid(BuildContext context, String mensaje, {String tipo = 'exito'}) {
@@ -140,12 +150,12 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
         return StatefulBuilder(
           builder: (context, setModalState) {
 
-            // EL LISTENER ORIGINAL QUE FUNCIONABA
             GoogleAuthService().listenToAuthentication(
               onSuccess: (usuarioData) async {
                 if (!dialogContext.mounted) return;
                 Navigator.pop(dialogContext);
                 setState(() { _usuarioActual = { 'nombre': usuarioData['correo'].split('@')[0], 'correo': usuarioData['correo'], 'foto': null }; });
+                _recargarUsuarioActual(); // Trae la foto real de la base de datos
                 if (mounted) _mostrarAlertaLiquid(context, '¡Acceso exitoso con Google!', tipo: 'exito');
               },
               onError: (mensaje) { setModalState(() { error = mensaje; cargando = false; }); }
@@ -170,6 +180,7 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
                   if (!dialogContext.mounted) return;
                   Navigator.pop(dialogContext);
                   setState(() { _usuarioActual = { 'nombre': nombre.isNotEmpty ? nombre : correo.split('@')[0], 'correo': correo }; });
+                  _recargarUsuarioActual(); // Trae la foto real de la base de datos
                   if (mounted) _mostrarAlertaLiquid(context, '¡Acceso exitoso! Bienvenido de vuelta.', tipo: 'exito');
                   return;
                 }
@@ -207,7 +218,6 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
                               TextButton(onPressed: () => setModalState(() { esRegistro = !esRegistro; error = null; }), child: Text(esRegistro ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600))),
                               Padding(padding: const EdgeInsets.symmetric(vertical: 15), child: Row(children: [Expanded(child: Divider(color: Colors.white.withOpacity(0.3))), Padding(padding: const EdgeInsets.symmetric(horizontal: 10), child: Text('O', style: TextStyle(color: Colors.white.withOpacity(0.5)))), Expanded(child: Divider(color: Colors.white.withOpacity(0.3)))]),),
                               
-                              // EL BOTÓN OFICIAL TAL CUAL LO TENÍAS
                               Container(
                                 decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)), 
                                 child: const GoogleLoginButton()
@@ -388,6 +398,18 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final anchoContenido = math.min(size.width * 0.85, 1400.0);
+    
+    // CACHÉ KILLER PARA EL AVATAR DEL HEADER
+    String? fotoUrlLimpia;
+    if (_usuarioActual != null) {
+      final fotoOriginal = _usuarioActual!['fotoUrl'] ?? _usuarioActual!['foto'];
+      if (fotoOriginal != null && fotoOriginal.toString().isNotEmpty) {
+        final fotoStr = fotoOriginal.toString();
+        fotoUrlLimpia = fotoStr.contains('?') 
+            ? '$fotoStr&v=${DateTime.now().millisecondsSinceEpoch}' 
+            : '$fotoStr?v=${DateTime.now().millisecondsSinceEpoch}';
+      }
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFFF0F2F5),
@@ -409,29 +431,115 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
           CustomScrollView(
             physics: const BouncingScrollPhysics(),
             slivers: [
-              // 1. NAVBAR
+              // 1. REDISEÑO DEL NAVBAR HEADER CENTRADO
               SliverAppBar(
-                pinned: true, expandedHeight: 90, collapsedHeight: 90, backgroundColor: Colors.white.withOpacity(0.5),
+                pinned: true, expandedHeight: 110, collapsedHeight: 110, backgroundColor: Colors.white.withOpacity(0.65),
                 flexibleSpace: ClipRRect(
                   child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                    filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 40),
-                      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Colors.white.withOpacity(0.5), width: 1.5))),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.sync_rounded, color: TruequiColors.purpura, size: 40), const SizedBox(width: 15),
-                          const Text('truequi', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: TruequiColors.purpura, letterSpacing: -1)),
-                          const Spacer(),
-                          if (_usuarioActual == null) ...[
-                            TextButton.icon(onPressed: _mostrarLogin, icon: const Icon(Icons.person_outline, color: TruequiColors.textoOscuro), label: const Text('Ingresar', style: TextStyle(color: TruequiColors.textoOscuro, fontWeight: FontWeight.bold))), const SizedBox(width: 20),
-                            ElevatedButton(onPressed: _mostrarLogin, style: ElevatedButton.styleFrom(backgroundColor: TruequiColors.purpura, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 18), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))), child: const Text('Iniciar sesión', style: TextStyle(fontWeight: FontWeight.bold))),
-                          ] else ...[
-                            TextButton.icon(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => MensajesWeb(usuarioActual: _usuarioActual!))), icon: const Icon(Icons.chat_bubble_outline, color: TruequiColors.textoOscuro), label: const Text('Mensajes', style: TextStyle(color: TruequiColors.textoOscuro, fontWeight: FontWeight.bold))), const SizedBox(width: 20),
-                            OutlinedButton.icon(onPressed: _mostrarPublicar, icon: const Icon(Icons.add), label: const Text('Publicar'), style: OutlinedButton.styleFrom(foregroundColor: TruequiColors.purpura, side: BorderSide(color: TruequiColors.purpura.withOpacity(0.5), width: 2), padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)))), const SizedBox(width: 20),
-                            GestureDetector(onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PerfilWeb(usuario: _usuarioActual!))), child: Container(padding: const EdgeInsets.all(5), decoration: BoxDecoration(color: Colors.white.withOpacity(0.5), shape: BoxShape.circle, border: Border.all(color: TruequiColors.purpura.withOpacity(0.5), width: 2)), child: CircleAvatar(backgroundColor: TruequiColors.purpura.withOpacity(0.2), backgroundImage: _usuarioActual!['foto'] != null ? NetworkImage(_usuarioActual!['foto']) : null, child: _usuarioActual!['foto'] == null ? Text(_usuarioActual!['nombre'][0].toUpperCase(), style: const TextStyle(color: TruequiColors.purpura, fontWeight: FontWeight.bold)) : null))),
-                          ],
-                        ],
+                      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Colors.white.withOpacity(0.8), width: 1.5))),
+                      child: SafeArea(
+                        bottom: false,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 50),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center, // ALINEACIÓN VERTICAL PERFECTA
+                            children: [
+                              const Icon(Icons.sync_rounded, color: TruequiColors.purpura, size: 50), 
+                              const SizedBox(width: 15),
+                              const Text('truequi', style: TextStyle(fontSize: 34, fontWeight: FontWeight.w900, color: TruequiColors.purpura, letterSpacing: -1.5)),
+                              
+                              const Spacer(),
+                              
+                              if (_usuarioActual == null) ...[
+                                TextButton(
+                                  onPressed: _mostrarLogin, 
+                                  style: TextButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                  ),
+                                  child: const Text('Crear cuenta', style: TextStyle(color: TruequiColors.textoOscuro, fontWeight: FontWeight.bold, fontSize: 16))
+                                ), 
+                                const SizedBox(width: 15),
+                                OutlinedButton.icon(
+                                  onPressed: _mostrarLogin, 
+                                  icon: const Icon(Icons.login_rounded, size: 20),
+                                  label: const Text('Ingresar', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: TruequiColors.purpura, 
+                                    backgroundColor: Colors.white.withOpacity(0.5),
+                                    side: const BorderSide(color: TruequiColors.purpura, width: 2), 
+                                    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20), 
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                    elevation: 0
+                                  )
+                                ),
+                              ] else ...[
+                                Stack(
+                                  clipBehavior: Clip.none,
+                                  children: [
+                                    OutlinedButton.icon(
+                                      onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => MensajesWeb(usuarioActual: _usuarioActual!))), 
+                                      icon: const Icon(Icons.forum_rounded, size: 20), 
+                                      label: const Text('Negociaciones', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                      style: OutlinedButton.styleFrom(
+                                        foregroundColor: TruequiColors.textoOscuro, 
+                                        backgroundColor: Colors.white.withOpacity(0.5),
+                                        side: BorderSide(color: Colors.grey.shade300, width: 2), 
+                                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20), 
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))
+                                      )
+                                    ),
+                                    Positioned(
+                                      top: -5, right: -5,
+                                      child: Container(
+                                        padding: const EdgeInsets.all(6),
+                                        decoration: BoxDecoration(color: Colors.redAccent, shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 2), boxShadow: [BoxShadow(color: Colors.redAccent.withOpacity(0.5), blurRadius: 10)]),
+                                        child: const Text('!', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                                      ),
+                                    )
+                                  ],
+                                ), 
+                                const SizedBox(width: 20),
+                                ElevatedButton.icon(
+                                  onPressed: _mostrarPublicar, 
+                                  icon: const Icon(Icons.add_rounded, size: 22), 
+                                  label: const Text('Publicar', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)), 
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: TruequiColors.purpura,
+                                    foregroundColor: Colors.white, 
+                                    elevation: 0,
+                                    padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20), 
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))
+                                  )
+                                ), 
+                                const SizedBox(width: 25),
+                                
+                                MouseRegion(
+                                  cursor: SystemMouseCursors.click,
+                                  child: GestureDetector(
+                                    onTap: () async {
+                                      await Navigator.push(context, MaterialPageRoute(builder: (_) => PerfilWeb(usuario: _usuarioActual!)));
+                                      // Al cerrar el perfil, descargamos la foto nueva si se editó
+                                      _recargarUsuarioActual();
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.all(4), 
+                                      decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, border: Border.all(color: TruequiColors.purpura.withOpacity(0.3), width: 2), boxShadow: [BoxShadow(color: TruequiColors.purpura.withOpacity(0.1), blurRadius: 15)]), 
+                                      child: CircleAvatar(
+                                        radius: 22,
+                                        backgroundColor: TruequiColors.purpura.withOpacity(0.1), 
+                                        backgroundImage: fotoUrlLimpia != null ? NetworkImage(fotoUrlLimpia) : null, 
+                                        child: fotoUrlLimpia == null ? Text(_usuarioActual!['nombre'][0].toUpperCase(), style: const TextStyle(color: TruequiColors.purpura, fontWeight: FontWeight.bold, fontSize: 18)) : null
+                                      )
+                                    )
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   ),

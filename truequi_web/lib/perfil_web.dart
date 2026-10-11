@@ -166,7 +166,14 @@ class _PerfilWebState extends State<PerfilWeb> with SingleTickerProviderStateMix
         if (mounted) _mostrarAlertaLiquid(context, '¡Foto actualizada!', tipo: 'exito');
         _cargarPerfil();
       } else {
-        if (mounted) _mostrarAlertaLiquid(context, 'Error al guardar en base de datos. Código: ${resUpdate.statusCode}', tipo: 'error');
+        // Extraemos el error exacto que nos manda Python desde AWS
+        String errorBackend = resUpdate.statusCode.toString();
+        try {
+          errorBackend = jsonDecode(resUpdate.body)['error'] ?? 'Desconocido';
+        } catch(_) {
+          errorBackend = resUpdate.body;
+        }
+        if (mounted) _mostrarAlertaLiquid(context, 'AWS Error: $errorBackend', tipo: 'error');
       }
     } catch (e) { 
       if (mounted) _mostrarAlertaLiquid(context, 'Error inesperado o de red: $e', tipo: 'error');

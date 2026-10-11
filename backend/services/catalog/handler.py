@@ -5,6 +5,17 @@ import uuid
 import os
 import random
 from datetime import datetime, timezone
+from decimal import Decimal # <-- 1. Agregamos esta importación
+
+# <-- 2. Creamos este traductor para que Python entienda los números de AWS
+class DecimalEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Decimal):
+            # Si es número entero lo devuelve como int, si no como float
+            if obj % 1 == 0:
+                return int(obj)
+            return float(obj)
+        return super(DecimalEncoder, self).default(obj)
 
 dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
 tabla_productos = dynamodb.Table('Productos')
@@ -13,8 +24,21 @@ tabla_usuarios = dynamodb.Table('Usuarios')
 s3_client = boto3.client('s3', region_name='us-east-1')
 BUCKET_NAME = os.environ.get('BUCKET_NAME', 'truequi-images-dm2026')
 
+# <-- 3. Actualizamos la función respuesta para usar el traductor
 def respuesta(status_code, body):
-    return {"statusCode": status_code, "headers": {"Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Content-Type", "Access-Control-Allow-Methods": "OPTIONS,POST,GET,PUT,DELETE"}, "body": json.dumps(body)}
+    return {
+        "statusCode": status_code, 
+        "headers": {
+            "Access-Control-Allow-Origin": "*", 
+            "Access-Control-Allow-Headers": "Content-Type", 
+            "Access-Control-Allow-Methods": "OPTIONS,POST,GET,PUT,DELETE"
+        }, 
+        "body": json.dumps(body, cls=DecimalEncoder)
+    }
+
+# ==========================================
+# 1. PUBLICAR PRODUCTO
+# ... (El resto de tu código se queda exactamente igual hacia abajo)
 
 # ==========================================
 # 1. PUBLICAR PRODUCTO
