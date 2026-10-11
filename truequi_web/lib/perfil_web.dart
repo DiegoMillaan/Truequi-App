@@ -4,7 +4,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
-import 'services/google_auth_service.dart';
+
+import 'services/google_auth_service.dart'; // USAMOS TU SERVICIO CORRECTO
 import 'home_web.dart';
 
 class PerfilWeb extends StatefulWidget {
@@ -42,7 +43,7 @@ class _PerfilWebState extends State<PerfilWeb> {
   }
 
   // ==========================================
-  // NOTIFICADOR LIQUID GLASS (SOPHISTICADO)
+  // NOTIFICADOR LIQUID GLASS
   // ==========================================
   void _mostrarAlertaLiquid(BuildContext context, String mensaje, {String tipo = 'exito'}) {
     Color colorBase;
@@ -234,12 +235,24 @@ class _PerfilWebState extends State<PerfilWeb> {
     );
   }
 
+  // ==========================================
+  // CIERRE DE SESIÓN SEGURO
+  // ==========================================
   Future<void> _cerrarSesion() async {
-    _mostrarAlertaLiquid(context, 'Cerrando sesión de forma segura...', tipo: 'info');
-    await Future.delayed(const Duration(seconds: 1)); // Pequeña pausa para que se lea la alerta
-    await GoogleAuthService().signOut(); 
+    try {
+      await GoogleAuthService().signOut();
+    } catch (e) {
+      debugPrint('Error al cerrar sesión: $e');
+    }
+    
     if (!mounted) return;
-    Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const HomeWeb()), (route) => false);
+    
+    // Redirección inmediata sin temporizadores que rompan la navegación
+    Navigator.pushAndRemoveUntil(
+      context, 
+      MaterialPageRoute(builder: (_) => const HomeWeb()), 
+      (route) => false
+    );
   }
 
   @override

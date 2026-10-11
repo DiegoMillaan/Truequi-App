@@ -33,7 +33,9 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
   static const String _productosUrl = 'https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/productos';
   static const String _uploadUrlEndpoint = 'https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/productos/upload-url';
 
+  // RESTAURACIÓN EXACTA DE TU CÓDIGO ORIGINAL QUE FUNCIONABA
   final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
+  
   late AnimationController _bgController;
   late AnimationController _floatController;
 
@@ -44,7 +46,6 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
   String _busqueda = '';
   String _categoriaSeleccionadaFiltro = 'Todas';
   
-  // ABANICO DE CATEGORÍAS UNIVERSALES
   final List<String> _categorias = [
     'Todas', 'Herramientas', 'Electrónica', 'Salud y Equipo', 
     'Vehículos', 'Hogar y Muebles', 'Instrumentos', 'Arte y Papelería', 
@@ -54,12 +55,13 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    _inicializarGoogle();
+    _inicializarGoogle(); // RESTAURADO PARA QUE EL BOTÓN CARGUE
     _cargarProductos();
     _bgController = AnimationController(vsync: this, duration: const Duration(seconds: 25))..repeat();
     _floatController = AnimationController(vsync: this, duration: const Duration(seconds: 4))..repeat(reverse: true);
   }
 
+  // RESTAURACIÓN DEL INICIALIZADOR DE GOOGLE
   Future<void> _inicializarGoogle() async {
     try { await _googleSignIn.initialize(); } catch (e) { debugPrint('ERROR GOOGLE: $e'); }
   }
@@ -78,9 +80,6 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
     super.dispose();
   }
 
-  // ==========================================
-  // GETTERS DE FILTRADO (AQUÍ ESTABA EL ERROR)
-  // ==========================================
   List<dynamic> get _productosFiltrados {
     return _productos.where((p) {
       final titulo = p['titulo'].toString().toLowerCase();
@@ -96,9 +95,6 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
     return _productos.take(5).toList(); 
   }
 
-  // ==========================================
-  // NOTIFICADOR LIQUID GLASS
-  // ==========================================
   void _mostrarAlertaLiquid(BuildContext context, String mensaje, {String tipo = 'exito'}) {
     Color colorBase = tipo == 'exito' ? TruequiColors.purpura : (tipo == 'error' ? Colors.redAccent : TruequiColors.amarillo);
     IconData icono = tipo == 'exito' ? Icons.check_circle_rounded : (tipo == 'error' ? Icons.error_rounded : Icons.info_rounded);
@@ -143,12 +139,14 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
       builder: (dialogContext) {
         return StatefulBuilder(
           builder: (context, setModalState) {
+
+            // EL LISTENER ORIGINAL QUE FUNCIONABA
             GoogleAuthService().listenToAuthentication(
               onSuccess: (usuarioData) async {
                 if (!dialogContext.mounted) return;
                 Navigator.pop(dialogContext);
                 setState(() { _usuarioActual = { 'nombre': usuarioData['correo'].split('@')[0], 'correo': usuarioData['correo'], 'foto': null }; });
-                if (mounted) _mostrarAlertaLiquid(context, '¡Acceso exitoso! Bienvenido a Truequi.', tipo: 'exito');
+                if (mounted) _mostrarAlertaLiquid(context, '¡Acceso exitoso con Google!', tipo: 'exito');
               },
               onError: (mensaje) { setModalState(() { error = mensaje; cargando = false; }); }
             );
@@ -207,6 +205,13 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
                               SizedBox(width: double.infinity, height: 55, child: ElevatedButton(onPressed: cargando ? null : procesarFormulario, style: ElevatedButton.styleFrom(backgroundColor: TruequiColors.purpura, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))), child: cargando ? const CircularProgressIndicator(color: Colors.white) : Text(esRegistro ? 'Registrarme' : 'Ingresar', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)))),
                               const SizedBox(height: 20),
                               TextButton(onPressed: () => setModalState(() { esRegistro = !esRegistro; error = null; }), child: Text(esRegistro ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600))),
+                              Padding(padding: const EdgeInsets.symmetric(vertical: 15), child: Row(children: [Expanded(child: Divider(color: Colors.white.withOpacity(0.3))), Padding(padding: const EdgeInsets.symmetric(horizontal: 10), child: Text('O', style: TextStyle(color: Colors.white.withOpacity(0.5)))), Expanded(child: Divider(color: Colors.white.withOpacity(0.3)))]),),
+                              
+                              // EL BOTÓN OFICIAL TAL CUAL LO TENÍAS
+                              Container(
+                                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)), 
+                                child: const GoogleLoginButton()
+                              ),
                             ],
                           ),
                         ),
@@ -362,9 +367,6 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
     );
   }
 
-  // ==========================================
-  // RENDERIZADO DEL CATÁLOGO BENTO GRID
-  // ==========================================
   List<Widget> _construirBentoGrid(List<dynamic> itemsFiltrados) {
     List<Widget> filas = [];
     for (int i = 0; i < itemsFiltrados.length; i++) {
@@ -407,6 +409,7 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
           CustomScrollView(
             physics: const BouncingScrollPhysics(),
             slivers: [
+              // 1. NAVBAR
               SliverAppBar(
                 pinned: true, expandedHeight: 90, collapsedHeight: 90, backgroundColor: Colors.white.withOpacity(0.5),
                 flexibleSpace: ClipRRect(
@@ -435,60 +438,43 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
                 ),
               ),
 
-              // HERO BÚSQUEDA A PANTALLA COMPLETA
+              // 2. HERO TEXTO (TUS FRASES ORIGINALES)
               SliverToBoxAdapter(
                 child: Center(
                   child: SizedBox(
                     width: anchoContenido,
                     child: Padding(
-                      padding: const EdgeInsets.only(top: 80.0, bottom: 40),
-                      child: AnimatedBuilder(
-                        animation: _floatController,
-                        builder: (context, child) {
-                          return Transform.translate(
-                            offset: Offset(0, math.sin(_floatController.value * math.pi) * 10),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(40),
-                              child: BackdropFilter(
-                                filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-                                child: Container(
-                                  width: double.infinity, padding: const EdgeInsets.all(80),
-                                  decoration: BoxDecoration(color: Colors.white.withOpacity(0.4), borderRadius: BorderRadius.circular(40), border: Border.all(color: Colors.white.withOpacity(0.8), width: 2), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 40, spreadRadius: 10)]),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Container(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10), decoration: BoxDecoration(color: TruequiColors.purpura.withOpacity(0.15), borderRadius: BorderRadius.circular(20)), child: const Text('El Marketplace Universal de la UAQ', style: TextStyle(color: TruequiColors.purpura, fontWeight: FontWeight.w900, letterSpacing: 1))),
-                                      const SizedBox(height: 30),
-                                      const Text('Libera el valor\nde lo que ya no usas.', style: TextStyle(fontSize: 64, fontWeight: FontWeight.w900, color: TruequiColors.textoOscuro, height: 1.05, letterSpacing: -2)),
-                                      const SizedBox(height: 50),
-                                      
-                                      Container(
-                                        width: 800,
-                                        decoration: BoxDecoration(color: Colors.white.withOpacity(0.6), borderRadius: BorderRadius.circular(30), border: Border.all(color: Colors.white, width: 3), boxShadow: [BoxShadow(color: TruequiColors.purpura.withOpacity(0.1), blurRadius: 30, offset: const Offset(0, 15))]),
-                                        child: TextField(
-                                          onChanged: (val) => setState(() => _busqueda = val),
-                                          style: const TextStyle(fontSize: 22, color: TruequiColors.textoOscuro, fontWeight: FontWeight.w600),
-                                          decoration: InputDecoration(
-                                            hintText: 'Buscar herramientas, estetoscopios, libros, laptops...', hintStyle: TextStyle(color: TruequiColors.textoOscuro.withOpacity(0.4)),
-                                            prefixIcon: const Padding(padding: EdgeInsets.symmetric(horizontal: 25), child: Icon(Icons.search_rounded, color: TruequiColors.purpura, size: 36)),
-                                            border: InputBorder.none, contentPadding: const EdgeInsets.symmetric(vertical: 25),
-                                          ),
-                                        ),
-                                      )
-                                    ],
-                                  ),
-                                ),
-                              ),
+                      padding: const EdgeInsets.only(top: 80.0, bottom: 20),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(40),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+                          child: Container(
+                            width: double.infinity, padding: const EdgeInsets.symmetric(vertical: 60, horizontal: 80),
+                            decoration: BoxDecoration(color: Colors.white.withOpacity(0.3), borderRadius: BorderRadius.circular(40), border: Border.all(color: Colors.white.withOpacity(0.6), width: 2), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 40, spreadRadius: 10)]),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10), decoration: BoxDecoration(color: TruequiColors.amarillo.withOpacity(0.2), borderRadius: BorderRadius.circular(20)), child: const Text('Renueva tu ecosistema', style: TextStyle(color: Color(0xFFD48B00), fontWeight: FontWeight.bold))),
+                                const SizedBox(height: 25),
+                                const Text('Cambia lo que tienes.\nEncuentra lo que buscas.', style: TextStyle(fontSize: 64, fontWeight: FontWeight.w900, color: TruequiColors.textoOscuro, height: 1.05, letterSpacing: -2)),
+                              ],
                             ),
-                          );
-                        }
+                          ),
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
 
-              // MENÚ DE CATEGORÍAS
+              // 3. BARRA DE BÚSQUEDA HIPNÓTICA (STICKY)
+              SliverPersistentHeader(
+                pinned: true,
+                delegate: _BuscadorDelegate(onChanged: (val) => setState(() => _busqueda = val)),
+              ),
+
+              // 4. MENÚ DE CATEGORÍAS
               SliverToBoxAdapter(
                 child: Center(
                   child: SizedBox(
@@ -525,7 +511,7 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
                 ),
               ),
 
-              // GRID DE PRODUCTOS TIPO BENTO
+              // 5. GRID DE PRODUCTOS TIPO BENTO
               _isLoadingCatalog
                 ? const SliverToBoxAdapter(child: SizedBox(height: 300, child: Center(child: CircularProgressIndicator(color: TruequiColors.purpura))))
                 : _productosFiltrados.isEmpty
@@ -553,12 +539,65 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
   }
 }
 
+// =========================================================
+// DELEGADO MAGICO DE LA BARRA DE BUSQUEDA (Efecto Sticky)
+// =========================================================
+class _BuscadorDelegate extends SliverPersistentHeaderDelegate {
+  final ValueChanged<String> onChanged;
+  _BuscadorDelegate({required this.onChanged});
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    final progress = (shrinkOffset / (maxExtent - minExtent)).clamp(0.0, 1.0);
+    final width = 1000.0 - (progress * 400.0); 
+
+    return Container(
+      alignment: Alignment.topCenter,
+      padding: const EdgeInsets.only(top: 10),
+      child: Container(
+        width: width,
+        height: 65,
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.5 + (progress * 0.45)), 
+          borderRadius: BorderRadius.circular(30),
+          border: Border.all(color: Colors.white.withOpacity(0.8), width: 2),
+          boxShadow: [
+            BoxShadow(
+              color: TruequiColors.purpura.withOpacity(0.1 + (progress * 0.15)), 
+              blurRadius: 20 + (progress * 15), 
+              offset: const Offset(0, 10)
+            )
+          ]
+        ),
+        child: TextField(
+          onChanged: onChanged,
+          style: const TextStyle(fontSize: 20, color: TruequiColors.textoOscuro, fontWeight: FontWeight.w600),
+          decoration: InputDecoration(
+            hintText: 'Buscar herramientas, estetoscopios, libros...',
+            hintStyle: TextStyle(color: TruequiColors.textoOscuro.withOpacity(0.5)),
+            prefixIcon: const Padding(padding: EdgeInsets.symmetric(horizontal: 25), child: Icon(Icons.search_rounded, color: TruequiColors.purpura, size: 30)),
+            border: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(vertical: 20),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  double get maxExtent => 110.0;
+  @override
+  double get minExtent => 85.0;
+  @override
+  bool shouldRebuild(covariant SliverPersistentHeaderDelegate oldDelegate) => true;
+}
+
 // ==========================================
-// TARJETA DE PRODUCTO BENTO GRID (Dinámica)
+// TARJETA DE PRODUCTO BENTO GRID
 // ==========================================
 class _TarjetaProductoWeb extends StatefulWidget {
   final Map<String, dynamic> producto;
-  final String tipoBento; // 'Hero' (Ancha) o 'Regular' (Cuadrada)
+  final String tipoBento; 
   const _TarjetaProductoWeb({required this.producto, required this.tipoBento});
   @override
   State<_TarjetaProductoWeb> createState() => _TarjetaProductoWebState();
