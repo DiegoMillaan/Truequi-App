@@ -35,6 +35,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   List<dynamic> _productos = [];
   bool _isLoading = true;
+  
+  // Variables dinámicas para el header
+  String _nombreUsuario = 'Cargando...';
+  String? _fotoUrl;
 
   bool get isGuest => widget.correo.isEmpty;
 
@@ -49,6 +53,46 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
     _entranceController.forward();
     _cargarProductos(); 
+    _cargarDatosUsuario(); // Llamada inicial para cargar nombre y foto
+  }
+
+  // Método para consultar tu nombre y foto en AWS
+  Future<void> _cargarDatosUsuario() async {
+    if (isGuest) {
+      if (mounted) setState(() => _nombreUsuario = 'Invitado');
+      return;
+    }
+    try {
+      final url = Uri.parse('https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/usuario/perfil/${widget.correo}');
+      final res = await http.get(url);
+      
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body)['usuario'];
+        if (mounted) {
+          setState(() {
+            // Capitalizar nombre
+            String nombreDB = data['nombre'] ?? widget.correo.split('@').first;
+            _nombreUsuario = nombreDB[0].toUpperCase() + nombreDB.substring(1);
+            
+            // Refresco de imagen (Cache Killer)
+            String? fotoDB = data['fotoUrl'] ?? data['foto'];
+            if (fotoDB != null && fotoDB.isNotEmpty) {
+              _fotoUrl = fotoDB.contains('?') 
+                  ? '$fotoDB&v=${DateTime.now().millisecondsSinceEpoch}' 
+                  : '$fotoDB?v=${DateTime.now().millisecondsSinceEpoch}';
+            }
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error cargando perfil en Home: $e');
+      if (mounted) {
+        setState(() {
+          String fallback = widget.correo.split('@').first;
+          _nombreUsuario = fallback[0].toUpperCase() + fallback.substring(1);
+        });
+      }
+    }
   }
 
   Future<void> _cargarProductos() async {
@@ -75,12 +119,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   // ==========================================
-  // ALGORITMO DE LAYOUT ASIMÉTRICO (ESTILO AMAZON)
+  // ALGORITMO DE LAYOUT ASIMÉTRICO
   // ==========================================
   List<Widget> _construirGridDinamico() {
     List<Widget> filas = [];
     for (int i = 0; i < _productos.length; i++) {
-      // Patrón: 1 Grande, 2 Pequeñas
       if (i % 3 == 0) {
         filas.add(Padding(padding: const EdgeInsets.only(bottom: 20), child: _buildCardGranFormato(context, _productos[i])));
       } else {
@@ -92,7 +135,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               Expanded(child: _buildCardPequena(context, _productos[i + 1])),
             ]
           )));
-          i++; // Saltamos el siguiente porque ya lo agrupamos en esta fila
+          i++; 
         } else {
           filas.add(Padding(padding: const EdgeInsets.only(bottom: 20), child: _buildCardGranFormato(context, _productos[i])));
         }
@@ -101,7 +144,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     return filas;
   }
 
-  Widget _buildInicioTab(String nombreUsuario) {
+  Widget _buildInicioTab() {
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
       slivers: [
@@ -115,15 +158,29 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('Descubre,', style: TextStyle(fontSize: 16, color: Colors.white.withOpacity(0.7), fontWeight: FontWeight.w500)),
-                    Text(nombreUsuario, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: -0.5)),
+                    Text(_nombreUsuario, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: -0.5)),
                   ],
                 ),
                 GestureDetector(
-                  onTap: isGuest ? () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginScreen())) : _cerrarSesion,
+                  onTap: () {
+                    if (isGuest) {
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
+                    } else {
+                      // Al tocar la foto desde inicio, vamos a la pestaña de perfil (índice 4)
+                      setState(() => _indiceNavegacion = 4);
+                    }
+                  },
                   child: Container(
                     padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), shape: BoxShape.circle, border: Border.all(color: Colors.white.withOpacity(0.3), width: 1.5)),
-                    child: CircleAvatar(radius: 22, backgroundColor: TruequiColors.purpura, child: Icon(isGuest ? Icons.login_rounded : Icons.person_rounded, color: Colors.white)),
+                    child: CircleAvatar(
+                      radius: 22, 
+                      backgroundColor: TruequiColors.purpura, 
+                      backgroundImage: _fotoUrl != null ? NetworkImage(_fotoUrl!) : null,
+                      child: _fotoUrl == null 
+                          ? Icon(isGuest ? Icons.login_rounded : Icons.person_rounded, color: Colors.white)
+                          : null,
+                    ),
                   ),
                 ),
               ],
@@ -153,7 +210,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           ? const SliverToBoxAdapter(child: Center(child: CircularProgressIndicator(color: TruequiColors.amarillo)))
           : SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
-              // Aquí inyectamos el nuevo layout asimétrico
               sliver: SliverList(delegate: SliverChildListDelegate(_construirGridDinamico())),
             ),
         const SliverToBoxAdapter(child: SizedBox(height: 140)),
@@ -161,9 +217,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  // ==========================================
-  // TARJETA GIGANTE (MÁS INMERSIVA)
-  // ==========================================
   Widget _buildCardGranFormato(BuildContext context, Map<String, dynamic> producto) {
     final String heroTag = 'img_${producto['id']}';
     
@@ -172,18 +225,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(32),
         child: Container(
-          height: 320, // Altura inmersiva
+          height: 320, 
           decoration: BoxDecoration(border: Border.all(color: Colors.white.withOpacity(0.3), width: 1.5), borderRadius: BorderRadius.circular(32)),
           child: Stack(
             fit: StackFit.expand,
             children: [
-              // IMAGEN DE FONDO CON ANIMACIÓN HERO
               Hero(tag: heroTag, child: Image.network(producto['imagenUrl'] ?? 'https://via.placeholder.com/400', fit: BoxFit.cover)),
-              
-              // GRADIENTE DE OSCURECIMIENTO
               Container(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, Colors.black.withOpacity(0.8)], stops: const [0.4, 1.0]))),
-              
-              // PANEL INFERIOR GLASSMORPHISM INTEGRADO
               Positioned(
                 bottom: 0, left: 0, right: 0,
                 child: ClipRRect(
@@ -214,9 +262,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  // ==========================================
-  // TARJETAS PEQUEÑAS (EVITANDO AMONTONAMIENTO)
-  // ==========================================
   Widget _buildCardPequena(BuildContext context, Map<String, dynamic> producto) {
     final String heroTag = 'img_${producto['id']}';
     
@@ -258,12 +303,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    String nombreUsuario = isGuest ? 'Invitado' : widget.correo.split('@').first;
-    if (!isGuest) nombreUsuario = nombreUsuario[0].toUpperCase() + nombreUsuario.substring(1);
     final size = MediaQuery.of(context).size;
 
     final List<Widget> pantallas = [
-      _buildInicioTab(nombreUsuario),           
+      _buildInicioTab(),          
       ExplorarPage(miCorreo: widget.correo),                     
       PublicarPage(miCorreo: widget.correo),                     
       ChatsPage(miCorreo: widget.correo),                        
@@ -303,7 +346,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       _buildNavItem(Icons.home_rounded, 0),
                       _buildNavItem(Icons.explore_rounded, 1),
                       GestureDetector(
-                        onTap: () { if (isGuest) { Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginScreen())); return; } setState(() => _indiceNavegacion = 2); },
+                        onTap: () { 
+                          if (isGuest) { Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginScreen())); return; } 
+                          setState(() => _indiceNavegacion = 2); 
+                        },
                         child: Container(width: 55, height: 55, decoration: BoxDecoration(gradient: const LinearGradient(colors: [TruequiColors.purpura, Color(0xFF8A62FF)], begin: Alignment.topLeft, end: Alignment.bottomRight), shape: BoxShape.circle, boxShadow: [BoxShadow(color: TruequiColors.purpura.withOpacity(0.5), blurRadius: 15, offset: const Offset(0, 5))]), child: const Icon(Icons.add_rounded, color: Colors.white, size: 32)),
                       ),
                       _buildNavItem(Icons.chat_bubble_rounded, 3),
@@ -322,7 +368,19 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Widget _buildNavItem(IconData icon, int index) {
     final isSelected = _indiceNavegacion == index;
     return GestureDetector(
-      onTap: () { if (isGuest && (index == 2 || index == 3 || index == 4)) { Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginScreen())); return; } setState(() => _indiceNavegacion = index); },
+      onTap: () { 
+        if (isGuest && (index == 2 || index == 3 || index == 4)) { 
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginScreen())); 
+          return; 
+        } 
+        
+        // Si el usuario regresa al Home (índice 0) desde el perfil u otra pestaña, refrescamos sus datos
+        if (index == 0 && _indiceNavegacion != 0) {
+          _cargarDatosUsuario();
+        }
+        
+        setState(() => _indiceNavegacion = index); 
+      },
       child: AnimatedContainer(duration: const Duration(milliseconds: 300), padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: isSelected ? Colors.white.withOpacity(0.15) : Colors.transparent, borderRadius: BorderRadius.circular(20)), child: Icon(icon, color: isSelected ? TruequiColors.amarillo : Colors.white.withOpacity(0.5), size: 28)),
     );
   }
