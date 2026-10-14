@@ -1,28 +1,75 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'home_page.dart'; 
 import 'chat_page.dart';
 import 'login_screen.dart';
 
-class DetalleProductoPage extends StatelessWidget {
+class DetalleProductoPage extends StatefulWidget {
   final Map<String, dynamic> producto;
   final String miCorreo; 
 
   const DetalleProductoPage({super.key, required this.producto, required this.miCorreo});
 
   @override
+  State<DetalleProductoPage> createState() => _DetalleProductoPageState();
+}
+
+class _DetalleProductoPageState extends State<DetalleProductoPage> {
+  String _nombreVendedor = '';
+  String? _fotoVendedorUrl;
+
+  @override
+  void initState() {
+    super.initState();
+    // Iniciar con el nombre que viene en el producto como "respaldo"
+    _nombreVendedor = widget.producto['vendedorNombre']?.toString() ?? 'Propietario';
+    _cargarDatosVendedorReal();
+  }
+
+  Future<void> _cargarDatosVendedorReal() async {
+    final vendedorId = widget.producto['vendedorId']?.toString() ?? '';
+    if (vendedorId.isEmpty) return;
+
+    try {
+      final url = Uri.parse('https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/usuario/perfil/$vendedorId');
+      final res = await http.get(url);
+      
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body)['usuario'];
+        if (mounted) {
+          setState(() {
+            // Actualizar con el nombre real de la base de datos de usuarios
+            String nombreDB = data['nombre'] ?? _nombreVendedor;
+            _nombreVendedor = nombreDB[0].toUpperCase() + nombreDB.substring(1);
+            
+            String? fotoDB = data['fotoUrl'] ?? data['foto'];
+            if (fotoDB != null && fotoDB.isNotEmpty) {
+              _fotoVendedorUrl = fotoDB.contains('?') 
+                  ? '$fotoDB&v=${DateTime.now().millisecondsSinceEpoch}' 
+                  : '$fotoDB?v=${DateTime.now().millisecondsSinceEpoch}';
+            }
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error cargando perfil del vendedor: $e');
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final titulo = producto['titulo'] ?? 'Sin título';
-    final descripcion = producto['descripcion'] ?? 'Sin descripción';
-    final precio = producto['precio']?.toString() ?? '0.0';
-    final categoria = producto['categoria'] ?? 'General';
-    final ubicacion = producto['ubicacion'] ?? 'Querétaro';
-    final imagenUrl = producto['imagenUrl'];
-    final vendedorId = producto['vendedorId']?.toString() ?? '';
-    final vendedorNombre = producto['vendedorNombre']?.toString() ?? 'Propietario';
+    final titulo = widget.producto['titulo'] ?? 'Sin título';
+    final descripcion = widget.producto['descripcion'] ?? 'Sin descripción';
+    final precio = widget.producto['precio']?.toString() ?? '0.0';
+    final categoria = widget.producto['categoria'] ?? 'General';
+    final ubicacion = widget.producto['ubicacion'] ?? 'Querétaro';
+    final imagenUrl = widget.producto['imagenUrl'];
+    final vendedorId = widget.producto['vendedorId']?.toString() ?? '';
 
     // Etiqueta única para la animación inmersiva
-    final String heroTag = 'img_${producto['id']}';
+    final String heroTag = 'img_${widget.producto['id']}';
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
@@ -49,7 +96,6 @@ class DetalleProductoPage extends StatelessWidget {
             physics: const BouncingScrollPhysics(),
             child: Column(
               children: [
-                // ANIMACIÓN HERO: La imagen "vuela" desde la tarjeta principal
                 Hero(
                   tag: heroTag,
                   child: SizedBox(
@@ -98,11 +144,23 @@ class DetalleProductoPage extends StatelessWidget {
                             Divider(color: Colors.white.withOpacity(0.1)),
                             const SizedBox(height: 20),
                             
+                            // SECCIÓN DEL VENDEDOR ACTUALIZADA DINÁMICAMENTE
                             Row(
                               children: [
-                                CircleAvatar(radius: 24, backgroundColor: TruequiColors.purpura.withOpacity(0.5), child: const Icon(Icons.person, color: Colors.white)),
+                                CircleAvatar(
+                                  radius: 24, 
+                                  backgroundColor: TruequiColors.purpura.withOpacity(0.5), 
+                                  backgroundImage: _fotoVendedorUrl != null ? NetworkImage(_fotoVendedorUrl!) : null,
+                                  child: _fotoVendedorUrl == null ? const Icon(Icons.person, color: Colors.white) : null,
+                                ),
                                 const SizedBox(width: 15),
-                                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text('Publicado por:', style: TextStyle(color: Colors.white54, fontSize: 13)), Text(vendedorNombre, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 17))])
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start, 
+                                  children: [
+                                    const Text('Publicado por:', style: TextStyle(color: Colors.white54, fontSize: 13)), 
+                                    Text(_nombreVendedor, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 17))
+                                  ]
+                                )
                               ],
                             ),
                             const SizedBox(height: 40),
@@ -112,7 +170,7 @@ class DetalleProductoPage extends StatelessWidget {
                               height: 60,
                               child: ElevatedButton(
                                 onPressed: () {
-                                  final miId = miCorreo.trim().toLowerCase();
+                                  final miId = widget.miCorreo.trim().toLowerCase();
                                   final vendedorNormalizado = vendedorId.trim().toLowerCase();
                                   
                                   if (miId.isEmpty || miId == 'invitado') {
@@ -132,9 +190,9 @@ class DetalleProductoPage extends StatelessWidget {
                                   }
 
                                   final participantes = [miId, vendedorNormalizado]..sort();
-                                  final conversacionId = "${producto['id']}_${participantes[0]}_${participantes[1]}";
+                                  final conversacionId = "${widget.producto['id']}_${participantes[0]}_${participantes[1]}";
 
-                                  Navigator.push(context, MaterialPageRoute(builder: (context) => ChatPage(miCorreo: miId, otroCorreo: vendedorNormalizado, productoId: producto['id'].toString(), productoTitulo: titulo, conversacionId: conversacionId, esMiArticulo: false, estadoPropuesta: 'Pendiente')));
+                                  Navigator.push(context, MaterialPageRoute(builder: (context) => ChatPage(miCorreo: miId, otroCorreo: vendedorNormalizado, productoId: widget.producto['id'].toString(), productoTitulo: titulo, conversacionId: conversacionId, esMiArticulo: false, estadoPropuesta: 'Pendiente')));
                                 },
                                 style: ElevatedButton.styleFrom(backgroundColor: TruequiColors.purpura, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)), elevation: 10, shadowColor: TruequiColors.purpura.withOpacity(0.5)),
                                 child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.swap_horiz_rounded, color: Colors.white, size: 28), SizedBox(width: 12), Text('Proponer Trueque', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white))]),
