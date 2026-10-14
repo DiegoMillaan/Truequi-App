@@ -165,74 +165,83 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Widget _buildInicioTab() {
-    return CustomScrollView(
-      physics: const BouncingScrollPhysics(),
-      slivers: [
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 40, 24, 20),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Descubre,', style: TextStyle(fontSize: 16, color: Colors.white.withOpacity(0.7), fontWeight: FontWeight.w500)),
-                    Text(_nombreUsuario, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: -0.5)),
-                  ],
-                ),
-                GestureDetector(
-                  onTap: () {
-                    if (isGuest) {
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
-                    } else {
-                      setState(() => _indiceNavegacion = 4);
-                    }
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), shape: BoxShape.circle, border: Border.all(color: Colors.white.withOpacity(0.3), width: 1.5)),
-                    child: CircleAvatar(
-                      radius: 22, 
-                      backgroundColor: TruequiColors.purpura, 
-                      backgroundImage: _fotoUrl != null ? NetworkImage(_fotoUrl!) : null,
-                      child: _fotoUrl == null 
-                          ? Icon(isGuest ? Icons.login_rounded : Icons.person_rounded, color: Colors.white)
-                          : null,
+    return RefreshIndicator(
+      color: TruequiColors.purpura,
+      backgroundColor: TruequiColors.fondoClaro,
+      onRefresh: () async {
+        await _cargarProductos();
+        await _cargarDatosUsuario();
+        await _verificarMensajesNuevos();
+      },
+      child: CustomScrollView(
+        physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+        slivers: [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(24, 40, 24, 20),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Descubre,', style: TextStyle(fontSize: 16, color: Colors.white.withOpacity(0.7), fontWeight: FontWeight.w500)),
+                      Text(_nombreUsuario, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: -0.5)),
+                    ],
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      if (isGuest) {
+                        Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
+                      } else {
+                        setState(() => _indiceNavegacion = 4);
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), shape: BoxShape.circle, border: Border.all(color: Colors.white.withOpacity(0.3), width: 1.5)),
+                      child: CircleAvatar(
+                        radius: 22, 
+                        backgroundColor: TruequiColors.purpura, 
+                        backgroundImage: _fotoUrl != null ? NetworkImage(_fotoUrl!) : null,
+                        child: _fotoUrl == null 
+                            ? Icon(isGuest ? Icons.login_rounded : Icons.person_rounded, color: Colors.white)
+                            : null,
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(color: Colors.white.withOpacity(0.08), borderRadius: BorderRadius.circular(30), border: Border.all(color: Colors.white.withOpacity(0.2), width: 1.5)),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.location_on_rounded, size: 18, color: TruequiColors.amarillo),
-                  const SizedBox(width: 8),
-                  Text('UAQ - Querétaro', style: TextStyle(fontSize: 14, color: Colors.white.withOpacity(0.9), fontWeight: FontWeight.w600)),
                 ],
               ),
             ),
           ),
-        ),
-        const SliverToBoxAdapter(child: Padding(padding: EdgeInsets.symmetric(horizontal: 24, vertical: 25), child: Text('Te podria gustar...', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)))),
-        
-        _isLoading 
-          ? const SliverToBoxAdapter(child: Center(child: CircularProgressIndicator(color: TruequiColors.amarillo)))
-          : SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              sliver: SliverList(delegate: SliverChildListDelegate(_construirGridDinamico())),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(color: Colors.white.withOpacity(0.08), borderRadius: BorderRadius.circular(30), border: Border.all(color: Colors.white.withOpacity(0.2), width: 1.5)),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.location_on_rounded, size: 18, color: TruequiColors.amarillo),
+                    const SizedBox(width: 8),
+                    Text('UAQ - Querétaro', style: TextStyle(fontSize: 14, color: Colors.white.withOpacity(0.9), fontWeight: FontWeight.w600)),
+                  ],
+                ),
+              ),
             ),
-        const SliverToBoxAdapter(child: SizedBox(height: 140)),
-      ],
+          ),
+          const SliverToBoxAdapter(child: Padding(padding: EdgeInsets.symmetric(horizontal: 24, vertical: 25), child: Text('Te podria gustar...', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)))),
+          
+          _isLoading 
+            ? const SliverToBoxAdapter(child: Center(child: CircularProgressIndicator(color: TruequiColors.amarillo)))
+            : SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                sliver: SliverList(delegate: SliverChildListDelegate(_construirGridDinamico())),
+              ),
+          const SliverToBoxAdapter(child: SizedBox(height: 140)),
+        ],
+      ),
     );
   }
 
