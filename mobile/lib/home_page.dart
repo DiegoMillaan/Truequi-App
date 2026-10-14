@@ -39,6 +39,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   // Variables dinámicas para el header
   String _nombreUsuario = 'Cargando...';
   String? _fotoUrl;
+  
+  // Variable para el punto de notificación
+  bool _tieneMensajesSinLeer = false;
 
   bool get isGuest => widget.correo.isEmpty;
 
@@ -53,10 +56,29 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
     _entranceController.forward();
     _cargarProductos(); 
-    _cargarDatosUsuario(); // Llamada inicial para cargar nombre y foto
+    _cargarDatosUsuario(); 
+    _verificarMensajesNuevos(); // Consulta inicial de notificaciones
   }
 
-  // Método para consultar tu nombre y foto en AWS
+  // Simulación de consulta de mensajes no leídos
+  Future<void> _verificarMensajesNuevos() async {
+    if (isGuest) return;
+    try {
+      // Aquí conectarás a tu API de chats:
+      // final res = await http.get(Uri.parse('TU_API/mensajes/no_leidos/${widget.correo}'));
+      // final data = jsonDecode(res.body);
+      
+      if (mounted) {
+        setState(() {
+          // Por ahora lo forzamos a true para que veas el diseño
+          _tieneMensajesSinLeer = true; 
+        });
+      }
+    } catch (e) {
+      debugPrint('Error al verificar mensajes: $e');
+    }
+  }
+
   Future<void> _cargarDatosUsuario() async {
     if (isGuest) {
       if (mounted) setState(() => _nombreUsuario = 'Invitado');
@@ -70,11 +92,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         final data = jsonDecode(res.body)['usuario'];
         if (mounted) {
           setState(() {
-            // Capitalizar nombre
             String nombreDB = data['nombre'] ?? widget.correo.split('@').first;
             _nombreUsuario = nombreDB[0].toUpperCase() + nombreDB.substring(1);
             
-            // Refresco de imagen (Cache Killer)
             String? fotoDB = data['fotoUrl'] ?? data['foto'];
             if (fotoDB != null && fotoDB.isNotEmpty) {
               _fotoUrl = fotoDB.contains('?') 
@@ -166,7 +186,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     if (isGuest) {
                       Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
                     } else {
-                      // Al tocar la foto desde inicio, vamos a la pestaña de perfil (índice 4)
                       setState(() => _indiceNavegacion = 4);
                     }
                   },
@@ -352,7 +371,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         },
                         child: Container(width: 55, height: 55, decoration: BoxDecoration(gradient: const LinearGradient(colors: [TruequiColors.purpura, Color(0xFF8A62FF)], begin: Alignment.topLeft, end: Alignment.bottomRight), shape: BoxShape.circle, boxShadow: [BoxShadow(color: TruequiColors.purpura.withOpacity(0.5), blurRadius: 15, offset: const Offset(0, 5))]), child: const Icon(Icons.add_rounded, color: Colors.white, size: 32)),
                       ),
-                      _buildNavItem(Icons.chat_bubble_rounded, 3),
+                      _buildNavItem(Icons.chat_bubble_rounded, 3, mostrarPunto: _tieneMensajesSinLeer),
                       _buildNavItem(Icons.person_rounded, 4),
                     ],
                   ),
@@ -365,7 +384,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildNavItem(IconData icon, int index) {
+  Widget _buildNavItem(IconData icon, int index, {bool mostrarPunto = false}) {
     final isSelected = _indiceNavegacion == index;
     return GestureDetector(
       onTap: () { 
@@ -374,14 +393,42 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           return; 
         } 
         
-        // Si el usuario regresa al Home (índice 0) desde el perfil u otra pestaña, refrescamos sus datos
         if (index == 0 && _indiceNavegacion != 0) {
           _cargarDatosUsuario();
+        }
+
+        // Desactivamos el punto cuando se navega a chats
+        if (index == 3) {
+          setState(() => _tieneMensajesSinLeer = false);
         }
         
         setState(() => _indiceNavegacion = index); 
       },
-      child: AnimatedContainer(duration: const Duration(milliseconds: 300), padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: isSelected ? Colors.white.withOpacity(0.15) : Colors.transparent, borderRadius: BorderRadius.circular(20)), child: Icon(icon, color: isSelected ? TruequiColors.amarillo : Colors.white.withOpacity(0.5), size: 28)),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300), 
+        padding: const EdgeInsets.all(12), 
+        decoration: BoxDecoration(color: isSelected ? Colors.white.withOpacity(0.15) : Colors.transparent, borderRadius: BorderRadius.circular(20)), 
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Icon(icon, color: isSelected ? TruequiColors.amarillo : Colors.white.withOpacity(0.5), size: 28),
+            if (mostrarPunto)
+              Positioned(
+                top: -2,
+                right: -2,
+                child: Container(
+                  width: 12,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: Colors.redAccent,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: TruequiColors.fondoClaro, width: 2),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 }
