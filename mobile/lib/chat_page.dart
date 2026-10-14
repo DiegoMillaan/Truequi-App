@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'dart:convert';
+import 'dart:async'; // 1. Importante para el Timer
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'home_page.dart';
@@ -38,37 +39,69 @@ class _ChatPageState extends State<ChatPage> {
   bool _enviando = false;
   final TextEditingController _mensajeController = TextEditingController();
   late String _estadoActual;
+  
+  // 2. Controladores para la magia en tiempo real
+  final ScrollController _scrollController = ScrollController();
+  Timer? _pollingTimer;
 
   @override
   void initState() {
     super.initState();
     _estadoActual = widget.estadoPropuesta;
-    _cargarMensajes();
+    _cargarMensajes(silencioso: false);
+    
+    // 3. Temporizador que pide mensajes en segundo plano cada 1.5 segundos
+    _pollingTimer = Timer.periodic(const Duration(milliseconds: 1500), (_) {
+      _cargarMensajes(silencioso: true);
+    });
   }
 
   @override
   void dispose() {
+    // 4. Importantísimo: Apagar el timer al salir de la pantalla
+    _pollingTimer?.cancel();
+    _scrollController.dispose();
     _mensajeController.dispose();
     super.dispose();
   }
 
-  Future<void> _cargarMensajes() async {
-    setState(() => _cargando = true);
+  // 5. Modificamos para aceptar consultas silenciosas (sin borrar la pantalla)
+  Future<void> _cargarMensajes({bool silencioso = false}) async {
+    if (!silencioso && mounted) setState(() => _cargando = true);
+    
     try {
       final url = Uri.parse('https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/mensajes?conversacionId=${widget.conversacionId}');
       final response = await http.get(url);
+      
       if (response.statusCode == 200) {
-        setState(() {
-          _mensajes = jsonDecode(response.body)['mensajes'];
-          // Orden cronológico para leer de arriba hacia abajo
-          _mensajes.sort((a, b) => a['fecha'].compareTo(b['fecha']));
-        });
+        final nuevosMensajes = jsonDecode(response.body)['mensajes'] as List<dynamic>;
+        nuevosMensajes.sort((a, b) => a['fecha'].compareTo(b['fecha']));
+        
+        if (mounted) {
+          // Detectar si la base de datos trajo más mensajes de los que tenemos en pantalla
+          bool hayNuevos = nuevosMensajes.length > _mensajes.length;
+          
+          setState(() {
+            _mensajes = nuevosMensajes;
+            _cargando = false;
+          });
+
+          // 6. Auto-Scroll suave hacia el fondo si llegó un mensaje nuevo
+          if (hayNuevos && _scrollController.hasClients) {
+            Future.delayed(const Duration(milliseconds: 100), () {
+              _scrollController.animateTo(
+                _scrollController.position.maxScrollExtent,
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOut,
+              );
+            });
+          }
+        }
       }
     } catch (e) {
       debugPrint(e.toString());
-    } finally {
-      setState(() => _cargando = false);
-    }
+      if (!silencioso && mounted) setState(() => _cargando = false);
+    } 
   }
 
   Future<void> _enviar() async {
@@ -93,10 +126,10 @@ class _ChatPageState extends State<ChatPage> {
 
       if (response.statusCode == 201) {
         _mensajeController.clear();
-        await _cargarMensajes();
+        await _cargarMensajes(silencioso: true); // Consulta rápida tras enviar
       }
     } finally {
-      setState(() => _enviando = false);
+      if (mounted) setState(() => _enviando = false);
     }
   }
 
@@ -141,15 +174,13 @@ class _ChatPageState extends State<ChatPage> {
       ),
       body: Stack(
         children: [
-          // ORBES DE FONDO
           Positioned(top: 100, left: -50, child: Container(width: 300, height: 300, decoration: BoxDecoration(shape: BoxShape.circle, color: TruequiColors.purpura.withOpacity(0.2)), child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 80, sigmaY: 80), child: const SizedBox()))),
           Positioned(bottom: 50, right: -50, child: Container(width: 350, height: 350, decoration: BoxDecoration(shape: BoxShape.circle, color: TruequiColors.amarillo.withOpacity(0.15)), child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 80, sigmaY: 80), child: const SizedBox()))),
           
           Column(
             children: [
-              const SizedBox(height: 100), // Espacio para el AppBar
+              const SizedBox(height: 100), 
               
-              // PANEL DE DECISIÓN (Si es tu artículo y está pendiente)
               if (widget.esMiArticulo && _estadoActual == 'Pendiente')
                 Container(
                   margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -177,11 +208,11 @@ class _ChatPageState extends State<ChatPage> {
                   child: Text('Trueque $_estadoActual', style: TextStyle(fontWeight: FontWeight.bold, color: _estadoActual == 'Aceptado' ? Colors.greenAccent : Colors.redAccent)),
                 ),
 
-              // ÁREA DE BURBUJAS DE CHAT
               Expanded(
                 child: _cargando
                     ? const Center(child: CircularProgressIndicator(color: TruequiColors.purpura))
                     : ListView.builder(
+                        controller: _scrollController, // 7. Asignamos el controlador para el scroll automático
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                         physics: const BouncingScrollPhysics(),
                         itemCount: _mensajes.length,
@@ -207,7 +238,6 @@ class _ChatPageState extends State<ChatPage> {
                       ),
               ),
 
-              // BARRA INFERIOR DE ENVÍO DE MENSAJES (Glass)
               ClipRRect(
                 child: BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
