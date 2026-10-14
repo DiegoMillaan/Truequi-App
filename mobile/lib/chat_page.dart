@@ -207,7 +207,7 @@ class _ChatPageState extends State<ChatPage> {
                       children: [
                         Container(padding: const EdgeInsets.all(15), decoration: BoxDecoration(color: TruequiColors.purpura.withOpacity(0.2), shape: BoxShape.circle), child: const Icon(Icons.lock_outline_rounded, size: 50, color: TruequiColors.purpura)),
                         const SizedBox(height: 20),
-                        const Text('Validación Zero-Trust', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+                        const Text('Validación mediante PIN', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
                         const SizedBox(height: 10),
                         Text('Pídele el código de 4 dígitos a la otra persona al momento de intercambiar el artículo.', style: TextStyle(color: Colors.white.withOpacity(0.7)), textAlign: TextAlign.center),
                         const SizedBox(height: 30),
@@ -339,7 +339,7 @@ class _ChatPageState extends State<ChatPage> {
             children: [
               const SizedBox(height: 100), 
               
-              // 🛡️ CABECERA INTELIGENTE DE ESTADOS (PIN)
+              
               if (widget.esMiArticulo && _estadoActual == 'Pendiente')
                 Container(
                   margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
