@@ -32,6 +32,7 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
   static const String _registroUrl = 'https://16663yaped.execute-api.us-east-1.amazonaws.com/dev/registro';
   static const String _productosUrl = 'https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/productos';
   static const String _uploadUrlEndpoint = 'https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/productos/upload-url';
+  static const String _perfilUrl = 'https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/usuario/perfil';
 
   final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
   
@@ -67,21 +68,78 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
   Future<void> _cargarProductos() async {
     try {
       final response = await http.get(Uri.parse(_productosUrl));
-      if (response.statusCode == 200) setState(() { _productos = jsonDecode(response.body)['productos']; _isLoadingCatalog = false; });
-    } catch (e) { setState(() => _isLoadingCatalog = false); }
+      if (response.statusCode == 200) {
+        if (mounted) {
+          setState(() {
+            _productos = jsonDecode(response.body)['productos'] ?? [];
+            _isLoadingCatalog = false;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoadingCatalog = false);
+    }
   }
 
-  // ==========================================
-  // FUNCIÓN PARA SINCRONIZAR LA FOTO DE PERFIL
-  // ==========================================
-  Future<void> _recargarUsuarioActual() async {
-    if (_usuarioActual == null) return;
+  // =========================================================
+  // SINCRONIZACIÓN BLINDADA DE PERFIL (EVITA PANTALLA GRIS)
+  // =========================================================
+  Future<void> _recargarUsuarioActual({String? nombreInicial, String? fotoInicial}) async {
+    if (_usuarioActual == null || _usuarioActual!['correo'] == null) return;
+
+    final String correo = _usuarioActual!['correo'].toString().trim();
+    final String nombreRespaldo = (nombreInicial != null && nombreInicial.trim().isNotEmpty)
+        ? nombreInicial.trim()
+        : (_usuarioActual!['nombre']?.toString().trim().isNotEmpty == true
+            ? _usuarioActual!['nombre'].toString().trim()
+            : correo.split('@').first);
+
     try {
-      final url = Uri.parse('https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/usuario/perfil/${_usuarioActual!['correo']}');
+      final url = Uri.parse('$_perfilUrl/$correo');
       final res = await http.get(url);
+
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
-        if (mounted) setState(() { _usuarioActual = data['usuario']; });
+        final Map<String, dynamic> usuarioDB = data['usuario'] != null
+            ? Map<String, dynamic>.from(data['usuario'])
+            : {};
+
+        final String? nombreEnDB = usuarioDB['nombre']?.toString().trim();
+        final String? fotoEnDB = (usuarioDB['fotoUrl'] ?? usuarioDB['foto'])?.toString().trim();
+
+        final String nombreFinal = (nombreEnDB != null && nombreEnDB.isNotEmpty)
+            ? nombreEnDB
+            : nombreRespaldo;
+
+        final String? fotoFinal = (fotoEnDB != null && fotoEnDB.isNotEmpty)
+            ? fotoEnDB
+            : (fotoInicial ?? _usuarioActual!['fotoUrl'] ?? _usuarioActual!['foto']);
+
+        if (mounted) {
+          setState(() {
+            _usuarioActual = {
+              ..._usuarioActual!,
+              ...usuarioDB,
+              'correo': correo,
+              'nombre': nombreFinal,
+              'foto': fotoFinal,
+              'fotoUrl': fotoFinal,
+            };
+          });
+        }
+
+        // Si el usuario es nuevo en DynamoDB (no tenía nombre guardado), lo inicializamos
+        if (nombreEnDB == null || nombreEnDB.isEmpty) {
+          await http.put(
+            Uri.parse(_perfilUrl),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'correo': correo,
+              'nombre': nombreFinal,
+              if (fotoFinal != null) 'fotoUrl': fotoFinal,
+            }),
+          );
+        }
       }
     } catch (e) {
       debugPrint('Error recargando usuario: $e');
@@ -97,8 +155,8 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
 
   List<dynamic> get _productosFiltrados {
     return _productos.where((p) {
-      final titulo = p['titulo'].toString().toLowerCase();
-      final descripcion = p['descripcion'].toString().toLowerCase();
+      final titulo = (p['titulo'] ?? '').toString().toLowerCase();
+      final descripcion = (p['descripcion'] ?? '').toString().toLowerCase();
       final matchBusqueda = titulo.contains(_busqueda.toLowerCase()) || descripcion.contains(_busqueda.toLowerCase());
       final matchCategoria = _categoriaSeleccionadaFiltro == 'Todas' || p['categoria'] == _categoriaSeleccionadaFiltro;
       return matchBusqueda && matchCategoria;
@@ -154,11 +212,30 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
               onSuccess: (usuarioData) async {
                 if (!dialogContext.mounted) return;
                 Navigator.pop(dialogContext);
-                setState(() { _usuarioActual = { 'nombre': usuarioData['correo'].split('@')[0], 'correo': usuarioData['correo'], 'foto': null }; });
-                _recargarUsuarioActual(); 
-                if (mounted) _mostrarAlertaLiquid(context, '¡Acceso exitoso con Google!', tipo: 'exito');
+
+                final String correoGoogle = (usuarioData['correo'] ?? '').toString().trim();
+                final String nombreGoogle = (usuarioData['nombre'] != null && usuarioData['nombre'].toString().trim().isNotEmpty)
+                    ? usuarioData['nombre'].toString().trim()
+                    : (correoGoogle.isNotEmpty ? correoGoogle.split('@').first : 'Usuario');
+                final String? fotoGoogle = (usuarioData['fotoUrl'] ?? usuarioData['foto'])?.toString();
+
+                setState(() {
+                  _usuarioActual = {
+                    'nombre': nombreGoogle,
+                    'correo': correoGoogle,
+                    'foto': fotoGoogle,
+                    'fotoUrl': fotoGoogle,
+                  };
+                });
+
+                await _recargarUsuarioActual(nombreInicial: nombreGoogle, fotoInicial: fotoGoogle);
+                if (mounted) _mostrarAlertaLiquid(this.context, '¡Acceso exitoso con Google!', tipo: 'exito');
               },
-              onError: (mensaje) { setModalState(() { error = mensaje; cargando = false; }); }
+              onError: (mensaje) {
+                if (dialogContext.mounted) {
+                  setModalState(() { error = mensaje; cargando = false; });
+                }
+              }
             );
 
             Future<void> procesarFormulario() async {
@@ -174,18 +251,51 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
               setModalState(() { cargando = true; error = null; });
               try {
                 final urlActual = esRegistro ? _registroUrl : _loginUrl;
-                final response = await http.post(Uri.parse(urlActual), headers: {'Content-Type': 'application/json'}, body: jsonEncode({'nombre': nombre, 'correo': correo, 'password': password, 'rol': 'Usuario'}));
+                final response = await http.post(
+                  Uri.parse(urlActual),
+                  headers: {'Content-Type': 'application/json'},
+                  body: jsonEncode({
+                    'nombre': nombre,
+                    'correo': correo,
+                    'password': password,
+                    'rol': 'Usuario'
+                  }),
+                );
 
                 if (response.statusCode >= 200 && response.statusCode < 300) {
                   if (!dialogContext.mounted) return;
                   Navigator.pop(dialogContext);
-                  setState(() { _usuarioActual = { 'nombre': nombre.isNotEmpty ? nombre : correo.split('@')[0], 'correo': correo }; });
-                  _recargarUsuarioActual(); 
-                  if (mounted) _mostrarAlertaLiquid(context, '¡Acceso exitoso! Bienvenido de vuelta.', tipo: 'exito');
+
+                  final String nombreSeguro = nombre.isNotEmpty ? nombre : correo.split('@').first;
+
+                  setState(() {
+                    _usuarioActual = {
+                      'nombre': nombreSeguro,
+                      'correo': correo,
+                      'foto': null,
+                    };
+                  });
+
+                  await _recargarUsuarioActual(nombreInicial: nombreSeguro);
+                  if (mounted) {
+                    _mostrarAlertaLiquid(
+                      this.context,
+                      esRegistro ? '¡Cuenta creada exitosamente! Bienvenido.' : '¡Acceso exitoso! Bienvenido de vuelta.',
+                      tipo: 'exito',
+                    );
+                  }
                   return;
                 }
-                setModalState(() { error = jsonDecode(response.body)['error'] ?? 'Credenciales incorrectas.'; cargando = false; });
-              } catch (e) { setModalState(() { error = 'Error de conexión.'; cargando = false; }); }
+                setModalState(() {
+                  error = jsonDecode(response.body)['error'] ?? 'Credenciales incorrectas.';
+                  cargando = false;
+                });
+              } catch (e) {
+                setModalState(() {
+                  error = 'Error de conexión.';
+                  cargando = false;
+                });
+              }
             }
 
             return Dialog(
@@ -288,17 +398,25 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
 
                 final resDB = await http.post(
                   Uri.parse(_productosUrl), headers: {'Content-Type': 'application/json'},
-                  body: jsonEncode({'titulo': tituloController.text.trim(), 'descripcion': descripcionController.text.trim(), 'precio': precioController.text.trim(), 'categoria': categoriaSeleccionada, 'imagenUrl': urlData['publicUrl'], 'vendedorId': _usuarioActual!['correo'], 'vendedorNombre': _usuarioActual!['nombre']}),
+                  body: jsonEncode({
+                    'titulo': tituloController.text.trim(),
+                    'descripcion': descripcionController.text.trim(),
+                    'precio': precioController.text.trim(),
+                    'categoria': categoriaSeleccionada,
+                    'imagenUrl': urlData['publicUrl'],
+                    'vendedorId': _usuarioActual!['correo'],
+                    'vendedorNombre': _usuarioActual!['nombre'] ?? _usuarioActual!['correo'].toString().split('@').first
+                  }),
                 );
 
                 if (resDB.statusCode == 201) {
                   if (!dialogContext.mounted) return;
                   Navigator.pop(dialogContext); 
-                  _mostrarAlertaLiquid(context, '¡Artículo publicado en el catálogo universal! 🚀', tipo: 'exito');
+                  _mostrarAlertaLiquid(this.context, '¡Artículo publicado en el catálogo universal! 🚀', tipo: 'exito');
                   _cargarProductos(); 
                 }
               } finally {
-                setModalState(() => cargando = false);
+                if (dialogContext.mounted) setModalState(() => cargando = false);
               }
             }
 
@@ -377,9 +495,6 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
     );
   }
 
-  // ==========================================
-  // FUNCIÓN CORREGIDA
-  // ==========================================
   List<Widget> _construirBentoGrid(List<dynamic> itemsFiltrados) {
     List<Widget> filas = [];
     for (int i = 0; i < itemsFiltrados.length; i++) {
@@ -406,31 +521,43 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
     final size = MediaQuery.of(context).size;
     final anchoContenido = math.min(size.width * 0.85, 1400.0);
     
+    // EXTRACCIÓN SEGURA DE FOTO E INICIAL PARA EVITAR ERRORES NULL EN EL BUILD
     String? fotoUrlLimpia;
+    String inicialAvatar = 'U';
+
     if (_usuarioActual != null) {
       final fotoOriginal = _usuarioActual!['fotoUrl'] ?? _usuarioActual!['foto'];
-      if (fotoOriginal != null && fotoOriginal.toString().isNotEmpty) {
-        final fotoStr = fotoOriginal.toString();
+      if (fotoOriginal != null && fotoOriginal.toString().trim().isNotEmpty) {
+        final fotoStr = fotoOriginal.toString().trim();
         fotoUrlLimpia = fotoStr.contains('?') 
             ? '$fotoStr&v=${DateTime.now().millisecondsSinceEpoch}' 
             : '$fotoStr?v=${DateTime.now().millisecondsSinceEpoch}';
       }
+
+      final String nombreSeguro = (_usuarioActual!['nombre']?.toString().trim().isNotEmpty == true)
+          ? _usuarioActual!['nombre'].toString().trim()
+          : (_usuarioActual!['correo']?.toString().trim().isNotEmpty == true
+              ? _usuarioActual!['correo'].toString().trim()
+              : 'Usuario');
+      inicialAvatar = nombreSeguro[0].toUpperCase();
     }
 
     return Scaffold(
       backgroundColor: const Color(0xFFF0F2F5),
       body: Stack(
         children: [
-          AnimatedBuilder(
-            animation: _bgController,
-            builder: (context, child) {
-              return Stack(
-                children: [
-                  Positioned(top: size.height * 0.05 + (math.sin(_bgController.value * 2 * math.pi) * 100), left: size.width * 0.1 + (math.cos(_bgController.value * 2 * math.pi) * 80), child: Container(width: size.width * 0.4, height: size.width * 0.4, decoration: BoxDecoration(shape: BoxShape.circle, color: TruequiColors.purpura.withOpacity(0.2)))),
-                  Positioned(bottom: size.height * 0.1 + (math.cos(_bgController.value * 2 * math.pi) * 120), right: size.width * 0.05 + (math.sin(_bgController.value * 2 * math.pi) * 90), child: Container(width: size.width * 0.5, height: size.width * 0.5, decoration: BoxDecoration(shape: BoxShape.circle, color: TruequiColors.amarillo.withOpacity(0.15)))),
-                ],
-              );
-            },
+          RepaintBoundary(
+            child: AnimatedBuilder(
+              animation: _bgController,
+              builder: (context, child) {
+                return Stack(
+                  children: [
+                    Positioned(top: size.height * 0.05 + (math.sin(_bgController.value * 2 * math.pi) * 100), left: size.width * 0.1 + (math.cos(_bgController.value * 2 * math.pi) * 80), child: Container(width: size.width * 0.4, height: size.width * 0.4, decoration: BoxDecoration(shape: BoxShape.circle, color: TruequiColors.purpura.withOpacity(0.2)))),
+                    Positioned(bottom: size.height * 0.1 + (math.cos(_bgController.value * 2 * math.pi) * 120), right: size.width * 0.05 + (math.sin(_bgController.value * 2 * math.pi) * 90), child: Container(width: size.width * 0.5, height: size.width * 0.5, decoration: BoxDecoration(shape: BoxShape.circle, color: TruequiColors.amarillo.withOpacity(0.15)))),
+                  ],
+                );
+              },
+            ),
           ),
           BackdropFilter(filter: ImageFilter.blur(sigmaX: 100.0, sigmaY: 100.0), child: Container(color: Colors.white.withOpacity(0.1))),
 
@@ -535,7 +662,7 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
                                         radius: 22,
                                         backgroundColor: TruequiColors.purpura.withOpacity(0.1), 
                                         backgroundImage: fotoUrlLimpia != null ? NetworkImage(fotoUrlLimpia) : null, 
-                                        child: fotoUrlLimpia == null ? Text(_usuarioActual!['nombre'][0].toUpperCase(), style: const TextStyle(color: TruequiColors.purpura, fontWeight: FontWeight.bold, fontSize: 18)) : null
+                                        child: fotoUrlLimpia == null ? Text(inicialAvatar, style: const TextStyle(color: TruequiColors.purpura, fontWeight: FontWeight.bold, fontSize: 18)) : null
                                       )
                                     )
                                   ),
