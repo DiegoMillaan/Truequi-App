@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'home_page.dart'; 
 import 'chat_page.dart';
 import 'login_screen.dart';
+import 'perfil_publico_dialog.dart'; // <-- 1. Importar el modal
 
 class DetalleProductoPage extends StatefulWidget {
   final Map<String, dynamic> producto;
@@ -23,7 +24,6 @@ class _DetalleProductoPageState extends State<DetalleProductoPage> {
   @override
   void initState() {
     super.initState();
-    // Iniciar con el nombre que viene en el producto como "respaldo"
     _nombreVendedor = widget.producto['vendedorNombre']?.toString() ?? 'Propietario';
     _cargarDatosVendedorReal();
   }
@@ -40,7 +40,6 @@ class _DetalleProductoPageState extends State<DetalleProductoPage> {
         final data = jsonDecode(res.body)['usuario'];
         if (mounted) {
           setState(() {
-            // Actualizar con el nombre real de la base de datos de usuarios
             String nombreDB = data['nombre'] ?? _nombreVendedor;
             _nombreVendedor = nombreDB[0].toUpperCase() + nombreDB.substring(1);
             
@@ -68,7 +67,6 @@ class _DetalleProductoPageState extends State<DetalleProductoPage> {
     final imagenUrl = widget.producto['imagenUrl'];
     final vendedorId = widget.producto['vendedorId']?.toString() ?? '';
 
-    // Etiqueta única para la animación inmersiva
     final String heroTag = 'img_${widget.producto['id']}';
     final size = MediaQuery.of(context).size;
 
@@ -144,24 +142,44 @@ class _DetalleProductoPageState extends State<DetalleProductoPage> {
                             Divider(color: Colors.white.withOpacity(0.1)),
                             const SizedBox(height: 20),
                             
-                            // SECCIÓN DEL VENDEDOR ACTUALIZADA DINÁMICAMENTE
-                            Row(
-                              children: [
-                                CircleAvatar(
-                                  radius: 24, 
-                                  backgroundColor: TruequiColors.purpura.withOpacity(0.5), 
-                                  backgroundImage: _fotoVendedorUrl != null ? NetworkImage(_fotoVendedorUrl!) : null,
-                                  child: _fotoVendedorUrl == null ? const Icon(Icons.person, color: Colors.white) : null,
-                                ),
-                                const SizedBox(width: 15),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start, 
+                            // <-- 2. AHORA ES CLICKABLE PARA ABRIR EL PERFIL
+                            GestureDetector(
+                              onTap: () {
+                                if (vendedorId.isNotEmpty) {
+                                  PerfilPublicoDialog.mostrar(context, vendedorId);
+                                }
+                              },
+                              child: Container(
+                                color: Colors.transparent, // Amplía el área táctil
+                                padding: const EdgeInsets.symmetric(vertical: 5),
+                                child: Row(
                                   children: [
-                                    const Text('Publicado por:', style: TextStyle(color: Colors.white54, fontSize: 13)), 
-                                    Text(_nombreVendedor, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 17))
-                                  ]
-                                )
-                              ],
+                                    CircleAvatar(
+                                      radius: 24, 
+                                      backgroundColor: TruequiColors.purpura.withOpacity(0.5), 
+                                      backgroundImage: _fotoVendedorUrl != null ? NetworkImage(_fotoVendedorUrl!) : null,
+                                      child: _fotoVendedorUrl == null ? const Icon(Icons.person, color: Colors.white) : null,
+                                    ),
+                                    const SizedBox(width: 15),
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start, 
+                                      children: [
+                                        const Text('Publicado por:', style: TextStyle(color: Colors.white54, fontSize: 13)), 
+                                        Text(
+                                          _nombreVendedor, 
+                                          style: const TextStyle(
+                                            color: Colors.white, 
+                                            fontWeight: FontWeight.bold, 
+                                            fontSize: 17,
+                                            decoration: TextDecoration.underline, // Le da estilo de "enlace"
+                                            decorationColor: Colors.white54
+                                          )
+                                        )
+                                      ]
+                                    )
+                                  ],
+                                ),
+                              ),
                             ),
                             const SizedBox(height: 40),
                             
