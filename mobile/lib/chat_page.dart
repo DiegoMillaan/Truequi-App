@@ -77,7 +77,12 @@ class _ChatPageState extends State<ChatPage> {
             .where((m) => m['conversacionId'] == widget.conversacionId)
             .toList();
             
-        nuevosMensajes.sort((a, b) => a['fecha'].compareTo(b['fecha']));
+        // 🛡️ PROTECCIÓN DE FECHA: Evita que la app choque con mensajes viejos
+        nuevosMensajes.sort((a, b) {
+          final fechaA = a['fecha'] ?? '';
+          final fechaB = b['fecha'] ?? '';
+          return fechaA.compareTo(fechaB);
+        });
         
         if (mounted) {
           bool hayNuevos = nuevosMensajes.length > _mensajes.length;
@@ -112,13 +117,43 @@ class _ChatPageState extends State<ChatPage> {
     } 
   }
 
+  // 🚀 ENVÍO MEJORADO: Con fecha, Optimistic UI y pausa de timer
   Future<void> _enviar() async {
     final texto = _mensajeController.text.trim();
     if (texto.isEmpty) return;
-    setState(() => _enviando = true);
+    
+    // 1. Pausamos la actualización automática
+    _pollingTimer?.cancel();
+
+    // 2. Mostramos el mensaje instantáneamente
+    setState(() {
+      _enviando = true;
+      _mensajes.add({
+        'id': 'temp_${DateTime.now().millisecondsSinceEpoch}',
+        'conversacionId': widget.conversacionId,
+        'remitente': widget.miCorreo,
+        'destinatario': widget.otroCorreo,
+        'contenido': texto,
+        'estado': _estadoActual,
+        'fecha': DateTime.now().toIso8601String(), 
+      });
+      _mensajeController.clear();
+    });
+
+    // Auto-scroll inmediato
+    if (_scrollController.hasClients) {
+      Future.delayed(const Duration(milliseconds: 100), () {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      });
+    }
 
     try {
-      final response = await http.post(
+      // 3. Enviamos a AWS con la fecha incluida
+      await http.post(
         Uri.parse('https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/mensajes'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
@@ -129,15 +164,24 @@ class _ChatPageState extends State<ChatPage> {
           'productoTitulo': widget.productoTitulo,
           'contenido': texto,
           'estado': _estadoActual,
+          'fecha': DateTime.now().toIso8601String(),
         }),
       );
 
-      if (response.statusCode == 201) {
-        _mensajeController.clear();
-        await _cargarMensajes(silencioso: true); 
-      }
+      // 4. Damos 2 segundos a AWS para sincronizar
+      await Future.delayed(const Duration(seconds: 2));
+      
+      // 5. Descargamos la lista real y actualizada
+      await _cargarMensajes(silencioso: true);
+
     } finally {
-      if (mounted) setState(() => _enviando = false);
+      if (mounted) {
+        setState(() => _enviando = false);
+        // 6. Volvemos a encender el temporizador
+        _pollingTimer = Timer.periodic(const Duration(milliseconds: 1500), (_) {
+          _cargarMensajes(silencioso: true);
+        });
+      }
     }
   }
 
@@ -157,6 +201,10 @@ class _ChatPageState extends State<ChatPage> {
         if (mounted && nuevoEstado != 'Completado') {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Trueque $nuevoEstado'), backgroundColor: nuevoEstado == 'Aceptado' ? Colors.green : Colors.orange));
         }
+        
+        // 🔄 Refrescamos los mensajes de inmediato para que aparezca el PIN o el cambio visual
+        await _cargarMensajes(silencioso: true);
+        
         return true;
       } else {
         final error = jsonDecode(response.body)['error'] ?? 'Error desconocido';
@@ -186,6 +234,13 @@ class _ChatPageState extends State<ChatPage> {
               bool exito = await _actualizarEstado('Completado', pin: pinController.text.trim());
               
               if (exito) {
+                // 🗑️ Borrado automático del artículo en AWS al confirmar el PIN
+                try {
+                  await http.delete(Uri.parse('https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/productos/${widget.productoId}'));
+                } catch (e) {
+                  debugPrint('Error al eliminar producto: $e');
+                }
+
                 if (!dialogContext.mounted) return;
                 Navigator.pop(dialogContext);
                 _mostrarModalCalificacion(destinatarioCorreo);
