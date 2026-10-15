@@ -61,15 +61,22 @@ class _ChatPageState extends State<ChatPage> {
     super.dispose();
   }
 
+  // 🛡️ CORRECCIÓN AQUÍ: Buscamos por usuario y filtramos por conversación
   Future<void> _cargarMensajes({bool silencioso = false}) async {
     if (!silencioso && mounted) setState(() => _cargando = true);
     
     try {
-      final url = Uri.parse('https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/mensajes?conversacionId=${widget.conversacionId}');
+      final url = Uri.parse('https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/mensajes?usuario=${widget.miCorreo}');
       final response = await http.get(url);
       
       if (response.statusCode == 200) {
-        final nuevosMensajes = jsonDecode(response.body)['mensajes'] as List<dynamic>;
+        final todosLosMensajes = jsonDecode(response.body)['mensajes'] as List<dynamic>;
+        
+        // Filtramos localmente para quedarnos solo con esta conversación
+        final nuevosMensajes = todosLosMensajes
+            .where((m) => m['conversacionId'] == widget.conversacionId)
+            .toList();
+            
         nuevosMensajes.sort((a, b) => a['fecha'].compareTo(b['fecha']));
         
         if (mounted) {
@@ -134,7 +141,6 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
-  // 🛡️ LÓGICA ACTUALIZADA PARA ACEPTAR EL PIN
   Future<bool> _actualizarEstado(String nuevoEstado, {String? pin}) async {
     final idMensaje = widget.idPrimerMensaje ?? (_mensajes.isNotEmpty ? _mensajes.first['id'] : null);
     if (idMensaje == null) return false;
@@ -163,9 +169,6 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
-  // ==========================================
-  // MODALES DE VALIDACIÓN PARA MÓVIL
-  // ==========================================
   void _mostrarModalValidacionPin(String destinatarioCorreo, String mensajeId) {
     final pinController = TextEditingController();
     bool validando = false;
@@ -297,7 +300,6 @@ class _ChatPageState extends State<ChatPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Extraer PIN si existe en los mensajes
     String pinValidacion = '0000';
     String idPrimerMensaje = widget.idPrimerMensaje ?? '';
     if (_mensajes.isNotEmpty) {
@@ -338,7 +340,6 @@ class _ChatPageState extends State<ChatPage> {
           Column(
             children: [
               const SizedBox(height: 100), 
-              
               
               if (widget.esMiArticulo && _estadoActual == 'Pendiente')
                 Container(
