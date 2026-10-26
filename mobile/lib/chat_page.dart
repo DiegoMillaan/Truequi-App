@@ -65,12 +65,21 @@ class _ChatPageState extends State<ChatPage> {
     if (!silencioso && mounted) setState(() => _cargando = true);
     
     try {
-      final url = Uri.parse('https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/mensajes?conversacionId=${widget.conversacionId}');
+      final url = Uri.parse('https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/mensajes?usuario=${widget.miCorreo}');
       final response = await http.get(url);
       
       if (response.statusCode == 200) {
-        final nuevosMensajes = jsonDecode(response.body)['mensajes'] as List<dynamic>;
-        nuevosMensajes.sort((a, b) => a['fecha'].compareTo(b['fecha']));
+        final todosLosMensajes = jsonDecode(response.body)['mensajes'] as List<dynamic>;
+        
+        final nuevosMensajes = todosLosMensajes
+            .where((m) => m['conversacionId'] == widget.conversacionId)
+            .toList();
+            
+        nuevosMensajes.sort((a, b) {
+          final fechaA = a['fecha'] ?? '';
+          final fechaB = b['fecha'] ?? '';
+          return fechaA.compareTo(fechaB);
+        });
         
         if (mounted) {
           bool hayNuevos = nuevosMensajes.length > _mensajes.length;
@@ -79,7 +88,6 @@ class _ChatPageState extends State<ChatPage> {
             _mensajes = nuevosMensajes;
             _cargando = false;
             
-            // Sincronizar el estado en tiempo real si el otro usuario lo cambió
             if (_mensajes.isNotEmpty) {
               final estadoRemoto = _mensajes.first['estado'] ?? _estadoActual;
               if (_estadoActual != estadoRemoto) {
@@ -106,12 +114,40 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Future<void> _enviar() async {
+    // 🛡️ BLOQUEO: No enviar mensajes si ya se completó el trueque
+    if (_estadoActual == 'Completado') return;
+
     final texto = _mensajeController.text.trim();
     if (texto.isEmpty) return;
-    setState(() => _enviando = true);
+    
+    _pollingTimer?.cancel();
+
+    setState(() {
+      _enviando = true;
+      _mensajes.add({
+        'id': 'temp_${DateTime.now().millisecondsSinceEpoch}',
+        'conversacionId': widget.conversacionId,
+        'remitente': widget.miCorreo,
+        'destinatario': widget.otroCorreo,
+        'contenido': texto,
+        'estado': _estadoActual,
+        'fecha': DateTime.now().toIso8601String(), 
+      });
+      _mensajeController.clear();
+    });
+
+    if (_scrollController.hasClients) {
+      Future.delayed(const Duration(milliseconds: 100), () {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      });
+    }
 
     try {
-      final response = await http.post(
+      await http.post(
         Uri.parse('https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/mensajes'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
@@ -122,19 +158,23 @@ class _ChatPageState extends State<ChatPage> {
           'productoTitulo': widget.productoTitulo,
           'contenido': texto,
           'estado': _estadoActual,
+          'fecha': DateTime.now().toIso8601String(),
         }),
       );
 
-      if (response.statusCode == 201) {
-        _mensajeController.clear();
-        await _cargarMensajes(silencioso: true); 
-      }
+      await Future.delayed(const Duration(seconds: 2));
+      await _cargarMensajes(silencioso: true);
+
     } finally {
-      if (mounted) setState(() => _enviando = false);
+      if (mounted) {
+        setState(() => _enviando = false);
+        _pollingTimer = Timer.periodic(const Duration(milliseconds: 1500), (_) {
+          _cargarMensajes(silencioso: true);
+        });
+      }
     }
   }
 
-  // 🛡️ LÓGICA ACTUALIZADA PARA ACEPTAR EL PIN
   Future<bool> _actualizarEstado(String nuevoEstado, {String? pin}) async {
     final idMensaje = widget.idPrimerMensaje ?? (_mensajes.isNotEmpty ? _mensajes.first['id'] : null);
     if (idMensaje == null) return false;
@@ -151,6 +191,8 @@ class _ChatPageState extends State<ChatPage> {
         if (mounted && nuevoEstado != 'Completado') {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Trueque $nuevoEstado'), backgroundColor: nuevoEstado == 'Aceptado' ? Colors.green : Colors.orange));
         }
+        
+        await _cargarMensajes(silencioso: true);
         return true;
       } else {
         final error = jsonDecode(response.body)['error'] ?? 'Error desconocido';
@@ -163,9 +205,6 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
-  // ==========================================
-  // MODALES DE VALIDACIÓN PARA MÓVIL
-  // ==========================================
   void _mostrarModalValidacionPin(String destinatarioCorreo, String mensajeId) {
     final pinController = TextEditingController();
     bool validando = false;
@@ -183,6 +222,12 @@ class _ChatPageState extends State<ChatPage> {
               bool exito = await _actualizarEstado('Completado', pin: pinController.text.trim());
               
               if (exito) {
+                try {
+                  await http.delete(Uri.parse('https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/productos/${widget.productoId}'));
+                } catch (e) {
+                  debugPrint('Error al eliminar producto: $e');
+                }
+
                 if (!dialogContext.mounted) return;
                 Navigator.pop(dialogContext);
                 _mostrarModalCalificacion(destinatarioCorreo);
@@ -297,7 +342,6 @@ class _ChatPageState extends State<ChatPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Extraer PIN si existe en los mensajes
     String pinValidacion = '0000';
     String idPrimerMensaje = widget.idPrimerMensaje ?? '';
     if (_mensajes.isNotEmpty) {
@@ -338,7 +382,6 @@ class _ChatPageState extends State<ChatPage> {
           Column(
             children: [
               const SizedBox(height: 100), 
-              
               
               if (widget.esMiArticulo && _estadoActual == 'Pendiente')
                 Container(
@@ -443,39 +486,57 @@ class _ChatPageState extends State<ChatPage> {
                       ),
               ),
 
-              ClipRRect(
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                  child: Container(
-                    padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 10, top: 10, left: 20, right: 20),
-                    decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), border: Border(top: BorderSide(color: Colors.white.withOpacity(0.1)))),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Container(
-                            decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white.withOpacity(0.2))),
-                            child: TextField(
-                              controller: _mensajeController, style: const TextStyle(color: Colors.white),
-                              decoration: InputDecoration(hintText: 'Escribe tu mensaje...', hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)), border: InputBorder.none, contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14)),
+              // 🛡️ REEMPLAZO CONDICIONAL DE LA CAJA DE TEXTO
+              if (_estadoActual == 'Completado')
+                ClipRRect(
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                    child: Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 20, top: 20, left: 20, right: 20),
+                      decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), border: Border(top: BorderSide(color: Colors.white.withOpacity(0.1)))),
+                      child: const Text(
+                        'Trueque finalizado. El chat ha sido cerrado.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.white54, fontStyle: FontStyle.italic, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                )
+              else
+                ClipRRect(
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                    child: Container(
+                      padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 10, top: 10, left: 20, right: 20),
+                      decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), border: Border(top: BorderSide(color: Colors.white.withOpacity(0.1)))),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Container(
+                              decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white.withOpacity(0.2))),
+                              child: TextField(
+                                controller: _mensajeController, style: const TextStyle(color: Colors.white),
+                                decoration: InputDecoration(hintText: 'Escribe tu mensaje...', hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)), border: InputBorder.none, contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14)),
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        GestureDetector(
-                          onTap: _enviando ? null : _enviar,
-                          child: Container(
-                            padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(color: TruequiColors.amarillo, shape: BoxShape.circle, boxShadow: [BoxShadow(color: TruequiColors.amarillo.withOpacity(0.4), blurRadius: 10)]),
-                            child: _enviando 
-                                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) 
-                                : const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+                          const SizedBox(width: 12),
+                          GestureDetector(
+                            onTap: _enviando ? null : _enviar,
+                            child: Container(
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(color: TruequiColors.amarillo, shape: BoxShape.circle, boxShadow: [BoxShadow(color: TruequiColors.amarillo.withOpacity(0.4), blurRadius: 10)]),
+                              child: _enviando 
+                                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) 
+                                  : const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
             ],
           ),
         ],

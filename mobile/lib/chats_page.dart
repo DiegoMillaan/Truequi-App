@@ -6,7 +6,7 @@ import 'home_page.dart';
 import 'chat_page.dart';
 
 class ChatsPage extends StatefulWidget {
-  final String miCorreo; // RECIBIMOS LA IDENTIDAD REAL
+  final String miCorreo; 
   const ChatsPage({super.key, required this.miCorreo});
 
   @override
@@ -115,73 +115,81 @@ class _ChatsPageState extends State<ChatsPage> with SingleTickerProviderStateMix
   }
 
   Widget _construirLista(List<List<dynamic>> hilos, {required bool esRecibido}) {
-    if (hilos.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.forum_outlined, size: 80, color: Colors.white.withOpacity(0.2)),
-            const SizedBox(height: 16),
-            Text('No hay mensajes aquí', style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 18, fontWeight: FontWeight.bold)),
-          ],
-        ),
-      );
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(24, 20, 24, 120),
-      itemCount: hilos.length,
-      itemBuilder: (context, index) {
-        final hilo = hilos[index];
-        final primerMsj = hilo.first;
-        final ultimoMsj = hilo.last;
-        final estado = primerMsj['estado'] ?? 'Pendiente';
-        final otroUsuario = esRecibido ? primerMsj['remitente'] : primerMsj['destinatario'];
-
-        return Container(
-          margin: const EdgeInsets.only(bottom: 16),
-          decoration: BoxDecoration(color: Colors.white.withOpacity(0.08), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white.withOpacity(0.2))),
-          child: ListTile(
-            contentPadding: const EdgeInsets.all(16),
-            leading: CircleAvatar(backgroundColor: esRecibido ? TruequiColors.amarillo.withOpacity(0.8) : TruequiColors.purpura.withOpacity(0.8), child: Icon(esRecibido ? Icons.call_received : Icons.call_made, color: Colors.white)),
-            title: Text(primerMsj['productoTitulo'], style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 16), maxLines: 1, overflow: TextOverflow.ellipsis),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    return RefreshIndicator(
+      color: TruequiColors.amarillo,
+      backgroundColor: TruequiColors.purpura.withOpacity(0.8),
+      onRefresh: _cargarMensajes,
+      child: hilos.isEmpty
+          ? ListView(
+              physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+              padding: EdgeInsets.only(top: MediaQuery.of(context).size.height * 0.2),
               children: [
-                const SizedBox(height: 6),
-                Text('"${ultimoMsj['contenido']}"', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: Colors.white.withOpacity(0.7), fontStyle: FontStyle.italic)),
-                const SizedBox(height: 6),
-                Text('Con: $otroUsuario', style: TextStyle(color: TruequiColors.amarillo.withOpacity(0.8), fontSize: 12, fontWeight: FontWeight.bold)),
-              ],
-            ),
-            trailing: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6), decoration: BoxDecoration(color: estado == 'Aceptado' ? Colors.greenAccent.withOpacity(0.2) : (estado == 'Rechazado' ? Colors.redAccent.withOpacity(0.2) : TruequiColors.amarillo.withOpacity(0.2)), borderRadius: BorderRadius.circular(12), border: Border.all(color: estado == 'Aceptado' ? Colors.greenAccent.withOpacity(0.5) : (estado == 'Rechazado' ? Colors.redAccent.withOpacity(0.5) : TruequiColors.amarillo.withOpacity(0.5)))), child: Text(estado, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10, color: estado == 'Aceptado' ? Colors.greenAccent : (estado == 'Rechazado' ? Colors.redAccent : TruequiColors.amarillo)))),
-                const SizedBox(height: 8),
-                const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white54, size: 14)
-              ],
-            ),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ChatPage(
-                    miCorreo: widget.miCorreo, // USAMOS LA IDENTIDAD REAL
-                    otroCorreo: otroUsuario,
-                    productoId: primerMsj['productoId'],
-                    productoTitulo: primerMsj['productoTitulo'],
-                    conversacionId: primerMsj['conversacionId'],
-                    esMiArticulo: esRecibido,
-                    estadoPropuesta: estado,
-                    idPrimerMensaje: primerMsj['id'],
+                Icon(Icons.forum_outlined, size: 80, color: Colors.white.withOpacity(0.2)),
+                const SizedBox(height: 16),
+                Center(
+                  child: Text(
+                    'No hay mensajes aquí', 
+                    style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 18, fontWeight: FontWeight.bold)
                   ),
                 ),
-              ).then((_) => _cargarMensajes());
-            },
-          ),
-        );
-      },
+              ],
+            )
+          : ListView.builder(
+              physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 120),
+              itemCount: hilos.length,
+              itemBuilder: (context, index) {
+                final hilo = hilos[index];
+                final primerMsj = hilo.first;
+                final ultimoMsj = hilo.last;
+                final estado = primerMsj['estado'] ?? 'Pendiente';
+                final otroUsuario = esRecibido ? primerMsj['remitente'] : primerMsj['destinatario'];
+
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(color: Colors.white.withOpacity(0.08), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white.withOpacity(0.2))),
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.all(16),
+                    leading: CircleAvatar(backgroundColor: esRecibido ? TruequiColors.amarillo.withOpacity(0.8) : TruequiColors.purpura.withOpacity(0.8), child: Icon(esRecibido ? Icons.call_received : Icons.call_made, color: Colors.white)),
+                    title: Text(primerMsj['productoTitulo'], style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 16), maxLines: 1, overflow: TextOverflow.ellipsis),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 6),
+                        Text('"${ultimoMsj['contenido']}"', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: Colors.white.withOpacity(0.7), fontStyle: FontStyle.italic)),
+                        const SizedBox(height: 6),
+                        Text('Con: $otroUsuario', style: TextStyle(color: TruequiColors.amarillo.withOpacity(0.8), fontSize: 12, fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                    trailing: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6), decoration: BoxDecoration(color: estado == 'Aceptado' ? Colors.greenAccent.withOpacity(0.2) : (estado == 'Rechazado' ? Colors.redAccent.withOpacity(0.2) : TruequiColors.amarillo.withOpacity(0.2)), borderRadius: BorderRadius.circular(12), border: Border.all(color: estado == 'Aceptado' ? Colors.greenAccent.withOpacity(0.5) : (estado == 'Rechazado' ? Colors.redAccent.withOpacity(0.5) : TruequiColors.amarillo.withOpacity(0.5)))), child: Text(estado, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10, color: estado == 'Aceptado' ? Colors.greenAccent : (estado == 'Rechazado' ? Colors.redAccent : TruequiColors.amarillo)))),
+                        const SizedBox(height: 8),
+                        const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white54, size: 14)
+                      ],
+                    ),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ChatPage(
+                            miCorreo: widget.miCorreo, 
+                            otroCorreo: otroUsuario,
+                            productoId: primerMsj['productoId'],
+                            productoTitulo: primerMsj['productoTitulo'],
+                            conversacionId: primerMsj['conversacionId'],
+                            esMiArticulo: esRecibido,
+                            estadoPropuesta: estado,
+                            idPrimerMensaje: primerMsj['id'],
+                          ),
+                        ),
+                      ).then((_) => _cargarMensajes());
+                    },
+                  ),
+                );
+              },
+            ),
     );
   }
 }
