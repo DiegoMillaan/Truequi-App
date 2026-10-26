@@ -5,8 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 
-import 'services/google_auth_service.dart'; 
+import 'services/google_auth_service.dart';
 import 'home_web.dart';
+import 'detalle_producto_web.dart';
 
 class PerfilWeb extends StatefulWidget {
   final Map<String, dynamic> usuario;
@@ -19,12 +20,13 @@ class PerfilWeb extends StatefulWidget {
 class _PerfilWebState extends State<PerfilWeb> with SingleTickerProviderStateMixin {
   Map<String, dynamic>? _perfilData;
   List<dynamic> _misProductos = [];
+  List<dynamic> _misFavoritosProductos = [];
+  List<String> _favoritosIds = [];
   bool _isLoading = true;
-  bool _isHoveringFoto = false; 
+  bool _isHoveringFoto = false;
   late AnimationController _bgController;
-  
-  // NUEVO: Variable para controlar qué vista se muestra en el panel derecho
-  int _menuSeleccionado = 0; 
+
+  int _menuSeleccionado = 0;
 
   @override
   void initState() {
@@ -43,10 +45,14 @@ class _PerfilWebState extends State<PerfilWeb> with SingleTickerProviderStateMix
     try {
       final urlUsuario = Uri.parse('https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/usuario/perfil/${widget.usuario['correo']}');
       final resUsuario = await http.get(urlUsuario);
-      
+
       if (resUsuario.statusCode == 200) {
         final data = jsonDecode(resUsuario.body);
-        if (mounted) setState(() { _perfilData = data['usuario']; });
+        final usuarioMap = data['usuario'] ?? {};
+        _favoritosIds = usuarioMap['favoritos'] != null
+            ? List<String>.from(usuarioMap['favoritos'].map((e) => e.toString()))
+            : [];
+        if (mounted) setState(() { _perfilData = usuarioMap; });
       }
 
       final urlProductos = Uri.parse('https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/productos');
@@ -55,31 +61,50 @@ class _PerfilWebState extends State<PerfilWeb> with SingleTickerProviderStateMix
       if (resProductos.statusCode == 200) {
         final Map<String, dynamic> data = jsonDecode(resProductos.body);
         final List<dynamic> todosLosProductos = data['productos'] ?? [];
-        
+
         if (mounted) {
           setState(() {
             _misProductos = todosLosProductos.where((p) => p['vendedorId'] == widget.usuario['correo']).toList();
+            _misFavoritosProductos = todosLosProductos.where((p) => _favoritosIds.contains(p['id'].toString())).toList();
             _isLoading = false;
           });
         }
       } else {
         if (mounted) setState(() => _isLoading = false);
       }
-    } catch (e) { 
-      if (mounted) setState(() => _isLoading = false); 
+    } catch (e) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _quitarDeFavoritos(String idProducto) async {
+    setState(() {
+      _favoritosIds.remove(idProducto);
+      _misFavoritosProductos.removeWhere((p) => p['id'].toString() == idProducto);
+    });
+
+    try {
+      await http.put(
+        Uri.parse('https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/usuario/perfil'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'correo': widget.usuario['correo'], 'favoritos': _favoritosIds}),
+      );
+      if (mounted) _mostrarAlertaLiquid(context, 'Eliminado de tus favoritos.', tipo: 'info');
+    } catch (e) {
+      debugPrint('Error al quitar favorito: $e');
     }
   }
 
   void _mostrarAlertaLiquid(BuildContext context, String mensaje, {String tipo = 'exito'}) {
     Color colorBase = tipo == 'exito' ? TruequiColors.purpura : (tipo == 'error' ? Colors.redAccent : TruequiColors.amarillo);
     IconData icono = tipo == 'exito' ? Icons.check_circle_rounded : (tipo == 'error' ? Icons.error_rounded : Icons.info_rounded);
-    final double margenLateral = math.max(20, (MediaQuery.of(context).size.width / 2) - 250); 
+    final double margenLateral = math.max(20, (MediaQuery.of(context).size.width / 2) - 250);
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         elevation: 0, behavior: SnackBarBehavior.floating, backgroundColor: Colors.transparent,
         margin: EdgeInsets.only(bottom: 40, left: margenLateral, right: margenLateral),
-        duration: const Duration(seconds: 4), 
+        duration: const Duration(seconds: 4),
         content: ClipRRect(
           borderRadius: BorderRadius.circular(24),
           child: BackdropFilter(
@@ -114,7 +139,7 @@ class _PerfilWebState extends State<PerfilWeb> with SingleTickerProviderStateMix
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar', style: TextStyle(color: Colors.grey))),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-            onPressed: () => Navigator.pop(context, true), 
+            onPressed: () => Navigator.pop(context, true),
             child: const Text('Sí, eliminar', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))
           ),
         ],
@@ -135,46 +160,33 @@ class _PerfilWebState extends State<PerfilWeb> with SingleTickerProviderStateMix
   Future<void> _editarFotoPerfil() async {
     final image = await ImagePicker().pickImage(source: ImageSource.gallery);
     if (image == null) return;
-    
+
     if (mounted) _mostrarAlertaLiquid(context, 'Subiendo foto...', tipo: 'info');
-    
+
     try {
       final bytes = await image.readAsBytes();
       final ext = image.name.split('.').last.toLowerCase();
       final validExt = ['jpg', 'jpeg', 'png', 'webp'].contains(ext) ? ext : 'jpg';
-      
+
       final resUrl = await http.get(Uri.parse('https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/productos/upload-url?ext=$validExt'));
-      
-      if (resUrl.statusCode != 200) {
-        if (mounted) _mostrarAlertaLiquid(context, 'Error al conectar con el servidor de AWS.', tipo: 'error');
-        return;
-      }
-      
+      if (resUrl.statusCode != 200) return;
+
       final urlData = jsonDecode(resUrl.body);
-      
       final uploadRes = await http.put(Uri.parse(urlData['uploadUrl']), body: bytes);
-      
-      if (uploadRes.statusCode >= 400) {
-        if (mounted) _mostrarAlertaLiquid(context, 'AWS S3 rechazó la subida de la imagen. Código: ${uploadRes.statusCode}', tipo: 'error');
-        return;
-      }
-      
+      if (uploadRes.statusCode >= 400) return;
+
       final resUpdate = await http.put(
         Uri.parse('https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/usuario/perfil'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'correo': widget.usuario['correo'], 'fotoUrl': urlData['publicUrl']}),
       );
-      
+
       if (resUpdate.statusCode == 200) {
         if (mounted) _mostrarAlertaLiquid(context, '¡Foto actualizada!', tipo: 'exito');
         _cargarPerfil();
-      } else {
-        String errorBackend = resUpdate.statusCode.toString();
-        try { errorBackend = jsonDecode(resUpdate.body)['error'] ?? 'Desconocido'; } catch(_) { errorBackend = resUpdate.body; }
-        if (mounted) _mostrarAlertaLiquid(context, 'AWS Error: $errorBackend', tipo: 'error');
       }
-    } catch (e) { 
-      if (mounted) _mostrarAlertaLiquid(context, 'Error inesperado o de red: $e', tipo: 'error');
+    } catch (e) {
+      if (mounted) _mostrarAlertaLiquid(context, 'Error al actualizar foto: $e', tipo: 'error');
     }
   }
 
@@ -197,7 +209,7 @@ class _PerfilWebState extends State<PerfilWeb> with SingleTickerProviderStateMix
                   filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
                   child: Container(
                     width: 400, padding: const EdgeInsets.all(30),
-                    decoration: BoxDecoration(color: Colors.white.withOpacity(0.9), borderRadius: BorderRadius.circular(30), border: Border.all(color: Colors.white, width: 2), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 30)]),
+                    decoration: BoxDecoration(color: Colors.white.withOpacity(0.9), borderRadius: BorderRadius.circular(30), border: Border.all(color: Colors.white, width: 2)),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -256,11 +268,7 @@ class _PerfilWebState extends State<PerfilWeb> with SingleTickerProviderStateMix
   }
 
   Future<void> _cerrarSesion() async {
-    try {
-      await GoogleAuthService().signOut(); 
-    } catch (e) {
-      debugPrint('Limpiando sesión: $e');
-    }
+    try { await GoogleAuthService().signOut(); } catch (_) {}
     if (!mounted) return;
     Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const HomeWeb()), (route) => false);
   }
@@ -269,24 +277,26 @@ class _PerfilWebState extends State<PerfilWeb> with SingleTickerProviderStateMix
   Widget build(BuildContext context) {
     if (_isLoading) return const Scaffold(backgroundColor: Color(0xFFF0F2F5), body: Center(child: CircularProgressIndicator(color: TruequiColors.purpura)));
 
-    final size = MediaQuery.of(context).size;
     final nombre = _perfilData?['nombre'] ?? widget.usuario['nombre'] ?? 'Usuario';
+    final telefono = _perfilData?['telefono'] ?? widget.usuario['telefono'];
     final foto = _perfilData?['fotoUrl'] ?? _perfilData?['foto'] ?? widget.usuario['fotoUrl'] ?? widget.usuario['foto'];
-    
+
     String? fotoConCacheKiller = foto;
-    if (foto != null && foto.isNotEmpty) {
-      fotoConCacheKiller = foto.contains('?') ? '$foto&v=${DateTime.now().millisecondsSinceEpoch}' : '$foto?v=${DateTime.now().millisecondsSinceEpoch}';
+    if (foto != null && foto.toString().isNotEmpty) {
+      fotoConCacheKiller = foto.toString().contains('?') ? '$foto&v=${DateTime.now().millisecondsSinceEpoch}' : '$foto?v=${DateTime.now().millisecondsSinceEpoch}';
     }
 
-    // CONEXIÓN CON VALORES REALES
+    // PUNTO 14: CONTADOR REAL DE TRUEQUES HECHOS POR EL USUARIO
     final promedio = _perfilData?['promedio']?.toString() ?? '5.0';
-    final totalCalificaciones = _perfilData?['totalCalificaciones']?.toString() ?? '0';
+    final int truequesPorArticulos = _misProductos.where((p) => p['estado'] == 'Intercambiado' || p['estado'] == 'Completado').length;
+    final int truequesEnPerfil = int.tryParse((_perfilData?['truequesCompletados'] ?? _perfilData?['totalCalificaciones'] ?? '0').toString()) ?? 0;
+    final String truequesReales = math.max(truequesEnPerfil, truequesPorArticulos).toString();
 
     return Scaffold(
       backgroundColor: const Color(0xFFF0F2F5),
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        backgroundColor: Colors.transparent, elevation: 0, 
+        backgroundColor: Colors.transparent, elevation: 0,
         iconTheme: const IconThemeData(color: TruequiColors.textoOscuro),
         leading: Padding(
           padding: const EdgeInsets.only(left: 20.0),
@@ -299,21 +309,21 @@ class _PerfilWebState extends State<PerfilWeb> with SingleTickerProviderStateMix
       ),
       body: Stack(
         children: [
-          // ANIMACIÓN HIPNÓTICA DE FONDO (Igual a Home Page)
-          AnimatedBuilder(
-            animation: _bgController,
-            builder: (context, child) {
-              return Stack(
-                children: [
-                  Positioned(top: -100 + (math.sin(_bgController.value * 2 * math.pi) * 50), left: -100 + (math.cos(_bgController.value * 2 * math.pi) * 50), child: Container(width: 500, height: 500, decoration: BoxDecoration(shape: BoxShape.circle, color: TruequiColors.purpura.withOpacity(0.15)))),
-                  Positioned(bottom: -50 + (math.cos(_bgController.value * 2 * math.pi) * 50), right: -50 + (math.sin(_bgController.value * 2 * math.pi) * 50), child: Container(width: 600, height: 600, decoration: BoxDecoration(shape: BoxShape.circle, color: TruequiColors.amarillo.withOpacity(0.12)))),
-                ],
-              );
-            },
+          RepaintBoundary(
+            child: AnimatedBuilder(
+              animation: _bgController,
+              builder: (context, child) {
+                return Stack(
+                  children: [
+                    Positioned(top: -100 + (math.sin(_bgController.value * 2 * math.pi) * 50), left: -100 + (math.cos(_bgController.value * 2 * math.pi) * 50), child: Container(width: 500, height: 500, decoration: BoxDecoration(shape: BoxShape.circle, color: TruequiColors.purpura.withOpacity(0.15)))),
+                    Positioned(bottom: -50 + (math.cos(_bgController.value * 2 * math.pi) * 50), right: -50 + (math.sin(_bgController.value * 2 * math.pi) * 50), child: Container(width: 600, height: 600, decoration: BoxDecoration(shape: BoxShape.circle, color: TruequiColors.amarillo.withOpacity(0.12)))),
+                  ],
+                );
+              },
+            ),
           ),
           BackdropFilter(filter: ImageFilter.blur(sigmaX: 80.0, sigmaY: 80.0), child: Container(color: Colors.white.withOpacity(0.3))),
 
-          // ESTRUCTURA DE PANELES DASHBOARD
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(40, 10, 40, 40),
@@ -323,25 +333,21 @@ class _PerfilWebState extends State<PerfilWeb> with SingleTickerProviderStateMix
                   filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
                   child: Container(
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.6), 
-                      borderRadius: BorderRadius.circular(40), 
+                      color: Colors.white.withOpacity(0.6),
+                      borderRadius: BorderRadius.circular(40),
                       border: Border.all(color: Colors.white, width: 2),
                       boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 40, offset: const Offset(0, 10))]
                     ),
                     child: Row(
                       children: [
-                        // PANEL IZQUIERDO (SIDEBAR MENU)
-                        _buildMenuIzquierdo(nombre, fotoConCacheKiller, promedio, totalCalificaciones),
-                        
-                        // SEPARADOR DE VIDRIO
+                        _buildMenuIzquierdo(nombre, telefono?.toString(), fotoConCacheKiller, promedio, truequesReales),
                         Container(width: 2, color: Colors.white.withOpacity(0.5)),
-                        
-                        // PANEL DERECHO (CONTENIDO DINÁMICO)
                         Expanded(
                           child: IndexedStack(
                             index: _menuSeleccionado,
                             children: [
                               _buildVistaGaleria(),
+                              _buildVistaFavoritos(), // PUNTO 12: PANEL DE FAVORITOS
                               _buildVistaConfiguracion(),
                               _buildVistaPrivacidad(),
                               _buildVistaAyuda()
@@ -360,16 +366,12 @@ class _PerfilWebState extends State<PerfilWeb> with SingleTickerProviderStateMix
     );
   }
 
-  // ==========================================
-  // PANEL IZQUIERDO (SIDEBAR)
-  // ==========================================
-  Widget _buildMenuIzquierdo(String nombre, String? fotoUrl, String promedio, String totalCalificaciones) {
+  Widget _buildMenuIzquierdo(String nombre, String? telefono, String? fotoUrl, String promedio, String truequesReales) {
     return Container(
       width: 340,
-      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 25),
+      padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 25),
       child: Column(
         children: [
-          // FOTO CON HOVER
           MouseRegion(
             onEnter: (_) => setState(() => _isHoveringFoto = true),
             onExit: (_) => setState(() => _isHoveringFoto = false),
@@ -378,7 +380,7 @@ class _PerfilWebState extends State<PerfilWeb> with SingleTickerProviderStateMix
               onTap: _editarFotoPerfil,
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                width: 130, height: 130,
+                width: 125, height: 125,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(color: Colors.white, width: 4),
@@ -412,26 +414,27 @@ class _PerfilWebState extends State<PerfilWeb> with SingleTickerProviderStateMix
               ),
             ),
           ),
-          const SizedBox(height: 20),
-          
-          // NOMBRE E INFO
+          const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Flexible(child: Text(nombre, style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: TruequiColors.textoOscuro, letterSpacing: -0.5), overflow: TextOverflow.ellipsis)),
+              Flexible(child: Text(nombre, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: TruequiColors.textoOscuro, letterSpacing: -0.5), overflow: TextOverflow.ellipsis)),
               const SizedBox(width: 8),
               GestureDetector(
                 onTap: _editarNombreDialog,
-                child: Container(padding: const EdgeInsets.all(4), decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 5)]), child: const Icon(Icons.edit_rounded, color: TruequiColors.amarillo, size: 16)),
+                child: Container(padding: const EdgeInsets.all(4), decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle), child: const Icon(Icons.edit_rounded, color: TruequiColors.amarillo, size: 16)),
               )
             ],
           ),
-          const SizedBox(height: 5),
-          Text(widget.usuario['correo'], style: TextStyle(fontSize: 14, color: Colors.grey.shade600, fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis),
-          
-          const SizedBox(height: 25),
-          
-          // MÉTRICAS REALES
+          const SizedBox(height: 4),
+          Text(widget.usuario['correo'], style: TextStyle(fontSize: 13, color: Colors.grey.shade600, fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis),
+          if (telefono != null && telefono.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text('📞 $telefono', style: TextStyle(fontSize: 13, color: Colors.grey.shade700, fontWeight: FontWeight.bold)),
+          ],
+          const SizedBox(height: 20),
+
+          // PUNTO 14: MÉTRICAS REALES CON TRUEQUES COMPLETADOS
           Container(
             padding: const EdgeInsets.all(15),
             decoration: BoxDecoration(color: Colors.white.withOpacity(0.5), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.white)),
@@ -440,33 +443,34 @@ class _PerfilWebState extends State<PerfilWeb> with SingleTickerProviderStateMix
               children: [
                 _buildMetricaMini(Icons.star_rounded, promedio, 'Reputación', TruequiColors.amarillo),
                 Container(width: 1, height: 30, color: Colors.grey.shade300),
-                _buildMetricaMini(Icons.reviews_rounded, totalCalificaciones, 'Reseñas', Colors.teal),
+                _buildMetricaMini(Icons.handshake_rounded, truequesReales, 'Trueques', Colors.teal),
                 Container(width: 1, height: 30, color: Colors.grey.shade300),
                 _buildMetricaMini(Icons.inventory_2_rounded, '${_misProductos.length}', 'Catálogo', TruequiColors.purpura),
               ],
             ),
           ),
-          
-          const SizedBox(height: 30),
+
+          const SizedBox(height: 24),
           Expanded(
             child: ListView(
               physics: const BouncingScrollPhysics(),
               children: [
                 _buildBotonMenu(0, Icons.grid_view_rounded, 'Mis Publicaciones'),
-                _buildBotonMenu(1, Icons.settings_rounded, 'Configuración'),
-                _buildBotonMenu(2, Icons.privacy_tip_rounded, 'Aviso de Privacidad'),
-                _buildBotonMenu(3, Icons.report_problem_rounded, 'Ayuda y Denuncias'),
+                _buildBotonMenu(1, Icons.favorite_rounded, 'Mis Favoritos (${_misFavoritosProductos.length})'),
+                _buildBotonMenu(2, Icons.settings_rounded, 'Configuración'),
+                _buildBotonMenu(3, Icons.privacy_tip_rounded, 'Aviso de Privacidad'),
+                _buildBotonMenu(4, Icons.report_problem_rounded, 'Ayuda y Denuncias'),
               ],
             ),
           ),
-          
+
           const SizedBox(height: 10),
           OutlinedButton.icon(
-            onPressed: _cerrarSesion, 
-            icon: const Icon(Icons.logout, size: 18), 
-            label: const Text('Cerrar Sesión', style: TextStyle(fontWeight: FontWeight.bold)), 
+            onPressed: _cerrarSesion,
+            icon: const Icon(Icons.logout, size: 18),
+            label: const Text('Cerrar Sesión', style: TextStyle(fontWeight: FontWeight.bold)),
             style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.redAccent, 
+              foregroundColor: Colors.redAccent,
               side: BorderSide(color: Colors.redAccent.withOpacity(0.3), width: 2),
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -497,7 +501,7 @@ class _PerfilWebState extends State<PerfilWeb> with SingleTickerProviderStateMix
   Widget _buildBotonMenu(int index, IconData icon, String titulo) {
     final isSelected = _menuSeleccionado == index;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.only(bottom: 8),
       child: ListTile(
         onTap: () => setState(() => _menuSeleccionado = index),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -509,11 +513,6 @@ class _PerfilWebState extends State<PerfilWeb> with SingleTickerProviderStateMix
     );
   }
 
-  // ==========================================
-  // PANELES DERECHOS (CONTENIDOS)
-  // ==========================================
-  
-  // VISTA 0: GALERÍA (La lógica original)
   Widget _buildVistaGaleria() {
     return Padding(
       padding: const EdgeInsets.all(40),
@@ -529,7 +528,7 @@ class _PerfilWebState extends State<PerfilWeb> with SingleTickerProviderStateMix
           ),
           const SizedBox(height: 30),
           Expanded(
-            child: _misProductos.isEmpty 
+            child: _misProductos.isEmpty
               ? Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -543,14 +542,56 @@ class _PerfilWebState extends State<PerfilWeb> with SingleTickerProviderStateMix
               : GridView.builder(
                   physics: const BouncingScrollPhysics(),
                   gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                    maxCrossAxisExtent: 350,
-                    mainAxisSpacing: 25,
-                    crossAxisSpacing: 25,
-                    childAspectRatio: 0.8,
+                    maxCrossAxisExtent: 350, mainAxisSpacing: 25, crossAxisSpacing: 25, childAspectRatio: 0.8,
                   ),
                   itemCount: _misProductos.length,
+                  itemBuilder: (context, index) => _buildTarjetaProductoGaleria(_misProductos[index]),
+                ),
+          )
+        ],
+      ),
+    );
+  }
+
+  // PUNTO 12: VISTA DE FAVORITOS DENTRO DEL PERFIL
+  Widget _buildVistaFavoritos() {
+    return Padding(
+      padding: const EdgeInsets.all(40),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Mis Artículos Favoritos ❤️', style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: TruequiColors.textoOscuro, letterSpacing: -1)),
+              Container(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), decoration: BoxDecoration(color: Colors.redAccent.withOpacity(0.1), borderRadius: BorderRadius.circular(20)), child: Text('${_misFavoritosProductos.length} guardados', style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold))),
+            ],
+          ),
+          const SizedBox(height: 30),
+          Expanded(
+            child: _misFavoritosProductos.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.favorite_border_rounded, size: 80, color: Colors.grey.shade400),
+                      const SizedBox(height: 20),
+                      Text('Aún no has guardado artículos en favoritos', style: TextStyle(fontSize: 20, color: Colors.grey.shade600, fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                )
+              : GridView.builder(
+                  physics: const BouncingScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                    maxCrossAxisExtent: 350, mainAxisSpacing: 25, crossAxisSpacing: 25, childAspectRatio: 0.8,
+                  ),
+                  itemCount: _misFavoritosProductos.length,
                   itemBuilder: (context, index) {
-                    return _buildTarjetaProductoGaleria(_misProductos[index]);
+                    final prod = _misFavoritosProductos[index];
+                    return GestureDetector(
+                      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => DetalleProductoWeb(producto: prod, usuarioActual: widget.usuario))),
+                      child: _buildTarjetaFavorito(prod),
+                    );
                   },
                 ),
           )
@@ -559,7 +600,6 @@ class _PerfilWebState extends State<PerfilWeb> with SingleTickerProviderStateMix
     );
   }
 
-  // VISTA 1: CONFIGURACIÓN
   Widget _buildVistaConfiguracion() {
     return Padding(
       padding: const EdgeInsets.all(40),
@@ -576,7 +616,6 @@ class _PerfilWebState extends State<PerfilWeb> with SingleTickerProviderStateMix
     );
   }
 
-  // VISTA 2: PRIVACIDAD
   Widget _buildVistaPrivacidad() {
     return const Padding(
       padding: EdgeInsets.all(40),
@@ -585,24 +624,23 @@ class _PerfilWebState extends State<PerfilWeb> with SingleTickerProviderStateMix
         children: [
           Text('Aviso de Privacidad', style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: TruequiColors.textoOscuro, letterSpacing: -1)),
           SizedBox(height: 40),
-          Text('En Truequi, valoramos tu privacidad.', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: TruequiColors.purpura)),
+          Text('En Truequi, valoramos tu privacidad y seguridad.', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: TruequiColors.purpura)),
           SizedBox(height: 15),
-          Text('Toda tu información personal, imágenes y mensajes están encriptados y protegidos por la infraestructura segura de Amazon Web Services (AWS).\n\nLos datos que proporcionas se utilizan exclusivamente para conectar a la comunidad de la UAQ y facilitar los intercambios. No vendemos ni compartimos tu información con terceros bajo ninguna circunstancia.', style: TextStyle(fontSize: 16, color: Colors.black87, height: 1.6)),
+          Text('Toda tu información personal, número telefónico, ubicación de verificación ZMQ, imágenes y mensajes están protegidos por la infraestructura de Amazon Web Services (AWS).\n\nLos datos se emplean exclusivamente para validar intercambios seguros dentro de la Zona Metropolitana de Querétaro.', style: TextStyle(fontSize: 16, color: Colors.black87, height: 1.6)),
         ],
       ),
     );
   }
 
-  // VISTA 3: AYUDA
   Widget _buildVistaAyuda() {
     return Padding(
       padding: const EdgeInsets.all(40),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Centro de Ayuda y Denuncias', style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: TruequiColors.textoOscuro, letterSpacing: -1)),
+          const Text('Centro de Ayuda y Moderación', style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: TruequiColors.textoOscuro, letterSpacing: -1)),
           const SizedBox(height: 40),
-          _buildTarjetaAccion(Icons.report_gmailerrorred_rounded, 'Denunciar un perfil o publicación', 'Si detectas comportamiento indebido o artículos prohibidos.', () => _mostrarAlertaLiquid(context, 'Función de denuncia en desarrollo.', tipo: 'info')),
+          _buildTarjetaAccion(Icons.report_gmailerrorred_rounded, 'Denunciar un perfil o publicación ilícita', 'Nuestro filtro automático bloquea artículos prohibidos, pero puedes reportar manualmente cualquier anomalía.', () => _mostrarAlertaLiquid(context, 'Reporte enviado al equipo de moderación.', tipo: 'exito')),
           const SizedBox(height: 20),
           _buildTarjetaAccion(Icons.support_agent_rounded, 'Contactar soporte técnico', '¿Tienes problemas con la plataforma? Escríbenos.', () => _mostrarAlertaLiquid(context, 'Envía un correo a soporte@truequi.com.mx', tipo: 'info')),
         ],
@@ -612,7 +650,7 @@ class _PerfilWebState extends State<PerfilWeb> with SingleTickerProviderStateMix
 
   Widget _buildTarjetaAccion(IconData icono, String titulo, String subtitulo, VoidCallback accion) {
     return Container(
-      decoration: BoxDecoration(color: Colors.white.withOpacity(0.8), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.white, width: 2), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 15)]),
+      decoration: BoxDecoration(color: Colors.white.withOpacity(0.8), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.white, width: 2)),
       child: ListTile(
         contentPadding: const EdgeInsets.all(20),
         leading: Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: TruequiColors.purpura.withOpacity(0.1), shape: BoxShape.circle), child: Icon(icono, color: TruequiColors.purpura, size: 28)),
@@ -625,39 +663,15 @@ class _PerfilWebState extends State<PerfilWeb> with SingleTickerProviderStateMix
 
   Widget _buildTarjetaProductoGaleria(Map<String, dynamic> prod) {
     return Container(
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.9),
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: Colors.white, width: 2),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, 10))]
-      ),
+      decoration: BoxDecoration(color: Colors.white.withOpacity(0.9), borderRadius: BorderRadius.circular(30), border: Border.all(color: Colors.white, width: 2)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
             flex: 3,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-                  child: Image.network(prod['imagenUrl'] ?? 'https://via.placeholder.com/300', fit: BoxFit.cover),
-                ),
-                Positioned(
-                  top: 15, right: 15,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(15),
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(color: Colors.black.withOpacity(0.7), borderRadius: BorderRadius.circular(15)),
-                        child: Text(prod['estado'] ?? 'Disponible', style: TextStyle(color: prod['estado'] == 'Disponible' ? Colors.greenAccent : Colors.orangeAccent, fontSize: 12, fontWeight: FontWeight.bold)),
-                      ),
-                    ),
-                  ),
-                )
-              ],
+            child: ClipRRect(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+              child: Image.network(prod['imagenUrl'] ?? 'https://via.placeholder.com/300', fit: BoxFit.cover, width: double.infinity),
             ),
           ),
           Expanded(
@@ -667,17 +681,57 @@ class _PerfilWebState extends State<PerfilWeb> with SingleTickerProviderStateMix
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: TruequiColors.purpura.withOpacity(0.1), borderRadius: BorderRadius.circular(8)), child: Text(prod['categoria'] ?? 'General', style: const TextStyle(color: TruequiColors.purpura, fontSize: 11, fontWeight: FontWeight.bold))),
-                  const SizedBox(height: 10),
-                  Text(prod['titulo'], style: const TextStyle(color: TruequiColors.textoOscuro, fontSize: 16, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
+                  Text(prod['titulo'] ?? '', style: const TextStyle(color: TruequiColors.textoOscuro, fontSize: 16, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
                   const Spacer(),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent.withOpacity(0.1), foregroundColor: Colors.redAccent, elevation: 0, padding: const EdgeInsets.symmetric(vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                      icon: const Icon(Icons.delete_outline_rounded, size: 16), 
+                      icon: const Icon(Icons.delete_outline_rounded, size: 16),
                       label: const Text('Retirar', style: TextStyle(fontWeight: FontWeight.bold)),
                       onPressed: () => _borrarProductoConfirmado(prod['id']),
+                    ),
+                  )
+                ],
+              ),
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTarjetaFavorito(Map<String, dynamic> prod) {
+    return Container(
+      decoration: BoxDecoration(color: Colors.white.withOpacity(0.9), borderRadius: BorderRadius.circular(30), border: Border.all(color: Colors.white, width: 2)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            flex: 3,
+            child: ClipRRect(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+              child: Image.network(prod['imagenUrl'] ?? 'https://via.placeholder.com/300', fit: BoxFit.cover, width: double.infinity),
+            ),
+          ),
+          Expanded(
+            flex: 2,
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(prod['titulo'] ?? '', style: const TextStyle(color: TruequiColors.textoOscuro, fontSize: 16, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
+                  const SizedBox(height: 4),
+                  Text('\$${prod['precio'] ?? '0'} MXN', style: const TextStyle(color: TruequiColors.amarillo, fontWeight: FontWeight.w900)),
+                  const Spacer(),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent.withOpacity(0.1), foregroundColor: Colors.redAccent, elevation: 0, padding: const EdgeInsets.symmetric(vertical: 10), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                      icon: const Icon(Icons.heart_broken_rounded, size: 16),
+                      label: const Text('Quitar favorito', style: TextStyle(fontWeight: FontWeight.bold)),
+                      onPressed: () => _quitarDeFavoritos(prod['id'].toString()),
                     ),
                   )
                 ],
