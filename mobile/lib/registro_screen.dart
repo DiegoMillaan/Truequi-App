@@ -15,10 +15,13 @@ class _RegistroScreenState extends State<RegistroScreen> with SingleTickerProvid
   final _nombreController = TextEditingController();
   final _correoController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController(); // NUEVO: Controlador para confirmar contraseña
   final _formKey = GlobalKey<FormState>();
   final AuthService _authService = AuthService();
   
   bool _cargando = false;
+  bool _ocultarPassword = true; // NUEVO: Estado de visibilidad
+  bool _ocultarConfirmPassword = true; // NUEVO: Estado de visibilidad
   late AnimationController _animationController;
 
   @override
@@ -33,6 +36,7 @@ class _RegistroScreenState extends State<RegistroScreen> with SingleTickerProvid
     _nombreController.dispose();
     _correoController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose(); // NUEVO: Liberar memoria
     super.dispose();
   }
 
@@ -40,7 +44,12 @@ class _RegistroScreenState extends State<RegistroScreen> with SingleTickerProvid
     if (!_formKey.currentState!.validate()) return;
     setState(() => _cargando = true);
 
-    bool exito = await _authService.registrarUsuario(_nombreController.text.trim(), _correoController.text.trim().toLowerCase(), _passwordController.text.trim());
+    bool exito = await _authService.registrarUsuario(
+      _nombreController.text.trim(), 
+      _correoController.text.trim().toLowerCase(), 
+      _passwordController.text.trim()
+    );
+    
     setState(() => _cargando = false);
 
     if (!mounted) return;
@@ -101,11 +110,52 @@ class _RegistroScreenState extends State<RegistroScreen> with SingleTickerProvid
                             decoration: BoxDecoration(color: Colors.white.withOpacity(0.08), borderRadius: BorderRadius.circular(40), border: Border.all(color: Colors.white.withOpacity(0.2), width: 1.5)),
                             child: Column(
                               children: [
-                                _buildGlassField(controller: _nombreController, label: 'Nombre Completo', icon: Icons.person_outline_rounded, validator: (v) => v != null && v.length >= 3 ? null : 'Nombre muy corto'),
+                                _buildGlassField(
+                                  controller: _nombreController, 
+                                  label: 'Nombre Completo', 
+                                  icon: Icons.person_outline_rounded, 
+                                  validator: (v) => v != null && v.length >= 3 ? null : 'Nombre muy corto'
+                                ),
                                 const SizedBox(height: 16),
-                                _buildGlassField(controller: _correoController, label: 'Correo Electrónico', icon: Icons.alternate_email_rounded, isEmail: true, validator: (v) => v != null && v.contains('@') ? null : 'Correo inválido'),
+                                _buildGlassField(
+                                  controller: _correoController, 
+                                  label: 'Correo Electrónico', 
+                                  icon: Icons.alternate_email_rounded, 
+                                  isEmail: true, 
+                                  validator: (v) => v != null && v.contains('@') ? null : 'Correo inválido' // Regla original restaurada
+                                ),
                                 const SizedBox(height: 16),
-                                _buildGlassField(controller: _passwordController, label: 'Contraseña', icon: Icons.lock_outline_rounded, isPass: true, validator: (v) => v != null && v.length >= 6 ? null : 'Mínimo 6 caracteres'),
+                                
+                                // CAMPO DE CONTRASEÑA CON VISIBILIDAD
+                                _buildGlassField(
+                                  controller: _passwordController, 
+                                  label: 'Contraseña', 
+                                  icon: Icons.lock_outline_rounded, 
+                                  obscureText: _ocultarPassword,
+                                  suffixIcon: IconButton(
+                                    icon: Icon(_ocultarPassword ? Icons.visibility_off : Icons.visibility, color: Colors.white70),
+                                    onPressed: () => setState(() => _ocultarPassword = !_ocultarPassword),
+                                  ),
+                                  validator: (v) => v != null && v.length >= 6 ? null : 'Mínimo 6 caracteres' // Regla original restaurada
+                                ),
+                                const SizedBox(height: 16),
+
+                                // NUEVO CAMPO: CONFIRMAR CONTRASEÑA
+                                _buildGlassField(
+                                  controller: _confirmPasswordController, 
+                                  label: 'Confirmar Contraseña', 
+                                  icon: Icons.lock_outline_rounded, 
+                                  obscureText: _ocultarConfirmPassword,
+                                  suffixIcon: IconButton(
+                                    icon: Icon(_ocultarConfirmPassword ? Icons.visibility_off : Icons.visibility, color: Colors.white70),
+                                    onPressed: () => setState(() => _ocultarConfirmPassword = !_ocultarConfirmPassword),
+                                  ),
+                                  validator: (v) {
+                                    if (v == null || v.isEmpty) return 'Confirma tu contraseña';
+                                    if (v != _passwordController.text) return 'Las contraseñas no coinciden';
+                                    return null;
+                                  }
+                                ),
                                 const SizedBox(height: 30),
                                 
                                 SizedBox(width: double.infinity, height: 56, child: ElevatedButton(onPressed: _cargando ? null : _registrar, style: ElevatedButton.styleFrom(backgroundColor: TruequiColors.purpura, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))), child: _cargando ? const CircularProgressIndicator(color: Colors.white) : const Text('Registrarme', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)))),
@@ -125,10 +175,31 @@ class _RegistroScreenState extends State<RegistroScreen> with SingleTickerProvid
     );
   }
 
-  Widget _buildGlassField({required TextEditingController controller, required String label, required IconData icon, bool isEmail = false, bool isPass = false, required String? Function(String?) validator}) {
+  // MÉTODO CONSTRUCTOR ACTUALIZADO PARA SOPORTAR SUFFIX ICON Y OBSCURE TEXT
+  Widget _buildGlassField({
+    required TextEditingController controller, 
+    required String label, 
+    required IconData icon, 
+    bool isEmail = false, 
+    bool obscureText = false, 
+    Widget? suffixIcon,
+    required String? Function(String?) validator
+  }) {
     return TextFormField(
-      controller: controller, obscureText: isPass, keyboardType: isEmail ? TextInputType.emailAddress : TextInputType.text, style: const TextStyle(color: Colors.white),
-      decoration: InputDecoration(labelText: label, labelStyle: TextStyle(color: Colors.white.withOpacity(0.6)), prefixIcon: Icon(icon, color: TruequiColors.amarillo), filled: true, fillColor: Colors.white.withOpacity(0.1), border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none), focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Colors.white.withOpacity(0.5), width: 1.5))),
+      controller: controller, 
+      obscureText: obscureText, 
+      keyboardType: isEmail ? TextInputType.emailAddress : TextInputType.text, 
+      style: const TextStyle(color: Colors.white),
+      decoration: InputDecoration(
+        labelText: label, 
+        labelStyle: TextStyle(color: Colors.white.withOpacity(0.6)), 
+        prefixIcon: Icon(icon, color: TruequiColors.amarillo), 
+        suffixIcon: suffixIcon, 
+        filled: true, 
+        fillColor: Colors.white.withOpacity(0.1), 
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none), 
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Colors.white.withOpacity(0.5), width: 1.5))
+      ),
       validator: validator,
     );
   }
