@@ -23,6 +23,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   final AuthService _authService = AuthService(); 
 
   bool _cargando = false;
+  bool _ocultarPassword = true; 
   late AnimationController _animationController;
 
   @override
@@ -169,9 +170,31 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                   validator: (value) => _validarEmail(value ?? '') ? null : 'Ingresa un correo real válido',
                                 ),
                                 const SizedBox(height: 16),
+                                
                                 TextFormField(
-                                  controller: _passwordController, obscureText: true, style: const TextStyle(color: Colors.white),
-                                  decoration: InputDecoration(labelText: 'Truequi Password', labelStyle: TextStyle(color: Colors.white.withOpacity(0.6)), prefixIcon: const Icon(Icons.lock_outline_rounded, color: TruequiColors.amarillo), filled: true, fillColor: Colors.white.withOpacity(0.1), border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none), focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Colors.white.withOpacity(0.5), width: 1.5))),
+                                  controller: _passwordController, 
+                                  obscureText: _ocultarPassword, 
+                                  style: const TextStyle(color: Colors.white),
+                                  decoration: InputDecoration(
+                                    labelText: 'Truequi Password', 
+                                    labelStyle: TextStyle(color: Colors.white.withOpacity(0.6)), 
+                                    prefixIcon: const Icon(Icons.lock_outline_rounded, color: TruequiColors.amarillo), 
+                                    suffixIcon: IconButton(
+                                      icon: Icon(
+                                        _ocultarPassword ? Icons.visibility_off : Icons.visibility,
+                                        color: Colors.white70,
+                                      ),
+                                      onPressed: () {
+                                        setState(() {
+                                          _ocultarPassword = !_ocultarPassword;
+                                        });
+                                      },
+                                    ),
+                                    filled: true, 
+                                    fillColor: Colors.white.withOpacity(0.1), 
+                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none), 
+                                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Colors.white.withOpacity(0.5), width: 1.5))
+                                  ),
                                   validator: (v) => v != null && v.length >= 6 ? null : 'Mínimo 6 caracteres',
                                 ),
                                 const SizedBox(height: 30),
