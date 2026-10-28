@@ -45,11 +45,15 @@ class _PublicarPageState extends State<PublicarPage> with TickerProviderStateMix
     super.dispose();
   }
 
-  // PARTE 1: Selección múltiple (hasta 5 fotos), SIN compresión aún
+  // PARTE 2: COMPRESIÓN NATIVA INTEGRADA
   Future<void> _obtenerImagenes(ImageSource origen) async {
     try {
       if (origen == ImageSource.gallery) {
-        final List<XFile> imagenes = await _picker.pickMultiImage(); // Sin parámetros de compresión
+        final List<XFile> imagenes = await _picker.pickMultiImage(
+          imageQuality: 60,
+          maxWidth: 800,
+          maxHeight: 800,
+        );
         
         if (imagenes.isNotEmpty) {
           int espaciosDisponibles = 5 - _imagenesSeleccionadas.length;
@@ -68,7 +72,12 @@ class _PublicarPageState extends State<PublicarPage> with TickerProviderStateMix
         }
       } else {
         if (_imagenesSeleccionadas.length < 5) {
-          final XFile? imagen = await _picker.pickImage(source: origen); // Sin parámetros de compresión
+          final XFile? imagen = await _picker.pickImage(
+            source: origen,
+            imageQuality: 60,
+            maxWidth: 800,
+            maxHeight: 800,
+          );
           
           if (imagen != null) {
             setState(() {
