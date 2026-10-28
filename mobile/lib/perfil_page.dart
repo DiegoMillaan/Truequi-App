@@ -24,7 +24,7 @@ class _PerfilPageState extends State<PerfilPage> {
   List<dynamic> _misProductos = [];
   List<dynamic> _favoritosProductos = [];
   bool _isLoading = true;
-  int _menuSeleccionado = 0; // 0: Galería, 1: Favoritos, 2: Configuración
+  int _menuSeleccionado = 0; // 0: Galería, 1: Favoritos, 2: Configuración, 3: Privacidad, 4: Ayuda
 
   @override
   void initState() {
@@ -130,7 +130,7 @@ class _PerfilPageState extends State<PerfilPage> {
   }
 
   // ==========================================
-  // MODAL DE REPORTE DE USUARIO / CONTENIDO (ISSUE #119)
+  // MODAL DE REPORTE CON CASILLA DE TEXTO (ISSUE #119)
   // ==========================================
   void _mostrarDialogoDenuncia() {
     final razonController = TextEditingController();
@@ -160,24 +160,24 @@ class _PerfilPageState extends State<PerfilPage> {
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
+                        const Row(
                           children: [
-                            const Icon(Icons.report_problem_rounded, color: Colors.redAccent, size: 28),
-                            const SizedBox(width: 10),
-                            const Text(
-                              'Denunciar o Reportar',
+                            Icon(Icons.report_problem_rounded, color: Colors.redAccent, size: 28),
+                            SizedBox(width: 10),
+                            Text(
+                              'Denunciar publicación',
                               style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
                             ),
                           ],
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          'Escribe las razones del reporte sobre algún perfil, comportamiento o contenido inapropiado:',
+                          'Escribe las razones del reporte de forma detallada para la revisión del equipo de moderación:',
                           style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 13),
                         ),
                         const SizedBox(height: 16),
                         
-                        // CASILLA PARA ESCRIBIR LAS RAZONES DEL REPORTE
+                        // CASILLA/TEXTFIELD DE REPORTE
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                           decoration: BoxDecoration(
@@ -189,7 +189,11 @@ class _PerfilPageState extends State<PerfilPage> {
                             controller: razonController,
                             maxLines: 4,
                             style: const TextStyle(color: Colors.white, fontSize: 14),
-                            decoration: InputDecoration(hintText: 'Escribe aquí los motivos detallados...', hintStyle: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 13), border: InputBorder.none),
+                            decoration: InputDecoration(
+                              hintText: 'Describe las razones del reporte (contenido inapropiado, estafa...)',
+                              hintStyle: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 13),
+                              border: InputBorder.none,
+                            ),
                           ),
                         ),
                         const SizedBox(height: 20),
@@ -248,36 +252,6 @@ class _PerfilPageState extends State<PerfilPage> {
           },
         );
       },
-    );
-  }
-
-  void _mostrarAvisoPrivacidad() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1E143A),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: const Row(
-          children: [
-            Icon(Icons.privacy_tip_rounded, color: TruequiColors.amarillo),
-            SizedBox(width: 10),
-            Text('Aviso de Privacidad', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-          ],
-        ),
-        content: SingleChildScrollView(
-          child: Text(
-            'En Truequi, valoramos tu privacidad y seguridad.\n\nToda tu información personal, número telefónico, ubicación de verificación ZMQ, imágenes y mensajes están protegidos por la infraestructura de Amazon Web Services (AWS).\n\nLos datos se emplean exclusivamente para validar intercambios seguros dentro de la Zona Metropolitana de Querétaro.',
-            style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 14, height: 1.5),
-          ),
-        ),
-        actions: [
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: TruequiColors.purpura, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Entendido', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
     );
   }
 
@@ -538,7 +512,7 @@ class _PerfilPageState extends State<PerfilPage> {
           ),
           const SliverToBoxAdapter(child: SizedBox(height: 20)),
 
-          // MENÚ HORIZONTAL (CHIPS CON NAVEGACIÓN A FAVORITOS)
+          // MENÚ HORIZONTAL DE CHIPS (HOMOLOGADO CON WEB)
           SliverToBoxAdapter(
             child: SizedBox(
               height: 45,
@@ -552,6 +526,10 @@ class _PerfilPageState extends State<PerfilPage> {
                   _buildMenuChip(1, 'Favoritos', Icons.favorite_rounded),
                   const SizedBox(width: 10),
                   _buildMenuChip(2, 'Configuración', Icons.settings_rounded),
+                  const SizedBox(width: 10),
+                  _buildMenuChip(3, 'Privacidad', Icons.privacy_tip_rounded),
+                  const SizedBox(width: 10),
+                  _buildMenuChip(4, 'Ayuda y Denuncias', Icons.report_problem_rounded),
                 ],
               ),
             ),
@@ -563,8 +541,12 @@ class _PerfilPageState extends State<PerfilPage> {
             _buildVistaGaleria() 
           else if (_menuSeleccionado == 1) 
             _buildVistaFavoritos() 
-          else 
-            _buildVistaConfiguracion(),
+          else if (_menuSeleccionado == 2)
+            _buildVistaConfiguracion()
+          else if (_menuSeleccionado == 3)
+            _buildVistaPrivacidad()
+          else
+            _buildVistaAyuda(),
 
           const SliverToBoxAdapter(child: SizedBox(height: 140)),
         ],
@@ -793,14 +775,101 @@ class _PerfilPageState extends State<PerfilPage> {
                   Divider(height: 1, color: Colors.white.withOpacity(0.1)),
                   _buildMenuOption(context, 'Actualizar foto', Icons.face_retouching_natural_rounded, _editarFotoPerfil),
                   Divider(height: 1, color: Colors.white.withOpacity(0.1)),
-                  _buildMenuOption(context, 'Aviso de Privacidad', Icons.privacy_tip_rounded, _mostrarAvisoPrivacidad),
-                  Divider(height: 1, color: Colors.white.withOpacity(0.1)),
-                  _buildMenuOption(context, 'Ayuda y Denuncias', Icons.report_problem_rounded, _mostrarDialogoDenuncia),
-                  Divider(height: 1, color: Colors.white.withOpacity(0.1)),
                   _buildMenuOption(context, 'Cerrar Sesión', Icons.logout_rounded, _cerrarSesion, isDestructive: true),
                 ],
               ),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVistaPrivacidad() {
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(30),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(30), border: Border.all(color: Colors.white.withOpacity(0.2), width: 1.5)),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Aviso de Privacidad', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: TruequiColors.amarillo)),
+                  const SizedBox(height: 16),
+                  Text(
+                    'En Truequi, valoramos tu privacidad y seguridad.\n\nToda tu información personal, número telefónico, ubicación de verificación ZMQ, imágenes y mensajes están protegidos por la infraestructura de Amazon Web Services (AWS).\n\nLos datos se emplean exclusivamente para validar intercambios seguros dentro de la Zona Metropolitana de Querétaro.',
+                    style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 14, height: 1.5),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // VISTA "CENTRO DE AYUDA Y MODERACIÓN" IDÉNTICA A LA WEB
+  Widget _buildVistaAyuda() {
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Column(
+          children: [
+            _buildTarjetaAccionWeb(
+              Icons.report_gmailerrorred_rounded,
+              'Denunciar un perfil o publicación ilícita',
+              'Nuestro filtro automático bloquea artículos prohibidos, pero puedes reportar manualmente cualquier anomalía.',
+              _mostrarDialogoDenuncia,
+            ),
+            const SizedBox(height: 16),
+            _buildTarjetaAccionWeb(
+              Icons.support_agent_rounded,
+              'Contactar soporte técnico',
+              '¿Tienes problemas con la plataforma? Escríbenos.',
+              () => _mostrarAlertaLiquid(context, 'Envía un correo a soporte@truequi.com.mx', tipo: 'exito'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTarjetaAccionWeb(IconData icono, String titulo, String subtitulo, VoidCallback accion) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(color: Colors.white.withOpacity(0.08), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white.withOpacity(0.2), width: 1.5)),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: TruequiColors.purpura.withOpacity(0.2), shape: BoxShape.circle), child: Icon(icono, color: TruequiColors.purpura, size: 24)),
+                  const SizedBox(width: 14),
+                  Expanded(child: Text(titulo, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white))),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(subtitulo, style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 13, height: 1.4)),
+              const SizedBox(height: 16),
+              Align(
+                alignment: Alignment.centerRight,
+                child: ElevatedButton(
+                  onPressed: accion,
+                  style: ElevatedButton.styleFrom(backgroundColor: TruequiColors.purpura, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                  child: const Text('Gestionar', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              )
+            ],
           ),
         ),
       ),
