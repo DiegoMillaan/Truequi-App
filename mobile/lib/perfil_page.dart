@@ -293,126 +293,131 @@ class _PerfilPageState extends State<PerfilPage> {
     final promedio = _perfilData?['promedio']?.toString() ?? '5.0';
     final truequesCompletados = _perfilData?['truequesCompletados']?.toString() ?? '0';
 
-    return CustomScrollView(
-      physics: const BouncingScrollPhysics(),
-      slivers: [
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 60, 24, 20),
-            child: Row(
-              children: [
-                const Icon(Icons.person_rounded, color: TruequiColors.amarillo, size: 32),
-                const SizedBox(width: 12),
-                const Text('Mi Perfil', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: -0.5)),
-              ],
+    return RefreshIndicator(
+      color: TruequiColors.amarillo,
+      backgroundColor: const Color(0xFF1E143A),
+      onRefresh: _cargarPerfil,
+      child: CustomScrollView(
+        physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+        slivers: [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(24, 60, 24, 20),
+              child: Row(
+                children: [
+                  const Icon(Icons.person_rounded, color: TruequiColors.amarillo, size: 32),
+                  const SizedBox(width: 12),
+                  const Text('Mi Perfil', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: -0.5)),
+                ],
+              ),
             ),
           ),
-        ),
 
-        // TARJETA PRINCIPAL (GLASSMORPHISM)
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(40),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                child: Container(
-                  padding: const EdgeInsets.all(30),
-                  decoration: BoxDecoration(color: Colors.white.withOpacity(0.08), borderRadius: BorderRadius.circular(40), border: Border.all(color: Colors.white.withOpacity(0.2), width: 1.5)),
-                  child: Column(
-                    children: [
-                      GestureDetector(
-                        onTap: _editarFotoPerfil,
-                        child: Stack(
-                          alignment: Alignment.bottomRight,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(6), 
-                              decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), shape: BoxShape.circle, border: Border.all(color: TruequiColors.purpura.withOpacity(0.5), width: 2)), 
-                              child: CircleAvatar(
-                                radius: 45, backgroundColor: TruequiColors.purpura, 
-                                backgroundImage: fotoUrl != null ? NetworkImage(fotoUrl) : null,
-                                child: fotoUrl == null ? const Icon(Icons.person_rounded, size: 45, color: Colors.white) : null
-                              )
-                            ),
-                            Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: TruequiColors.amarillo, shape: BoxShape.circle, border: Border.all(color: Colors.black, width: 2)), child: const Icon(Icons.camera_alt_rounded, color: TruequiColors.textoOscuro, size: 14)),
-                          ],
+          // TARJETA PRINCIPAL (GLASSMORPHISM)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(40),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                  child: Container(
+                    padding: const EdgeInsets.all(30),
+                    decoration: BoxDecoration(color: Colors.white.withOpacity(0.08), borderRadius: BorderRadius.circular(40), border: Border.all(color: Colors.white.withOpacity(0.2), width: 1.5)),
+                    child: Column(
+                      children: [
+                        GestureDetector(
+                          onTap: _editarFotoPerfil,
+                          child: Stack(
+                            alignment: Alignment.bottomRight,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(6), 
+                                decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), shape: BoxShape.circle, border: Border.all(color: TruequiColors.purpura.withOpacity(0.5), width: 2)), 
+                                child: CircleAvatar(
+                                  radius: 45, backgroundColor: TruequiColors.purpura, 
+                                  backgroundImage: fotoUrl != null ? NetworkImage(fotoUrl) : null,
+                                  child: fotoUrl == null ? const Icon(Icons.person_rounded, size: 45, color: Colors.white) : null
+                                )
+                              ),
+                              Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: TruequiColors.amarillo, shape: BoxShape.circle, border: Border.all(color: Colors.black, width: 2)), child: const Icon(Icons.camera_alt_rounded, color: TruequiColors.textoOscuro, size: 14)),
+                            ],
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 20),
-                      
-                      GestureDetector(
-                        onTap: _editarNombreDialog,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Flexible(child: Text(nombreUsuario, style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Colors.white), overflow: TextOverflow.ellipsis)),
-                            const SizedBox(width: 8),
-                            const Icon(Icons.edit_rounded, color: TruequiColors.amarillo, size: 16),
-                          ],
+                        const SizedBox(height: 20),
+                        
+                        GestureDetector(
+                          onTap: _editarNombreDialog,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Flexible(child: Text(nombreUsuario, style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Colors.white), overflow: TextOverflow.ellipsis)),
+                              const SizedBox(width: 8),
+                              const Icon(Icons.edit_rounded, color: TruequiColors.amarillo, size: 16),
+                            ],
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(widget.correo, style: TextStyle(fontSize: 14, color: Colors.white.withOpacity(0.5))),
-                      const SizedBox(height: 20),
-                      Container(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), decoration: BoxDecoration(color: TruequiColors.amarillo.withOpacity(0.2), borderRadius: BorderRadius.circular(20), border: Border.all(color: TruequiColors.amarillo.withOpacity(0.5))), child: const Row(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.location_on_rounded, size: 16, color: TruequiColors.amarillo), SizedBox(width: 6), Text('Querétaro, Qro.', style: TextStyle(fontWeight: FontWeight.bold, color: TruequiColors.amarillo, fontSize: 13))])),
-                    ],
+                        const SizedBox(height: 4),
+                        Text(widget.correo, style: TextStyle(fontSize: 14, color: Colors.white.withOpacity(0.5))),
+                        const SizedBox(height: 20),
+                        Container(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), decoration: BoxDecoration(color: TruequiColors.amarillo.withOpacity(0.2), borderRadius: BorderRadius.circular(20), border: Border.all(color: TruequiColors.amarillo.withOpacity(0.5))), child: const Row(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.location_on_rounded, size: 16, color: TruequiColors.amarillo), SizedBox(width: 6), Text('Querétaro, Qro.', style: TextStyle(fontWeight: FontWeight.bold, color: TruequiColors.amarillo, fontSize: 13))])),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
           ),
-        ),
-        const SliverToBoxAdapter(child: SizedBox(height: 20)),
+          const SliverToBoxAdapter(child: SizedBox(height: 20)),
 
-        // ESTADÍSTICAS BENTO GRID
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Row(
-              children: [
-                Expanded(child: _buildStatCard('Artículos', '${_misProductos.length}', Icons.inventory_2_rounded, TruequiColors.purpura)),
-                const SizedBox(width: 10),
-                Expanded(child: _buildStatCard('Trueques', truequesCompletados, Icons.handshake_rounded, Colors.greenAccent)),
-                const SizedBox(width: 10),
-                Expanded(child: _buildStatCard('Reputación', promedio, Icons.star_rounded, TruequiColors.amarillo)),
-              ],
-            ),
-          ),
-        ),
-        const SliverToBoxAdapter(child: SizedBox(height: 20)),
-
-        // MENÚ HORIZONTAL (CHIPS CON NAVEGACIÓN A FAVORITOS)
-        SliverToBoxAdapter(
-          child: SizedBox(
-            height: 45,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
+          // ESTADÍSTICAS BENTO GRID
+          SliverToBoxAdapter(
+            child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
-              physics: const BouncingScrollPhysics(),
-              children: [
-                _buildMenuChip(0, 'Galería', Icons.grid_view_rounded),
-                const SizedBox(width: 10),
-                _buildMenuChip(1, 'Favoritos', Icons.favorite_rounded),
-                const SizedBox(width: 10),
-                _buildMenuChip(2, 'Configuración', Icons.settings_rounded),
-              ],
+              child: Row(
+                children: [
+                  Expanded(child: _buildStatCard('Artículos', '${_misProductos.length}', Icons.inventory_2_rounded, TruequiColors.purpura)),
+                  const SizedBox(width: 10),
+                  Expanded(child: _buildStatCard('Trueques', truequesCompletados, Icons.handshake_rounded, Colors.greenAccent)),
+                  const SizedBox(width: 10),
+                  Expanded(child: _buildStatCard('Reputación', promedio, Icons.star_rounded, TruequiColors.amarillo)),
+                ],
+              ),
             ),
           ),
-        ),
-        const SliverToBoxAdapter(child: SizedBox(height: 20)),
+          const SliverToBoxAdapter(child: SizedBox(height: 20)),
 
-        // CONTENIDO DINÁMICO
-        if (_menuSeleccionado == 0) 
-          _buildVistaGaleria() 
-        else if (_menuSeleccionado == 1) 
-          _buildVistaFavoritos() 
-        else 
-          _buildVistaConfiguracion(),
+          // MENÚ HORIZONTAL (CHIPS CON NAVEGACIÓN A FAVORITOS)
+          SliverToBoxAdapter(
+            child: SizedBox(
+              height: 45,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                physics: const BouncingScrollPhysics(),
+                children: [
+                  _buildMenuChip(0, 'Galería', Icons.grid_view_rounded),
+                  const SizedBox(width: 10),
+                  _buildMenuChip(1, 'Favoritos', Icons.favorite_rounded),
+                  const SizedBox(width: 10),
+                  _buildMenuChip(2, 'Configuración', Icons.settings_rounded),
+                ],
+              ),
+            ),
+          ),
+          const SliverToBoxAdapter(child: SizedBox(height: 20)),
 
-        const SliverToBoxAdapter(child: SizedBox(height: 140)),
-      ],
+          // CONTENIDO DINÁMICO
+          if (_menuSeleccionado == 0) 
+            _buildVistaGaleria() 
+          else if (_menuSeleccionado == 1) 
+            _buildVistaFavoritos() 
+          else 
+            _buildVistaConfiguracion(),
+
+          const SliverToBoxAdapter(child: SizedBox(height: 140)),
+        ],
+      ),
     );
   }
 
