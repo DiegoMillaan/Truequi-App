@@ -259,6 +259,8 @@ class _PerfilPageState extends State<PerfilPage> {
     String? fotoUrl = foto != null && foto.isNotEmpty ? (foto.contains('?') ? '$foto&v=${DateTime.now().millisecondsSinceEpoch}' : '$foto?v=${DateTime.now().millisecondsSinceEpoch}') : null;
 
     final promedio = _perfilData?['promedio']?.toString() ?? '5.0';
+    // NUEVO: Se recupera el valor de trueques concretados desde el backend
+    final truequesCompletados = _perfilData?['truequesCompletados']?.toString() ?? '0';
 
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
@@ -289,7 +291,6 @@ class _PerfilPageState extends State<PerfilPage> {
                   decoration: BoxDecoration(color: Colors.white.withOpacity(0.08), borderRadius: BorderRadius.circular(40), border: Border.all(color: Colors.white.withOpacity(0.2), width: 1.5)),
                   child: Column(
                     children: [
-                      // FOTO DE PERFIL EDITABLE
                       GestureDetector(
                         onTap: _editarFotoPerfil,
                         child: Stack(
@@ -310,7 +311,6 @@ class _PerfilPageState extends State<PerfilPage> {
                       ),
                       const SizedBox(height: 20),
                       
-                      // NOMBRE EDITABLE
                       GestureDetector(
                         onTap: _editarNombreDialog,
                         child: Row(
@@ -335,15 +335,17 @@ class _PerfilPageState extends State<PerfilPage> {
         ),
         const SliverToBoxAdapter(child: SizedBox(height: 20)),
 
-        // ESTADÍSTICAS BENTO GRID
+        // ESTADÍSTICAS BENTO GRID (Ajustado para 3 columnas)
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Row(
               children: [
-                Expanded(child: _buildStatCard('Mis Artículos', '${_misProductos.length}', Icons.inventory_2_rounded, TruequiColors.purpura)),
-                const SizedBox(width: 16),
-                Expanded(child: _buildStatCard('Valoración', promedio, Icons.star_rounded, TruequiColors.amarillo)),
+                Expanded(child: _buildStatCard('Artículos', '${_misProductos.length}', Icons.inventory_2_rounded, TruequiColors.purpura)),
+                const SizedBox(width: 10),
+                Expanded(child: _buildStatCard('Trueques', truequesCompletados, Icons.handshake_rounded, Colors.greenAccent)),
+                const SizedBox(width: 10),
+                Expanded(child: _buildStatCard('Reputación', promedio, Icons.star_rounded, TruequiColors.amarillo)),
               ],
             ),
           ),
@@ -379,21 +381,24 @@ class _PerfilPageState extends State<PerfilPage> {
   // ==========================================
   // WIDGETS AUXILIARES
   // ==========================================
+  
+  // Tamaño de texto y padding ajustado para que quepan 3 tarjetas sin romper la UI
   Widget _buildStatCard(String titulo, String valor, IconData icono, Color color) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(30),
+      borderRadius: BorderRadius.circular(24),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
         child: Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(color: Colors.white.withOpacity(0.08), borderRadius: BorderRadius.circular(30), border: Border.all(color: Colors.white.withOpacity(0.2), width: 1.5)),
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 10),
+          decoration: BoxDecoration(color: Colors.white.withOpacity(0.08), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white.withOpacity(0.2), width: 1.5)),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(icono, color: color, size: 30),
-              const SizedBox(height: 15),
-              Text(valor, style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: Colors.white)),
-              Text(titulo, style: TextStyle(fontSize: 13, color: Colors.white.withOpacity(0.6), fontWeight: FontWeight.w500)),
+              Icon(icono, color: color, size: 24),
+              const SizedBox(height: 10),
+              Text(valor, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.white)),
+              const SizedBox(height: 2),
+              Text(titulo, style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.6), fontWeight: FontWeight.w500), maxLines: 1, overflow: TextOverflow.ellipsis),
             ],
           ),
         ),
