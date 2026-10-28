@@ -22,8 +22,9 @@ class PerfilPage extends StatefulWidget {
 class _PerfilPageState extends State<PerfilPage> {
   Map<String, dynamic>? _perfilData;
   List<dynamic> _misProductos = [];
+  List<dynamic> _favoritosProductos = [];
   bool _isLoading = true;
-  int _menuSeleccionado = 0; // 0: Mis Artículos, 1: Configuración
+  int _menuSeleccionado = 0; // 0: Galería, 1: Favoritos, 2: Configuración
 
   @override
   void initState() {
@@ -39,9 +40,11 @@ class _PerfilPageState extends State<PerfilPage> {
       final urlUsuario = Uri.parse('https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/usuario/perfil/${widget.correo}');
       final resUsuario = await http.get(urlUsuario);
       
+      Map<String, dynamic>? usuarioMap;
       if (resUsuario.statusCode == 200) {
         final data = jsonDecode(resUsuario.body);
-        if (mounted) setState(() { _perfilData = data['usuario']; });
+        usuarioMap = data['usuario'];
+        if (mounted) setState(() { _perfilData = usuarioMap; });
       }
 
       final urlProductos = Uri.parse('https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/productos');
@@ -51,9 +54,13 @@ class _PerfilPageState extends State<PerfilPage> {
         final Map<String, dynamic> data = jsonDecode(resProductos.body);
         final List<dynamic> todosLosProductos = data['productos'] ?? [];
         
+        // Obtener la lista de IDs de favoritos del perfil de usuario
+        final List<dynamic> idsFavoritos = usuarioMap?['favoritos'] ?? [];
+
         if (mounted) {
           setState(() {
             _misProductos = todosLosProductos.where((p) => p['vendedorId'] == widget.correo).toList();
+            _favoritosProductos = todosLosProductos.where((p) => idsFavoritos.contains(p['id'])).toList();
             _isLoading = false;
           });
         }
@@ -62,6 +69,31 @@ class _PerfilPageState extends State<PerfilPage> {
       }
     } catch (e) { 
       if (mounted) setState(() => _isLoading = false); 
+    }
+  }
+
+  Future<void> _removerFavorito(String productoId) async {
+    try {
+      List<dynamic> actuales = List.from(_perfilData?['favoritos'] ?? []);
+      actuales.remove(productoId);
+
+      final res = await http.put(
+        Uri.parse('https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/usuario/perfil'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'correo': widget.correo,
+          'favoritos': actuales,
+        }),
+      );
+
+      if (res.statusCode == 200) {
+        if (mounted) {
+          _mostrarAlertaLiquid(context, 'Eliminado de favoritos.', tipo: 'exito');
+          _cargarPerfil();
+        }
+      }
+    } catch (e) {
+      debugPrint('Error al remover favorito: $e');
     }
   }
 
@@ -259,7 +291,6 @@ class _PerfilPageState extends State<PerfilPage> {
     String? fotoUrl = foto != null && foto.isNotEmpty ? (foto.contains('?') ? '$foto&v=${DateTime.now().millisecondsSinceEpoch}' : '$foto?v=${DateTime.now().millisecondsSinceEpoch}') : null;
 
     final promedio = _perfilData?['promedio']?.toString() ?? '5.0';
-    // NUEVO: Se recupera el valor de trueques concretados desde el backend
     final truequesCompletados = _perfilData?['truequesCompletados']?.toString() ?? '0';
 
     return CustomScrollView(
@@ -335,7 +366,7 @@ class _PerfilPageState extends State<PerfilPage> {
         ),
         const SliverToBoxAdapter(child: SizedBox(height: 20)),
 
-        // ESTADÍSTICAS BENTO GRID (Ajustado para 3 columnas)
+        // ESTADÍSTICAS BENTO GRID
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -352,7 +383,7 @@ class _PerfilPageState extends State<PerfilPage> {
         ),
         const SliverToBoxAdapter(child: SizedBox(height: 20)),
 
-        // MENÚ HORIZONTAL (CHIPS)
+        // MENÚ HORIZONTAL (CHIPS CON NAVEGACIÓN A FAVORITOS)
         SliverToBoxAdapter(
           child: SizedBox(
             height: 45,
@@ -363,7 +394,9 @@ class _PerfilPageState extends State<PerfilPage> {
               children: [
                 _buildMenuChip(0, 'Galería', Icons.grid_view_rounded),
                 const SizedBox(width: 10),
-                _buildMenuChip(1, 'Configuración', Icons.settings_rounded),
+                _buildMenuChip(1, 'Favoritos', Icons.favorite_rounded),
+                const SizedBox(width: 10),
+                _buildMenuChip(2, 'Configuración', Icons.settings_rounded),
               ],
             ),
           ),
@@ -371,7 +404,12 @@ class _PerfilPageState extends State<PerfilPage> {
         const SliverToBoxAdapter(child: SizedBox(height: 20)),
 
         // CONTENIDO DINÁMICO
-        if (_menuSeleccionado == 0) _buildVistaGaleria() else _buildVistaConfiguracion(),
+        if (_menuSeleccionado == 0) 
+          _buildVistaGaleria() 
+        else if (_menuSeleccionado == 1) 
+          _buildVistaFavoritos() 
+        else 
+          _buildVistaConfiguracion(),
 
         const SliverToBoxAdapter(child: SizedBox(height: 140)),
       ],
@@ -382,7 +420,6 @@ class _PerfilPageState extends State<PerfilPage> {
   // WIDGETS AUXILIARES
   // ==========================================
   
-  // Tamaño de texto y padding ajustado para que quepan 3 tarjetas sin romper la UI
   Widget _buildStatCard(String titulo, String valor, IconData icono, Color color) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(24),
@@ -496,6 +533,89 @@ class _PerfilPageState extends State<PerfilPage> {
             );
           },
           childCount: _misProductos.length,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVistaFavoritos() {
+    if (_favoritosProductos.isEmpty) {
+      return SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.all(40),
+          child: Column(
+            children: [
+              Icon(Icons.favorite_border_rounded, size: 60, color: Colors.white.withOpacity(0.3)),
+              const SizedBox(height: 16),
+              Text('No tienes favoritos guardados', style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 16)),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return SliverPadding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      sliver: SliverGrid(
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, mainAxisSpacing: 16, crossAxisSpacing: 16, childAspectRatio: 0.7),
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            final prod = _favoritosProductos[index];
+            return ClipRRect(
+              borderRadius: BorderRadius.circular(24),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                child: Container(
+                  decoration: BoxDecoration(color: Colors.white.withOpacity(0.08), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white.withOpacity(0.2), width: 1.5)),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        flex: 4,
+                        child: Stack(
+                          children: [
+                            ClipRRect(
+                              borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+                              child: Image.network(prod['imagenUrl'] ?? 'https://via.placeholder.com/150', fit: BoxFit.cover, width: double.infinity, height: double.infinity),
+                            ),
+                            Positioned(
+                              top: 8,
+                              right: 8,
+                              child: GestureDetector(
+                                onTap: () => _removerFavorito(prod['id']),
+                                child: Container(
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: BoxDecoration(color: Colors.black.withOpacity(0.5), shape: BoxShape.circle),
+                                  child: const Icon(Icons.favorite_rounded, color: Colors.redAccent, size: 18),
+                                ),
+                              ),
+                            )
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        flex: 3,
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(prod['titulo'], style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
+                              const SizedBox(height: 4),
+                              Text(prod['categoria'] ?? 'General', style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 11)),
+                              const Spacer(),
+                              Text(prod['estado'] ?? 'Usado', style: const TextStyle(color: TruequiColors.amarillo, fontSize: 11, fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+          childCount: _favoritosProductos.length,
         ),
       ),
     );
