@@ -5,7 +5,7 @@ import 'dart:convert';
 import 'home_page.dart'; 
 import 'chat_page.dart';
 import 'login_screen.dart';
-import 'perfil_publico_dialog.dart'; // <-- 1. Importar el modal
+import 'perfil_publico_dialog.dart';
 
 class DetalleProductoPage extends StatefulWidget {
   final Map<String, dynamic> producto;
@@ -20,12 +20,102 @@ class DetalleProductoPage extends StatefulWidget {
 class _DetalleProductoPageState extends State<DetalleProductoPage> {
   String _nombreVendedor = '';
   String? _fotoVendedorUrl;
+  bool _esFavorito = false;
+  bool _cargandoFavorito = false;
+  List<dynamic> _favoritosUsuario = [];
 
   @override
   void initState() {
     super.initState();
     _nombreVendedor = widget.producto['vendedorNombre']?.toString() ?? 'Propietario';
     _cargarDatosVendedorReal();
+    _cargarEstadoFavorito();
+  }
+
+  Future<void> _cargarEstadoFavorito() async {
+    final miId = widget.miCorreo.trim().toLowerCase();
+    if (miId.isEmpty || miId == 'invitado') return;
+
+    try {
+      final url = Uri.parse('https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/usuario/perfil/$miId');
+      final res = await http.get(url);
+
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body)['usuario'];
+        final List<dynamic> favs = data['favoritos'] ?? [];
+        final prodId = widget.producto['id']?.toString() ?? '';
+
+        if (mounted) {
+          setState(() {
+            _favoritosUsuario = favs;
+            _esFavorito = favs.contains(prodId);
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error al verificar estado de favorito: $e');
+    }
+  }
+
+  Future<void> _toggleFavorito() async {
+    final miId = widget.miCorreo.trim().toLowerCase();
+    if (miId.isEmpty || miId == 'invitado') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Debes iniciar sesión para guardar favoritos.', style: TextStyle(fontWeight: FontWeight.bold, color: TruequiColors.textoOscuro)),
+          backgroundColor: TruequiColors.amarillo,
+        ),
+      );
+      return;
+    }
+
+    if (_cargandoFavorito) return;
+    setState(() => _cargandoFavorito = true);
+
+    final prodId = widget.producto['id']?.toString() ?? '';
+    List<dynamic> favsActualizados = List.from(_favoritosUsuario);
+
+    if (_esFavorito) {
+      favsActualizados.remove(prodId);
+    } else {
+      if (!favsActualizados.contains(prodId)) {
+        favsActualizados.add(prodId);
+      }
+    }
+
+    try {
+      final res = await http.put(
+        Uri.parse('https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/usuario/perfil'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'correo': miId,
+          'favoritos': favsActualizados,
+        }),
+      );
+
+      if (res.statusCode == 200) {
+        if (mounted) {
+          setState(() {
+            _favoritosUsuario = favsActualizados;
+            _esFavorito = !_esFavorito;
+            _cargandoFavorito = false;
+          });
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(_esFavorito ? 'Guardado en favoritos' : 'Eliminado de favoritos', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+              backgroundColor: _esFavorito ? TruequiColors.purpura : Colors.grey[800],
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      } else {
+        if (mounted) setState(() => _cargandoFavorito = false);
+      }
+    } catch (e) {
+      debugPrint('Error al actualizar favorito: $e');
+      if (mounted) setState(() => _cargandoFavorito = false);
+    }
   }
 
   Future<void> _cargarDatosVendedorReal() async {
@@ -84,6 +174,25 @@ class _DetalleProductoPageState extends State<DetalleProductoPage> {
             child: IconButton(icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20), onPressed: () => Navigator.pop(context)),
           ),
         ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 10),
+            child: Container(
+              margin: const EdgeInsets.all(4),
+              decoration: BoxDecoration(color: Colors.black.withOpacity(0.4), shape: BoxShape.circle),
+              child: IconButton(
+                icon: _cargandoFavorito
+                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    : Icon(
+                        _esFavorito ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                        color: _esFavorito ? Colors.redAccent : Colors.white,
+                        size: 22,
+                      ),
+                onPressed: _toggleFavorito,
+              ),
+            ),
+          )
+        ],
       ),
       body: Stack(
         children: [
@@ -142,7 +251,6 @@ class _DetalleProductoPageState extends State<DetalleProductoPage> {
                             Divider(color: Colors.white.withOpacity(0.1)),
                             const SizedBox(height: 20),
                             
-                            // <-- 2. AHORA ES CLICKABLE PARA ABRIR EL PERFIL
                             GestureDetector(
                               onTap: () {
                                 if (vendedorId.isNotEmpty) {
@@ -150,7 +258,7 @@ class _DetalleProductoPageState extends State<DetalleProductoPage> {
                                 }
                               },
                               child: Container(
-                                color: Colors.transparent, // Amplía el área táctil
+                                color: Colors.transparent,
                                 padding: const EdgeInsets.symmetric(vertical: 5),
                                 child: Row(
                                   children: [
@@ -171,7 +279,7 @@ class _DetalleProductoPageState extends State<DetalleProductoPage> {
                                             color: Colors.white, 
                                             fontWeight: FontWeight.bold, 
                                             fontSize: 17,
-                                            decoration: TextDecoration.underline, // Le da estilo de "enlace"
+                                            decoration: TextDecoration.underline,
                                             decorationColor: Colors.white54
                                           )
                                         )
@@ -213,7 +321,7 @@ class _DetalleProductoPageState extends State<DetalleProductoPage> {
                                   Navigator.push(context, MaterialPageRoute(builder: (context) => ChatPage(miCorreo: miId, otroCorreo: vendedorNormalizado, productoId: widget.producto['id'].toString(), productoTitulo: titulo, conversacionId: conversacionId, esMiArticulo: false, estadoPropuesta: 'Pendiente')));
                                 },
                                 style: ElevatedButton.styleFrom(backgroundColor: TruequiColors.purpura, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)), elevation: 10, shadowColor: TruequiColors.purpura.withOpacity(0.5)),
-                                child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.swap_horiz_rounded, color: Colors.white, size: 28), SizedBox(width: 12), Text('Proponer Trueque', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white))]),
+                                child: const Row(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.swap_horiz_rounded, color: Colors.white, size: 28), SizedBox(width: 12), Text('Proponer Trueque', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white))]),
                               ),
                             ),
                           ],
