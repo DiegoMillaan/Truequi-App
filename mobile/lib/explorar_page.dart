@@ -13,11 +13,28 @@ class ExplorarPage extends StatefulWidget {
 }
 
 class _ExplorarPageState extends State<ExplorarPage> {
-  String _categoriaSeleccionada = 'Todos';
+  // Ajustamos el valor por defecto a 'Todas' para coincidir con la nueva lista
+  String _categoriaSeleccionada = 'Todas';
   String _busqueda = '';
   List<dynamic> _articulos = []; 
   bool _isLoading = true; 
-  final List<String> _categorias = ['Todos', 'Electrónica', 'Accesorios', 'Libros', 'Hogar y Cocina', 'Mascotas'];
+  
+  // Lista actualizada desde la versión web (sin '❤️ Favoritos')
+  final List<String> _categorias = [
+    'Todas',
+    'Hogar y Muebles',
+    'Cocina y Electrodomésticos',
+    'Electrónica y Cómputo',
+    'Juguetes y Juegos',
+    'Libros y Estudio',
+    'Herramientas',
+    'Salud y Equipo Médico',
+    'Deportes y Fitness',
+    'Instrumentos Musicales',
+    'Arte y Papelería',
+    'Ropa y Accesorios',
+    'Vehículos y Movilidad'
+  ];
 
   @override
   void initState() {
@@ -33,7 +50,8 @@ class _ExplorarPageState extends State<ExplorarPage> {
   @override
   Widget build(BuildContext context) {
     final articulosFiltrados = _articulos.where((item) {
-      final matchCategoria = _categoriaSeleccionada == 'Todos' || item['categoria'] == _categoriaSeleccionada;
+      // Ajustamos el filtrado para validar contra 'Todas'
+      final matchCategoria = _categoriaSeleccionada == 'Todas' || item['categoria'] == _categoriaSeleccionada;
       final query = _busqueda.toLowerCase();
       final titulo = (item['titulo'] ?? '').toString().toLowerCase();
       final descripcion = (item['descripcion'] ?? '').toString().toLowerCase();
@@ -41,14 +59,11 @@ class _ExplorarPageState extends State<ExplorarPage> {
       return matchCategoria && matchBusqueda;
     }).toList();
 
-    // 1. Envolvemos el CustomScrollView en un RefreshIndicator
     return RefreshIndicator(
       color: TruequiColors.purpura,
       backgroundColor: TruequiColors.fondoClaro,
-      // 2. Definimos la acción: volver a cargar los productos
       onRefresh: _cargarProductos,
       child: CustomScrollView(
-        // 3. Modificamos las físicas para que siempre permita arrastrar hacia abajo
         physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
         slivers: [
           SliverToBoxAdapter(
@@ -91,11 +106,14 @@ class _ExplorarPageState extends State<ExplorarPage> {
           ),
           const SliverToBoxAdapter(child: SizedBox(height: 10)),
 
+          // Selector de categorías
           SliverToBoxAdapter(
             child: SizedBox(
               height: 45,
               child: ListView.builder(
-                scrollDirection: Axis.horizontal, physics: const BouncingScrollPhysics(), padding: const EdgeInsets.symmetric(horizontal: 24),
+                scrollDirection: Axis.horizontal, 
+                physics: const BouncingScrollPhysics(), 
+                padding: const EdgeInsets.symmetric(horizontal: 24),
                 itemCount: _categorias.length,
                 itemBuilder: (context, index) {
                   final categoria = _categorias[index];
@@ -103,9 +121,20 @@ class _ExplorarPageState extends State<ExplorarPage> {
                   return GestureDetector(
                     onTap: () => setState(() => _categoriaSeleccionada = categoria),
                     child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 300), margin: const EdgeInsets.only(right: 12), padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                      decoration: BoxDecoration(color: isSelected ? TruequiColors.purpura : Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(20), border: Border.all(color: isSelected ? TruequiColors.purpura : Colors.white.withOpacity(0.2), width: 1.5)),
-                      child: Center(child: Text(categoria, style: TextStyle(color: Colors.white, fontWeight: isSelected ? FontWeight.bold : FontWeight.w500, fontSize: 15))),
+                      duration: const Duration(milliseconds: 300), 
+                      margin: const EdgeInsets.only(right: 12), 
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: isSelected ? TruequiColors.purpura : Colors.white.withOpacity(0.1), 
+                        borderRadius: BorderRadius.circular(20), 
+                        border: Border.all(color: isSelected ? TruequiColors.purpura : Colors.white.withOpacity(0.2), width: 1.5)
+                      ),
+                      child: Center(
+                        child: Text(
+                          categoria, 
+                          style: TextStyle(color: Colors.white, fontWeight: isSelected ? FontWeight.bold : FontWeight.w500, fontSize: 15)
+                        )
+                      ),
                     ),
                   );
                 },
@@ -164,8 +193,29 @@ class _ExplorarPageState extends State<ExplorarPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(flex: 5, child: Container(decoration: BoxDecoration(borderRadius: const BorderRadius.vertical(top: Radius.circular(28)), image: DecorationImage(image: NetworkImage(imagenUrl.isNotEmpty ? imagenUrl : 'https://via.placeholder.com/150'), fit: BoxFit.cover)))),
-                Expanded(flex: 4, child: Padding(padding: const EdgeInsets.all(16.0), child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text(titulo, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white), maxLines: 2, overflow: TextOverflow.ellipsis), Text('\$$precio', style: const TextStyle(color: TruequiColors.amarillo, fontSize: 16, fontWeight: FontWeight.w900))]))),
+                Expanded(
+                  flex: 5, 
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)), 
+                      image: DecorationImage(image: NetworkImage(imagenUrl.isNotEmpty ? imagenUrl : 'https://via.placeholder.com/150'), fit: BoxFit.cover)
+                    )
+                  )
+                ),
+                Expanded(
+                  flex: 4, 
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0), 
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start, 
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween, 
+                      children: [
+                        Text(titulo, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white), maxLines: 2, overflow: TextOverflow.ellipsis), 
+                        Text('\$$precio', style: const TextStyle(color: TruequiColors.amarillo, fontSize: 16, fontWeight: FontWeight.w900))
+                      ]
+                    )
+                  )
+                ),
               ],
             ),
           ),
