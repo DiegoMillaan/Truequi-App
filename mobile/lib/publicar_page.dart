@@ -24,8 +24,22 @@ class _PublicarPageState extends State<PublicarPage> with TickerProviderStateMix
   List<File> _imagenesSeleccionadas = [];
   final ImagePicker _picker = ImagePicker();
 
-  String _categoriaSeleccionada = 'Electrónica';
-  final List<String> _categorias = ['Electrónica', 'Libros', 'Accesorios', 'Hogar y Cocina', 'Mascotas'];
+  // Categoría inicial por defecto y lista ampliada sincronizada con la Web
+  String _categoriaSeleccionada = 'Hogar y Muebles';
+  final List<String> _categorias = [
+    'Hogar y Muebles',
+    'Cocina y Electrodomésticos',
+    'Electrónica y Cómputo',
+    'Juguetes y Juegos',
+    'Libros y Estudio',
+    'Herramientas',
+    'Salud y Equipo Médico',
+    'Deportes y Fitness',
+    'Instrumentos Musicales',
+    'Arte y Papelería',
+    'Ropa y Accesorios',
+    'Vehículos y Movilidad'
+  ];
 
   bool _isPublishing = false;
   late AnimationController _bgController;
@@ -45,7 +59,6 @@ class _PublicarPageState extends State<PublicarPage> with TickerProviderStateMix
     super.dispose();
   }
 
-  // PARTE 2: COMPRESIÓN NATIVA INTEGRADA
   Future<void> _obtenerImagenes(ImageSource origen) async {
     try {
       if (origen == ImageSource.gallery) {
