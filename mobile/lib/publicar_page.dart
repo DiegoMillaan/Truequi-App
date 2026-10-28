@@ -8,7 +8,7 @@ import 'package:http/http.dart' as http;
 import 'home_page.dart'; 
 
 class PublicarPage extends StatefulWidget {
-  final String miCorreo; // RECIBIMOS LA IDENTIDAD REAL
+  final String miCorreo; 
   const PublicarPage({super.key, required this.miCorreo});
 
   @override
@@ -21,7 +21,7 @@ class _PublicarPageState extends State<PublicarPage> with TickerProviderStateMix
   final _descripcionController = TextEditingController();
   final _precioController = TextEditingController();
   
-  File? _imagenSeleccionada;
+  List<File> _imagenesSeleccionadas = [];
   final ImagePicker _picker = ImagePicker();
 
   String _categoriaSeleccionada = 'Electrónica';
@@ -45,15 +45,51 @@ class _PublicarPageState extends State<PublicarPage> with TickerProviderStateMix
     super.dispose();
   }
 
-  Future<void> _obtenerImagen(ImageSource origen) async {
+  // PARTE 1: Selección múltiple (hasta 5 fotos), SIN compresión aún
+  Future<void> _obtenerImagenes(ImageSource origen) async {
     try {
-      final XFile? imagen = await _picker.pickImage(source: origen, imageQuality: 80);
-      if (imagen != null) {
-        setState(() => _imagenSeleccionada = File(imagen.path));
+      if (origen == ImageSource.gallery) {
+        final List<XFile> imagenes = await _picker.pickMultiImage(); // Sin parámetros de compresión
+        
+        if (imagenes.isNotEmpty) {
+          int espaciosDisponibles = 5 - _imagenesSeleccionadas.length;
+          
+          if (imagenes.length > espaciosDisponibles && mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Solo puedes subir un máximo de 5 fotos.'))
+            );
+          }
+          
+          setState(() {
+            _imagenesSeleccionadas.addAll(
+              imagenes.take(espaciosDisponibles).map((xfile) => File(xfile.path))
+            );
+          });
+        }
+      } else {
+        if (_imagenesSeleccionadas.length < 5) {
+          final XFile? imagen = await _picker.pickImage(source: origen); // Sin parámetros de compresión
+          
+          if (imagen != null) {
+            setState(() {
+              _imagenesSeleccionadas.add(File(imagen.path));
+            });
+          }
+        } else if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Límite de 5 fotos alcanzado.'))
+          );
+        }
       }
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error al acceder a la cámara/galería')));
     }
+  }
+
+  void _eliminarImagen(int index) {
+    setState(() {
+      _imagenesSeleccionadas.removeAt(index);
+    });
   }
 
   void _mostrarOpcionesDeImagen(BuildContext context) {
@@ -69,12 +105,12 @@ class _PublicarPageState extends State<PublicarPage> with TickerProviderStateMix
                 ListTile(
                   leading: const Icon(Icons.camera_alt_rounded, color: TruequiColors.amarillo),
                   title: const Text('Tomar Foto', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-                  onTap: () { Navigator.pop(context); _obtenerImagen(ImageSource.camera); },
+                  onTap: () { Navigator.pop(context); _obtenerImagenes(ImageSource.camera); },
                 ),
                 ListTile(
                   leading: const Icon(Icons.photo_library_rounded, color: TruequiColors.amarillo),
                   title: const Text('Elegir de Galería', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-                  onTap: () { Navigator.pop(context); _obtenerImagen(ImageSource.gallery); },
+                  onTap: () { Navigator.pop(context); _obtenerImagenes(ImageSource.gallery); },
                 ),
               ],
             ),
@@ -86,8 +122,8 @@ class _PublicarPageState extends State<PublicarPage> with TickerProviderStateMix
 
   Future<void> _publicarTrueque() async {
     if (!_formKey.currentState!.validate()) return;
-    if (_imagenSeleccionada == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Por favor, selecciona una foto de tu artículo.'), backgroundColor: Colors.redAccent));
+    if (_imagenesSeleccionadas.isEmpty) { 
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Por favor, selecciona al menos una foto.'), backgroundColor: Colors.redAccent));
       return;
     }
 
@@ -97,19 +133,25 @@ class _PublicarPageState extends State<PublicarPage> with TickerProviderStateMix
       String textoPrecio = _precioController.text.replaceAll(RegExp(r'[^0-9.]'), '');
       double precioFinal = double.tryParse(textoPrecio) ?? 1.0;
 
-      final extensionArchivo = _imagenSeleccionada!.path.split('.').last.toLowerCase();
-      final extensionValida = ['jpg', 'jpeg', 'png', 'webp'].contains(extensionArchivo) ? extensionArchivo : 'jpg';
-      
-      final resUrl = await http.get(Uri.parse('https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/productos/upload-url?ext=$extensionValida'));
-      if (resUrl.statusCode != 200) throw Exception('Error al contactar S3');
-      
-      final urlData = jsonDecode(resUrl.body);
-      final uploadUrl = urlData['uploadUrl'];
-      final publicUrl = urlData['publicUrl'];
+      List<String> urlsSubidas = [];
 
-      final bytes = await _imagenSeleccionada!.readAsBytes();
-      final resS3 = await http.put(Uri.parse(uploadUrl), body: bytes);
-      if (resS3.statusCode != 200) throw Exception('Fallo al subir la imagen');
+      for (File imagen in _imagenesSeleccionadas) {
+        final extensionArchivo = imagen.path.split('.').last.toLowerCase();
+        final extensionValida = ['jpg', 'jpeg', 'png', 'webp'].contains(extensionArchivo) ? extensionArchivo : 'jpg';
+        
+        final resUrl = await http.get(Uri.parse('https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/productos/upload-url?ext=$extensionValida'));
+        if (resUrl.statusCode != 200) throw Exception('Error al contactar S3');
+        
+        final urlData = jsonDecode(resUrl.body);
+        final uploadUrl = urlData['uploadUrl'];
+        final publicUrl = urlData['publicUrl'];
+
+        final bytes = await imagen.readAsBytes();
+        final resS3 = await http.put(Uri.parse(uploadUrl), body: bytes);
+        if (resS3.statusCode != 200) throw Exception('Fallo al subir una de las imágenes');
+
+        urlsSubidas.add(publicUrl);
+      }
 
       final responseDb = await http.post(
         Uri.parse('https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/productos'),
@@ -119,22 +161,23 @@ class _PublicarPageState extends State<PublicarPage> with TickerProviderStateMix
           'descripcion': _descripcionController.text.trim(),
           'precio': precioFinal,
           'categoria': _categoriaSeleccionada,
-          'vendedorId': widget.miCorreo, // USAMOS LA IDENTIDAD REAL
+          'vendedorId': widget.miCorreo, 
           'vendedorNombre': widget.miCorreo.split('@')[0], 
-          'imagenUrl': publicUrl,
+          'imagenesUrls': urlsSubidas, 
         }),
       );
 
       if (responseDb.statusCode == 201) {
         _formKey.currentState!.reset();
         _tituloController.clear(); _descripcionController.clear(); _precioController.clear();
-        setState(() => _imagenSeleccionada = null);
+        setState(() => _imagenesSeleccionadas.clear()); 
         if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('¡Trueque publicado con éxito! 🎉'), backgroundColor: Colors.green));
       } else {
-        throw Exception('Fallo al guardar en base de datos');
+        final data = jsonDecode(responseDb.body);
+        throw Exception(data['error'] ?? 'Fallo al guardar en base de datos');
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.redAccent));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: ${e.toString().replaceAll('Exception: ', '')}'), backgroundColor: Colors.redAccent, duration: const Duration(seconds: 4)));
     } finally {
       if (mounted) setState(() => _isPublishing = false);
     }
@@ -191,25 +234,80 @@ class _PublicarPageState extends State<PublicarPage> with TickerProviderStateMix
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              GestureDetector(
-                                onTap: () => _mostrarOpcionesDeImagen(context),
-                                child: Container(
-                                  height: 200, width: double.infinity,
-                                  decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white.withOpacity(0.3), width: 1.5)),
-                                  child: _imagenSeleccionada != null
-                                      ? ClipRRect(borderRadius: BorderRadius.circular(22), child: Image.file(_imagenSeleccionada!, fit: BoxFit.cover, width: double.infinity))
-                                      : Center(
-                                          child: Column(
-                                            mainAxisAlignment: MainAxisAlignment.center,
-                                            children: [
-                                              Icon(Icons.camera_alt_rounded, size: 40, color: Colors.white.withOpacity(0.8)),
-                                              const SizedBox(height: 10),
-                                              Text('Añadir foto del artículo', style: TextStyle(color: Colors.white.withOpacity(0.8), fontWeight: FontWeight.bold)),
-                                            ],
+                              
+                              if (_imagenesSeleccionadas.isNotEmpty)
+                                SizedBox(
+                                  height: 200,
+                                  child: ListView.builder(
+                                    scrollDirection: Axis.horizontal,
+                                    itemCount: _imagenesSeleccionadas.length < 5 ? _imagenesSeleccionadas.length + 1 : 5,
+                                    itemBuilder: (context, index) {
+                                      if (index == _imagenesSeleccionadas.length) {
+                                        return GestureDetector(
+                                          onTap: () => _mostrarOpcionesDeImagen(context),
+                                          child: Container(
+                                            width: 150,
+                                            margin: const EdgeInsets.only(left: 10),
+                                            decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white.withOpacity(0.3), width: 1.5)),
+                                            child: Center(
+                                              child: Column(
+                                                mainAxisAlignment: MainAxisAlignment.center,
+                                                children: [
+                                                  Icon(Icons.add_photo_alternate_rounded, size: 30, color: Colors.white.withOpacity(0.8)),
+                                                  const SizedBox(height: 5),
+                                                  Text('Añadir más', style: TextStyle(color: Colors.white.withOpacity(0.8), fontWeight: FontWeight.bold, fontSize: 12)),
+                                                ],
+                                              ),
+                                            ),
                                           ),
-                                        ),
+                                        );
+                                      }
+                                      
+                                      return Stack(
+                                        children: [
+                                          Container(
+                                            width: 150,
+                                            margin: EdgeInsets.only(right: index < _imagenesSeleccionadas.length - 1 ? 10 : 0),
+                                            decoration: BoxDecoration(borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white.withOpacity(0.3), width: 1.5)),
+                                            child: ClipRRect(
+                                              borderRadius: BorderRadius.circular(22),
+                                              child: Image.file(_imagenesSeleccionadas[index], fit: BoxFit.cover),
+                                            ),
+                                          ),
+                                          Positioned(
+                                            top: 5, right: 15,
+                                            child: GestureDetector(
+                                              onTap: () => _eliminarImagen(index),
+                                              child: Container(
+                                                padding: const EdgeInsets.all(4),
+                                                decoration: const BoxDecoration(color: Colors.redAccent, shape: BoxShape.circle),
+                                                child: const Icon(Icons.close, color: Colors.white, size: 16),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  ),
+                                )
+                              else
+                                GestureDetector(
+                                  onTap: () => _mostrarOpcionesDeImagen(context),
+                                  child: Container(
+                                    height: 200, width: double.infinity,
+                                    decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white.withOpacity(0.3), width: 1.5)),
+                                    child: Center(
+                                      child: Column(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(Icons.camera_alt_rounded, size: 40, color: Colors.white.withOpacity(0.8)),
+                                          const SizedBox(height: 10),
+                                          Text('Añadir hasta 5 fotos', style: TextStyle(color: Colors.white.withOpacity(0.8), fontWeight: FontWeight.bold)),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
                                 ),
-                              ),
                               const SizedBox(height: 25),
 
                               _buildLabel('¿Qué ofreces? (Título)'),
