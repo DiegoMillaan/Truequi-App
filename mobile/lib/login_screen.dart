@@ -85,6 +85,12 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
 
   bool _validarEmail(String email) {
     final emailLimpio = email.trim();
+    
+    // Validaciones de seguridad añadidas
+    if (emailLimpio.length > 100) return false;
+    if (emailLimpio.contains(' ')) return false;
+
+    // Reglas de negocio existentes
     if (!RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$').hasMatch(emailLimpio)) return false;
     if (emailLimpio.startsWith('a@a') || emailLimpio.contains('test@test') || emailLimpio.length < 8) return false;
     return true;
@@ -165,8 +171,18 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                             child: Column(
                               children: [
                                 TextFormField(
-                                  controller: _correoController, keyboardType: TextInputType.emailAddress, style: const TextStyle(color: Colors.white),
-                                  decoration: InputDecoration(labelText: 'Truequi Email', labelStyle: TextStyle(color: Colors.white.withOpacity(0.6)), prefixIcon: const Icon(Icons.alternate_email_rounded, color: TruequiColors.amarillo), filled: true, fillColor: Colors.white.withOpacity(0.1), border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none), focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Colors.white.withOpacity(0.5), width: 1.5))),
+                                  controller: _correoController, 
+                                  keyboardType: TextInputType.emailAddress, 
+                                  style: const TextStyle(color: Colors.white),
+                                  decoration: InputDecoration(
+                                    labelText: 'Truequi Email', 
+                                    labelStyle: TextStyle(color: Colors.white.withOpacity(0.6)), 
+                                    prefixIcon: const Icon(Icons.alternate_email_rounded, color: TruequiColors.amarillo), 
+                                    filled: true, 
+                                    fillColor: Colors.white.withOpacity(0.1), 
+                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none), 
+                                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Colors.white.withOpacity(0.5), width: 1.5))
+                                  ),
                                   validator: (value) => _validarEmail(value ?? '') ? null : 'Ingresa un correo real válido',
                                 ),
                                 const SizedBox(height: 16),
@@ -195,7 +211,11 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none), 
                                     focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Colors.white.withOpacity(0.5), width: 1.5))
                                   ),
-                                  validator: (v) => v != null && v.length >= 6 ? null : 'Mínimo 6 caracteres',
+                                  validator: (v) {
+                                    if (v == null || v.length < 6) return 'Mínimo 6 caracteres';
+                                    if (v.length > 50) return 'Máximo 50 caracteres permitidos';
+                                    return null;
+                                  },
                                 ),
                                 const SizedBox(height: 30),
                                 
