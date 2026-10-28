@@ -15,13 +15,13 @@ class _RegistroScreenState extends State<RegistroScreen> with SingleTickerProvid
   final _nombreController = TextEditingController();
   final _correoController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController(); // NUEVO: Controlador para confirmar contraseña
+  final _confirmPasswordController = TextEditingController(); 
   final _formKey = GlobalKey<FormState>();
   final AuthService _authService = AuthService();
   
   bool _cargando = false;
-  bool _ocultarPassword = true; // NUEVO: Estado de visibilidad
-  bool _ocultarConfirmPassword = true; // NUEVO: Estado de visibilidad
+  bool _ocultarPassword = true; 
+  bool _ocultarConfirmPassword = true; 
   late AnimationController _animationController;
 
   @override
@@ -36,7 +36,7 @@ class _RegistroScreenState extends State<RegistroScreen> with SingleTickerProvid
     _nombreController.dispose();
     _correoController.dispose();
     _passwordController.dispose();
-    _confirmPasswordController.dispose(); // NUEVO: Liberar memoria
+    _confirmPasswordController.dispose(); 
     super.dispose();
   }
 
@@ -117,16 +117,23 @@ class _RegistroScreenState extends State<RegistroScreen> with SingleTickerProvid
                                   validator: (v) => v != null && v.length >= 3 ? null : 'Nombre muy corto'
                                 ),
                                 const SizedBox(height: 16),
+                                
+                                // CAMPO DE CORREO CON REGLAS DE SEGURIDAD
                                 _buildGlassField(
                                   controller: _correoController, 
                                   label: 'Correo Electrónico', 
                                   icon: Icons.alternate_email_rounded, 
                                   isEmail: true, 
-                                  validator: (v) => v != null && v.contains('@') ? null : 'Correo inválido' // Regla original restaurada
+                                  validator: (v) {
+                                    if (v == null || !v.contains('@')) return 'Correo inválido';
+                                    if (v.length > 100) return 'Máximo 100 caracteres'; // Regla añadida
+                                    if (v.contains(' ')) return 'El correo no puede tener espacios'; // Regla añadida
+                                    return null;
+                                  }
                                 ),
                                 const SizedBox(height: 16),
                                 
-                                // CAMPO DE CONTRASEÑA CON VISIBILIDAD
+                                // CAMPO DE CONTRASEÑA CON REGLA DE SEGURIDAD
                                 _buildGlassField(
                                   controller: _passwordController, 
                                   label: 'Contraseña', 
@@ -136,11 +143,14 @@ class _RegistroScreenState extends State<RegistroScreen> with SingleTickerProvid
                                     icon: Icon(_ocultarPassword ? Icons.visibility_off : Icons.visibility, color: Colors.white70),
                                     onPressed: () => setState(() => _ocultarPassword = !_ocultarPassword),
                                   ),
-                                  validator: (v) => v != null && v.length >= 6 ? null : 'Mínimo 6 caracteres' // Regla original restaurada
+                                  validator: (v) {
+                                    if (v == null || v.length < 6) return 'Mínimo 6 caracteres';
+                                    if (v.length > 50) return 'Máximo 50 caracteres permitidos'; // Regla añadida
+                                    return null;
+                                  }
                                 ),
                                 const SizedBox(height: 16),
 
-                                // NUEVO CAMPO: CONFIRMAR CONTRASEÑA
                                 _buildGlassField(
                                   controller: _confirmPasswordController, 
                                   label: 'Confirmar Contraseña', 
@@ -175,7 +185,6 @@ class _RegistroScreenState extends State<RegistroScreen> with SingleTickerProvid
     );
   }
 
-  // MÉTODO CONSTRUCTOR ACTUALIZADO PARA SOPORTAR SUFFIX ICON Y OBSCURE TEXT
   Widget _buildGlassField({
     required TextEditingController controller, 
     required String label, 
