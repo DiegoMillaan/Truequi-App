@@ -54,7 +54,6 @@ class _PerfilPageState extends State<PerfilPage> {
         final Map<String, dynamic> data = jsonDecode(resProductos.body);
         final List<dynamic> todosLosProductos = data['productos'] ?? [];
         
-        // Obtener la lista de IDs de favoritos del perfil de usuario
         final List<dynamic> idsFavoritos = usuarioMap?['favoritos'] ?? [];
 
         if (mounted) {
@@ -126,6 +125,158 @@ class _PerfilPageState extends State<PerfilPage> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  // ==========================================
+  // MODAL DE REPORTE DE USUARIO / CONTENIDO (ISSUE #119)
+  // ==========================================
+  void _mostrarDialogoDenuncia() {
+    final razonController = TextEditingController();
+    bool enviando = false;
+
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.6),
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Dialog(
+              backgroundColor: Colors.transparent,
+              insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(28),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                  child: Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1E143A).withOpacity(0.95),
+                      borderRadius: BorderRadius.circular(28),
+                      border: Border.all(color: Colors.redAccent.withOpacity(0.5), width: 1.5),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.report_problem_rounded, color: Colors.redAccent, size: 28),
+                            const SizedBox(width: 10),
+                            const Text(
+                              'Denunciar o Reportar',
+                              style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Escribe las razones del reporte sobre algún perfil, comportamiento o contenido inapropiado:',
+                          style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 13),
+                        ),
+                        const SizedBox(height: 16),
+                        
+                        // CASILLA PARA ESCRIBIR LAS RAZONES DEL REPORTE
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.05),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: Colors.white.withOpacity(0.2)),
+                          ),
+                          child: TextField(
+                            controller: razonController,
+                            maxLines: 4,
+                            style: const TextStyle(color: Colors.white, fontSize: 14),
+                            decoration: InputDecoration(hintText: 'Escribe aquí los motivos detallados...', hintStyle: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 13), border: InputBorder.none),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(dialogContext),
+                              child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
+                            ),
+                            const SizedBox(width: 10),
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.redAccent,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                              ),
+                              onPressed: enviando ? null : () async {
+                                final razon = razonController.text.trim();
+                                if (razon.isEmpty) {
+                                  _mostrarAlertaLiquid(context, 'Por favor escribe el motivo del reporte.', tipo: 'error');
+                                  return;
+                                }
+
+                                setModalState(() => enviando = true);
+
+                                try {
+                                  await http.post(
+                                    Uri.parse('https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/reportes'),
+                                    headers: {'Content-Type': 'application/json'},
+                                    body: jsonEncode({
+                                      'reportadorId': widget.correo,
+                                      'motivo': razon,
+                                      'fecha': DateTime.now().toIso8601String(),
+                                    }),
+                                  );
+                                } catch (_) {}
+
+                                if (!dialogContext.mounted) return;
+                                Navigator.pop(dialogContext);
+
+                                _mostrarAlertaLiquid(this.context, 'Reporte enviado al equipo de moderación.', tipo: 'exito');
+                              },
+                              child: enviando
+                                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                                  : const Text('Enviar Reporte', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                            ),
+                          ],
+                        )
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _mostrarAvisoPrivacidad() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1E143A),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: const Row(
+          children: [
+            Icon(Icons.privacy_tip_rounded, color: TruequiColors.amarillo),
+            SizedBox(width: 10),
+            Text('Aviso de Privacidad', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Text(
+            'En Truequi, valoramos tu privacidad y seguridad.\n\nToda tu información personal, número telefónico, ubicación de verificación ZMQ, imágenes y mensajes están protegidos por la infraestructura de Amazon Web Services (AWS).\n\nLos datos se emplean exclusivamente para validar intercambios seguros dentro de la Zona Metropolitana de Querétaro.',
+            style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 14, height: 1.5),
+          ),
+        ),
+        actions: [
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: TruequiColors.purpura, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Entendido', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+        ],
       ),
     );
   }
@@ -641,6 +792,10 @@ class _PerfilPageState extends State<PerfilPage> {
                   _buildMenuOption(context, 'Editar mi nombre', Icons.badge_rounded, _editarNombreDialog),
                   Divider(height: 1, color: Colors.white.withOpacity(0.1)),
                   _buildMenuOption(context, 'Actualizar foto', Icons.face_retouching_natural_rounded, _editarFotoPerfil),
+                  Divider(height: 1, color: Colors.white.withOpacity(0.1)),
+                  _buildMenuOption(context, 'Aviso de Privacidad', Icons.privacy_tip_rounded, _mostrarAvisoPrivacidad),
+                  Divider(height: 1, color: Colors.white.withOpacity(0.1)),
+                  _buildMenuOption(context, 'Ayuda y Denuncias', Icons.report_problem_rounded, _mostrarDialogoDenuncia),
                   Divider(height: 1, color: Colors.white.withOpacity(0.1)),
                   _buildMenuOption(context, 'Cerrar Sesión', Icons.logout_rounded, _cerrarSesion, isDestructive: true),
                 ],
