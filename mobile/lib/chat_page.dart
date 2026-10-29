@@ -205,6 +205,173 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
+  // ==========================================
+  // MODAL DE CALIFICACIÓN (COMPLETADO TRUEQUE)
+  // ==========================================
+  void _mostrarDialogoCalificacion(String destinatarioCorreo) {
+    int estrellas = 5;
+    final comentarioController = TextEditingController();
+    bool enviando = false;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Evita que se cierre sin calificar u omitir
+      barrierColor: Colors.black.withOpacity(0.8),
+      builder: (dialogCtx) {
+        return StatefulBuilder(
+          builder: (ctx, setModalState) {
+            Future<void> enviarCalificacion() async {
+              if (comentarioController.text.trim().isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Por favor, escribe un breve comentario sobre el usuario.'), backgroundColor: Colors.redAccent),
+                );
+                return;
+              }
+
+              setModalState(() => enviando = true);
+              try {
+                final res = await http.put(
+                  Uri.parse('https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/usuario/calificar'),
+                  headers: {'Content-Type': 'application/json'},
+                  body: jsonEncode({
+                    'tipo': 'resena',
+                    'correoCalificado': destinatarioCorreo,
+                    'autorCorreo': widget.miCorreo,
+                    'autorNombre': widget.miCorreo.split('@').first,
+                    'estrellas': estrellas,
+                    'comentario': comentarioController.text.trim(),
+                    'fecha': DateTime.now().toIso8601String(),
+                  }),
+                );
+
+                if (!dialogCtx.mounted) return;
+                Navigator.pop(dialogCtx);
+
+                if (res.statusCode == 200) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      backgroundColor: TruequiColors.purpura,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      behavior: SnackBarBehavior.floating,
+                      content: const Row(
+                        children: [
+                          Icon(Icons.star_rounded, color: TruequiColors.amarillo),
+                          SizedBox(width: 12),
+                          Expanded(child: Text('¡Trueque completado y usuario calificado!', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (dialogCtx.mounted) Navigator.pop(dialogCtx);
+              }
+            }
+
+            return Dialog(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(40),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+                  child: Container(
+                    padding: const EdgeInsets.all(30),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(40),
+                      border: Border.all(color: TruequiColors.amarillo.withOpacity(0.5), width: 1.5),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.handshake_rounded, color: TruequiColors.amarillo, size: 60),
+                        const SizedBox(height: 20),
+                        const Text('¡Trato Cerrado!', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 10),
+                        Text(
+                          'Califica tu experiencia de intercambio con\n$destinatarioCorreo',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 14),
+                        ),
+                        const SizedBox(height: 20),
+                        
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(5, (index) {
+                            return GestureDetector(
+                              onTap: () => setModalState(() => estrellas = index + 1),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 4),
+                                child: Icon(
+                                  index < estrellas ? Icons.star_rounded : Icons.star_border_rounded,
+                                  color: TruequiColors.amarillo,
+                                  size: 40,
+                                ),
+                              ),
+                            );
+                          }),
+                        ),
+                        const SizedBox(height: 20),
+
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: Colors.white.withOpacity(0.2)),
+                          ),
+                          child: TextField(
+                            controller: comentarioController,
+                            maxLines: 3,
+                            style: const TextStyle(color: Colors.white),
+                            decoration: InputDecoration(
+                              hintText: 'Escribe un comentario público (opcional pero recomendado)...',
+                              hintStyle: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 13),
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(dialogCtx),
+                              child: const Text('Omitir', style: TextStyle(color: Colors.grey)),
+                            ),
+                            const SizedBox(width: 10),
+                            SizedBox(
+                              height: 50,
+                              child: ElevatedButton(
+                                onPressed: enviando ? null : enviarCalificacion,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: TruequiColors.amarillo,
+                                  foregroundColor: TruequiColors.textoOscuro,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                ),
+                                child: enviando
+                                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: TruequiColors.textoOscuro, strokeWidth: 2))
+                                    : const Text('Guardar Reputación', style: TextStyle(fontWeight: FontWeight.bold)),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   void _mostrarModalValidacionPin(String destinatarioCorreo, String mensajeId) {
     final pinController = TextEditingController();
     bool validando = false;
@@ -229,8 +396,10 @@ class _ChatPageState extends State<ChatPage> {
                 }
 
                 if (!dialogContext.mounted) return;
-                Navigator.pop(dialogContext);
-                _mostrarModalCalificacion(destinatarioCorreo);
+                Navigator.pop(dialogContext); // Cierra modal de PIN
+                
+                // Abre modal de calificación y comentarios
+                _mostrarDialogoCalificacion(destinatarioCorreo);
               } else {
                 setModalState(() => validando = false);
               }
@@ -277,66 +446,6 @@ class _ChatPageState extends State<ChatPage> {
           }
         );
       }
-    );
-  }
-
-  void _mostrarModalCalificacion(String destinatarioCorreo) {
-    double estrellas = 5.0;
-    bool procesando = false;
-
-    showDialog(
-      context: context, barrierColor: Colors.black.withOpacity(0.7),
-      builder: (dialogContext) {
-        return StatefulBuilder(
-          builder: (contextModal, setModalState) {
-            Future<void> enviarCalificacion() async {
-              setModalState(() => procesando = true);
-              try {
-                await http.put(Uri.parse('https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/usuario/calificar'),
-                    headers: {'Content-Type': 'application/json'}, body: jsonEncode({'correo': destinatarioCorreo, 'estrellas': estrellas}));
-                
-                if (!dialogContext.mounted) return;
-                Navigator.pop(dialogContext);
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('¡Trueque completado y calificado! 🎉', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)), backgroundColor: Colors.green));
-              } catch (e) { 
-                setModalState(() => procesando = false); 
-              }
-            }
-
-            return Dialog(
-              backgroundColor: Colors.transparent,
-              insetPadding: const EdgeInsets.symmetric(horizontal: 20),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(40),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-                  child: Container(
-                    width: double.infinity, padding: const EdgeInsets.all(30),
-                    decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(40), border: Border.all(color: TruequiColors.amarillo.withOpacity(0.5), width: 1.5)),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.handshake_rounded, size: 60, color: TruequiColors.amarillo),
-                        const SizedBox(height: 20),
-                        const Text('¡Trato Cerrado!', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 10),
-                        Text('Califica la experiencia con $destinatarioCorreo', style: TextStyle(color: Colors.white.withOpacity(0.7)), textAlign: TextAlign.center),
-                        const SizedBox(height: 30),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: List.generate(5, (index) => IconButton(icon: Icon(index < estrellas ? Icons.star_rounded : Icons.star_border_rounded, color: TruequiColors.amarillo, size: 40), onPressed: () => setModalState(() => estrellas = index + 1.0))),
-                        ),
-                        const SizedBox(height: 30),
-                        SizedBox(width: double.infinity, height: 50, child: ElevatedButton(onPressed: procesando ? null : enviarCalificacion, style: ElevatedButton.styleFrom(backgroundColor: TruequiColors.amarillo, foregroundColor: TruequiColors.textoOscuro, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))), child: procesando ? const CircularProgressIndicator(color: TruequiColors.textoOscuro) : const Text('Guardar Reputación', style: TextStyle(fontWeight: FontWeight.bold)))),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            );
-          },
-        );
-      },
     );
   }
 
@@ -486,7 +595,6 @@ class _ChatPageState extends State<ChatPage> {
                       ),
               ),
 
-              // 🛡️ REEMPLAZO CONDICIONAL DE LA CAJA DE TEXTO
               if (_estadoActual == 'Completado')
                 ClipRRect(
                   child: BackdropFilter(
