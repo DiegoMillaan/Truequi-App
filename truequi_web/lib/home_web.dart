@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
+import 'package:web/web.dart' as web;
 
 import 'services/google_auth_service.dart';
 import 'services/ubicacion_zmq_service.dart';
@@ -40,8 +41,10 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
   static const String _productosUrl = 'https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/productos';
   static const String _uploadUrlEndpoint = 'https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/productos/upload-url';
   static const String _perfilUrl = 'https://y3cokge8sa.execute-api.us-east-1.amazonaws.com/dev/usuario/perfil';
+  static const String _storageKeySesion = 'truequi_usuario_sesion';
 
   final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
+  final ScrollController _scrollController = ScrollController();
 
   late AnimationController _bgController;
   late AnimationController _floatController;
@@ -50,11 +53,11 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
   bool _isLoadingCatalog = true;
   Map<String, dynamic>? _usuarioActual;
   List<String> _favoritosIds = [];
+  bool _hoverLogo = false;
 
   String _busqueda = '';
   String _categoriaSeleccionadaFiltro = 'Todas';
 
-  // PUNTO 10: MÁS CATEGORÍAS DE ARTÍCULOS
   final List<String> _categorias = [
     'Todas',
     '❤️ Favoritos',
@@ -72,7 +75,6 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
     'Vehículos y Movilidad'
   ];
 
-  // PUNTO 11: MUNICIPIOS DE LA ZONA METROPOLITANA DE QUERÉTARO
   final List<String> _municipiosZMQ = [
     'Santiago de Querétaro',
     'Corregidora',
@@ -80,7 +82,6 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
     'Huimilpan',
   ];
 
-  // PUNTO 9: DICCIONARIO DE MODERACIÓN CONTRA PUBLICACIONES O SERVICIOS ILÍCITOS
   static const List<String> _palabrasIlicitas = [
     'droga', 'marihuana', 'weed', 'cocaína', 'cocaina', 'metanfetamina', 'cristal',
     'fentanilo', 'lsd', 'vape', 'vaper', 'wax', 'thc', 'cbd',
@@ -95,10 +96,42 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+    _restaurarSesionGuardada();
     _inicializarGoogle();
     _cargarProductos();
     _bgController = AnimationController(vsync: this, duration: const Duration(seconds: 25))..repeat();
     _floatController = AnimationController(vsync: this, duration: const Duration(seconds: 4))..repeat(reverse: true);
+  }
+
+  // =========================================================
+  // PERSISTENCIA DE SESIÓN EN NAVEGADOR (LOCAL STORAGE)
+  // =========================================================
+  void _restaurarSesionGuardada() {
+    try {
+      final raw = web.window.localStorage.getItem(_storageKeySesion);
+      if (raw != null && raw.isNotEmpty) {
+        final Map<String, dynamic> sesion = Map<String, dynamic>.from(jsonDecode(raw));
+        if (sesion['correo'] != null) {
+          setState(() {
+            _usuarioActual = sesion;
+            if (sesion['favoritos'] is List) {
+              _favoritosIds = List<String>.from((sesion['favoritos'] as List).map((e) => e.toString()));
+            }
+          });
+          _recargarUsuarioActual();
+        }
+      }
+    } catch (e) {
+      debugPrint('Error restaurando sesión: $e');
+    }
+  }
+
+  void _guardarSesionLocal(Map<String, dynamic> usuario) {
+    try {
+      web.window.localStorage.setItem(_storageKeySesion, jsonEncode(usuario));
+    } catch (e) {
+      debugPrint('Error guardando sesión local: $e');
+    }
   }
 
   Future<void> _inicializarGoogle() async {
@@ -121,9 +154,21 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
     }
   }
 
-  // =========================================================
-  // SINCRONIZACIÓN DE PERFIL, TELÉFONO Y FAVORITOS
-  // =========================================================
+  void _irAlInicioYRefrescar() {
+    setState(() {
+      _busqueda = '';
+      _categoriaSeleccionadaFiltro = 'Todas';
+    });
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 650),
+        curve: Curves.easeOutCubic,
+      );
+    }
+    _cargarProductos();
+  }
+
   Future<void> _recargarUsuarioActual({String? nombreInicial, String? fotoInicial, String? telefonoInicial}) async {
     if (_usuarioActual == null || _usuarioActual!['correo'] == null) return;
 
@@ -160,21 +205,24 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
             ? List<String>.from(usuarioDB['favoritos'].map((e) => e.toString()))
             : _favoritosIds;
 
+        final Map<String, dynamic> nuevoEstadoUsuario = {
+          ..._usuarioActual!,
+          ...usuarioDB,
+          'correo': correo,
+          'nombre': nombreFinal,
+          'foto': fotoFinal,
+          'fotoUrl': fotoFinal,
+          'telefono': telefonoFinal,
+          'favoritos': favs,
+        };
+
         if (mounted) {
           setState(() {
             _favoritosIds = favs;
-            _usuarioActual = {
-              ..._usuarioActual!,
-              ...usuarioDB,
-              'correo': correo,
-              'nombre': nombreFinal,
-              'foto': fotoFinal,
-              'fotoUrl': fotoFinal,
-              'telefono': telefonoFinal,
-              'favoritos': favs,
-            };
+            _usuarioActual = nuevoEstadoUsuario;
           });
         }
+        _guardarSesionLocal(nuevoEstadoUsuario);
 
         if (nombreEnDB == null || nombreEnDB.isEmpty || (telefonoInicial != null && telefonoEnDB == null)) {
           await http.put(
@@ -195,13 +243,10 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
     }
   }
 
-  // =========================================================
-  // PUNTO 12: AGREGAR / QUITAR DE FAVORITOS
-  // =========================================================
   Future<void> _toggleFavorito(String productoId) async {
     if (_usuarioActual == null) {
       _mostrarAlertaLiquid(context, 'Inicia sesión para guardar artículos en tus favoritos ❤️', tipo: 'info');
-      _mostrarLogin();
+      _mostrarLogin(iniciarEnRegistro: false);
       return;
     }
 
@@ -214,6 +259,7 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
       }
       _usuarioActual!['favoritos'] = _favoritosIds;
     });
+    _guardarSesionLocal(_usuarioActual!);
 
     try {
       await http.put(
@@ -229,9 +275,6 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
     }
   }
 
-  // =========================================================
-  // PUNTO 9: VALIDADOR DE PUBLICACIONES ILÍCITAS
-  // =========================================================
   String? _detectarContenidoIlicito(String titulo, String descripcion) {
     final texto = '$titulo $descripcion'.toLowerCase();
     for (final palabra in _palabrasIlicitas) {
@@ -245,6 +288,7 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
 
   @override
   void dispose() {
+    _scrollController.dispose();
     _bgController.dispose();
     _floatController.dispose();
     super.dispose();
@@ -297,10 +341,7 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
     );
   }
 
-  // =========================================================
-  // PUNTOS 7 Y 8: LOGIN CON TELÉFONO, DOBLE PASSWORD Y OJITO
-  // =========================================================
-  void _mostrarLogin() {
+  void _mostrarLogin({bool iniciarEnRegistro = false}) {
     final nombreController = TextEditingController();
     final telefonoController = TextEditingController();
     final correoController = TextEditingController();
@@ -308,7 +349,7 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
     final confirmarPasswordController = TextEditingController();
 
     bool cargando = false;
-    bool esRegistro = false;
+    bool esRegistro = iniciarEnRegistro;
     bool ocultarPassword = true;
     bool ocultarConfirmarPassword = true;
     String? error;
@@ -330,14 +371,15 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
                     : (correoGoogle.isNotEmpty ? correoGoogle.split('@').first : 'Usuario');
                 final String? fotoGoogle = (usuarioData['fotoUrl'] ?? usuarioData['foto'])?.toString();
 
-                setState(() {
-                  _usuarioActual = {
-                    'nombre': nombreGoogle,
-                    'correo': correoGoogle,
-                    'foto': fotoGoogle,
-                    'fotoUrl': fotoGoogle,
-                  };
-                });
+                final Map<String, dynamic> userTemp = {
+                  'nombre': nombreGoogle,
+                  'correo': correoGoogle,
+                  'foto': fotoGoogle,
+                  'fotoUrl': fotoGoogle,
+                };
+
+                setState(() => _usuarioActual = userTemp);
+                _guardarSesionLocal(userTemp);
 
                 await _recargarUsuarioActual(nombreInicial: nombreGoogle, fotoInicial: fotoGoogle);
                 if (mounted) _mostrarAlertaLiquid(this.context, '¡Acceso exitoso con Google!', tipo: 'exito');
@@ -404,15 +446,15 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
                   Navigator.pop(dialogContext);
 
                   final String nombreSeguro = nombre.isNotEmpty ? nombre : correo.split('@').first;
+                  final Map<String, dynamic> userTemp = {
+                    'nombre': nombreSeguro,
+                    'correo': correo,
+                    'telefono': telefono.isNotEmpty ? telefono : null,
+                    'foto': null,
+                  };
 
-                  setState(() {
-                    _usuarioActual = {
-                      'nombre': nombreSeguro,
-                      'correo': correo,
-                      'telefono': telefono.isNotEmpty ? telefono : null,
-                      'foto': null,
-                    };
-                  });
+                  setState(() => _usuarioActual = userTemp);
+                  _guardarSesionLocal(userTemp);
 
                   await _recargarUsuarioActual(
                     nombreInicial: nombreSeguro,
@@ -540,6 +582,8 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
         obscureText: isPass,
         maxLines: isPass ? 1 : lines,
         keyboardType: keyboardType,
+        showCursor: true,
+        cursorColor: TruequiColors.amarillo,
         style: const TextStyle(color: Colors.white),
         decoration: InputDecoration(
           labelText: label,
@@ -553,11 +597,8 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
     );
   }
 
-  // =========================================================
-  // PUNTOS 9, 10, 11 Y 13: MODAL PUBLICAR (ZMQ + 5 FOTOS + MODERACIÓN)
-  // =========================================================
   Future<void> _mostrarPublicar() async {
-    if (_usuarioActual == null) { _mostrarLogin(); return; }
+    if (_usuarioActual == null) { _mostrarLogin(iniciarEnRegistro: false); return; }
 
     _mostrarAlertaLiquid(context, 'Verificando ubicación en la Zona Metropolitana de Querétaro... 📍', tipo: 'info');
     final ubicacion = await UbicacionZmqService.verificarUbicacionActual();
@@ -622,7 +663,6 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
                 return;
               }
 
-              // PUNTO 9: VALIDACIÓN AUTOMÁTICA CONTRA COSAS O SERVICIOS ILÍCITOS
               final palabraProhibida = _detectarContenidoIlicito(titulo, descripcion);
               if (palabraProhibida != null) {
                 _mostrarAlertaLiquid(
@@ -636,7 +676,6 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
               setModalState(() => cargando = true);
 
               try {
-                // PUNTO 13: SUBIR HASTA 5 IMÁGENES EN PARALELO A S3
                 List<String> urlsPublicas = [];
                 for (final img in imagenesSeleccionadas) {
                   final resUrl = await http.get(Uri.parse('$_uploadUrlEndpoint?ext=${img.extension}'));
@@ -715,7 +754,6 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // SELECTOR DE HASTA 5 IMÁGENES CON MINIATURAS
                               Expanded(
                                 flex: 1,
                                 child: Column(
@@ -815,7 +853,6 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
                                     const SizedBox(height: 14),
                                     _ConstruirCampoGlass('Valor estimado (MXN)', Icons.attach_money, precioController, false, 1, TextInputType.number),
                                     const SizedBox(height: 14),
-                                    // SELECTOR DE CATEGORÍA AMPLIADO
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
                                       decoration: BoxDecoration(color: Colors.white.withOpacity(0.15), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white.withOpacity(0.3))),
@@ -828,7 +865,6 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
                                       ),
                                     ),
                                     const SizedBox(height: 14),
-                                    // SELECTOR DE MUNICIPIO ZMQ
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
                                       decoration: BoxDecoration(color: Colors.white.withOpacity(0.15), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white.withOpacity(0.3))),
@@ -869,6 +905,112 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
     );
   }
 
+  // =========================================================
+  // NUEVO LOGO CON FLECHAS EN CÍRCULO (CLICKABLE AL INICIO)
+  // =========================================================
+  Widget _buildLogoTruequiModerno() {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hoverLogo = true),
+      onExit: (_) => setState(() => _hoverLogo = false),
+      child: GestureDetector(
+        onTap: _irAlInicioYRefrescar,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 280),
+          curve: Curves.easeOutBack,
+          transform: Matrix4.identity()..scale(_hoverLogo ? 1.04 : 1.0),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(_hoverLogo ? 0.85 : 0.5),
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(
+              color: _hoverLogo ? TruequiColors.purpura.withOpacity(0.4) : Colors.white,
+              width: 1.8,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: TruequiColors.purpura.withOpacity(_hoverLogo ? 0.22 : 0.08),
+                blurRadius: _hoverLogo ? 24 : 12,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // EMBLEMA DE FLECHAS EN CÍRCULO CON ANILLO DE CRISTAL Y ROTACIÓN SUAVE
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: const LinearGradient(
+                    colors: [TruequiColors.purpura, TruequiColors.amarillo],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: TruequiColors.purpura.withOpacity(0.35),
+                      blurRadius: 14,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
+                ),
+                padding: const EdgeInsets.all(2.5),
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF23154F), TruequiColors.purpura],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    border: Border.all(color: Colors.white.withOpacity(0.25), width: 1),
+                  ),
+                  child: AnimatedRotation(
+                    turns: _hoverLogo ? 0.5 : 0.0,
+                    duration: const Duration(milliseconds: 500),
+                    curve: Curves.easeOutBack,
+                    child: const Icon(
+                      Icons.sync_rounded,
+                      color: TruequiColors.amarillo,
+                      size: 28,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 14),
+              ShaderMask(
+                shaderCallback: (bounds) => const LinearGradient(
+                  colors: [Color(0xFF1E143A), TruequiColors.purpura],
+                ).createShader(bounds),
+                child: const Text(
+                  'Truequi',
+                  style: TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                    letterSpacing: -1.2,
+                  ),
+                ),
+              ),
+              Container(
+                width: 8,
+                height: 8,
+                margin: const EdgeInsets.only(left: 3, top: 10),
+                decoration: const BoxDecoration(
+                  color: TruequiColors.amarillo,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   List<Widget> _construirBentoGrid(List<dynamic> itemsFiltrados) {
     List<Widget> filas = [];
     for (int i = 0; i < itemsFiltrados.length; i++) {
@@ -880,7 +1022,10 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
           child: SizedBox(
             width: double.infinity, height: 380,
             child: GestureDetector(
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => DetalleProductoWeb(producto: prod, usuarioActual: _usuarioActual))),
+              onTap: () async {
+                await Navigator.push(context, MaterialPageRoute(builder: (_) => DetalleProductoWeb(producto: prod, usuarioActual: _usuarioActual)));
+                _cargarProductos();
+              },
               child: _TarjetaProductoWeb(
                 producto: prod,
                 tipoBento: 'Hero',
@@ -904,7 +1049,10 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
                   child: SizedBox(
                     height: 380,
                     child: GestureDetector(
-                      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => DetalleProductoWeb(producto: prod1, usuarioActual: _usuarioActual))),
+                      onTap: () async {
+                        await Navigator.push(context, MaterialPageRoute(builder: (_) => DetalleProductoWeb(producto: prod1, usuarioActual: _usuarioActual)));
+                        _cargarProductos();
+                      },
                       child: _TarjetaProductoWeb(
                         producto: prod1,
                         tipoBento: 'Regular',
@@ -919,7 +1067,10 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
                   child: SizedBox(
                     height: 380,
                     child: GestureDetector(
-                      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => DetalleProductoWeb(producto: prod2, usuarioActual: _usuarioActual))),
+                      onTap: () async {
+                        await Navigator.push(context, MaterialPageRoute(builder: (_) => DetalleProductoWeb(producto: prod2, usuarioActual: _usuarioActual)));
+                        _cargarProductos();
+                      },
                       child: _TarjetaProductoWeb(
                         producto: prod2,
                         tipoBento: 'Regular',
@@ -941,7 +1092,10 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
             child: SizedBox(
               width: double.infinity, height: 380,
               child: GestureDetector(
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => DetalleProductoWeb(producto: prod, usuarioActual: _usuarioActual))),
+                onTap: () async {
+                  await Navigator.push(context, MaterialPageRoute(builder: (_) => DetalleProductoWeb(producto: prod, usuarioActual: _usuarioActual)));
+                  _cargarProductos();
+                },
                 child: _TarjetaProductoWeb(
                   producto: prod,
                   tipoBento: 'Hero',
@@ -1002,6 +1156,7 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
           BackdropFilter(filter: ImageFilter.blur(sigmaX: 100.0, sigmaY: 100.0), child: Container(color: Colors.white.withOpacity(0.1))),
 
           CustomScrollView(
+            controller: _scrollController,
             physics: const BouncingScrollPhysics(),
             slivers: [
               SliverAppBar(
@@ -1018,34 +1173,21 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              const Icon(Icons.sync_rounded, color: TruequiColors.purpura, size: 50),
-                              const SizedBox(width: 15),
-                              const Text('truequi', style: TextStyle(fontSize: 34, fontWeight: FontWeight.w900, color: TruequiColors.purpura, letterSpacing: -1.5)),
-                              const SizedBox(width: 20),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                decoration: BoxDecoration(color: TruequiColors.purpura.withOpacity(0.08), borderRadius: BorderRadius.circular(20)),
-                                child: const Row(
-                                  children: [
-                                    Icon(Icons.location_on_rounded, color: TruequiColors.purpura, size: 16),
-                                    SizedBox(width: 5),
-                                    Text('ZMQ Querétaro', style: TextStyle(color: TruequiColors.purpura, fontWeight: FontWeight.bold, fontSize: 13)),
-                                  ],
-                                ),
-                              ),
+                              // NUEVO LOGO CON FLECHAS EN CÍRCULO QUE LLEVA AL INICIO
+                              _buildLogoTruequiModerno(),
                               const Spacer(),
                               if (_usuarioActual == null) ...[
                                 TextButton(
-                                  onPressed: _mostrarLogin,
+                                  onPressed: () => _mostrarLogin(iniciarEnRegistro: true),
                                   style: TextButton.styleFrom(
                                     padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                                   ),
-                                  child: const Text('Crear cuenta', style: TextStyle(color: TruequiColors.textoOscuro, fontWeight: FontWeight.bold, fontSize: 16))
+                                  child: const Text('Crear cuenta', style: TextStyle(color: TruequiColors.textoOscuro, fontWeight: FontWeight.bold, fontSize: 16)),
                                 ),
                                 const SizedBox(width: 15),
                                 OutlinedButton.icon(
-                                  onPressed: _mostrarLogin,
+                                  onPressed: () => _mostrarLogin(iniciarEnRegistro: false),
                                   icon: const Icon(Icons.login_rounded, size: 20),
                                   label: const Text('Ingresar', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                                   style: OutlinedButton.styleFrom(
@@ -1054,15 +1196,20 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
                                     side: const BorderSide(color: TruequiColors.purpura, width: 2),
                                     padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                    elevation: 0
-                                  )
+                                    elevation: 0,
+                                  ),
                                 ),
                               ] else ...[
                                 Stack(
                                   clipBehavior: Clip.none,
                                   children: [
                                     OutlinedButton.icon(
-                                      onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => MensajesWeb(usuarioActual: _usuarioActual!))),
+                                      onPressed: () async {
+                                        await Navigator.push(context, MaterialPageRoute(builder: (_) => MensajesWeb(usuarioActual: _usuarioActual!)));
+                                        // Refrescar catálogo por si se completó un trueque
+                                        await _cargarProductos();
+                                        await _recargarUsuarioActual();
+                                      },
                                       icon: const Icon(Icons.forum_rounded, size: 20),
                                       label: const Text('Negociaciones', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                                       style: OutlinedButton.styleFrom(
@@ -1102,7 +1249,9 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
                                   child: GestureDetector(
                                     onTap: () async {
                                       await Navigator.push(context, MaterialPageRoute(builder: (_) => PerfilWeb(usuario: _usuarioActual!)));
-                                      _recargarUsuarioActual();
+                                      // AL REGRESAR DEL PERFIL, RECARGAMOS EL CATÁLOGO Y EL USUARIO
+                                      await _cargarProductos();
+                                      await _recargarUsuarioActual();
                                     },
                                     child: Container(
                                       padding: const EdgeInsets.all(4),
@@ -1252,6 +1401,8 @@ class _BuscadorDelegate extends SliverPersistentHeaderDelegate {
         ),
         child: TextField(
           onChanged: onChanged,
+          showCursor: true,
+          cursorColor: TruequiColors.purpura,
           style: const TextStyle(fontSize: 20, color: TruequiColors.textoOscuro, fontWeight: FontWeight.w600),
           decoration: InputDecoration(
             hintText: 'Buscar hogar, cocina, juguetes, libros...',
@@ -1319,7 +1470,6 @@ class _TarjetaProductoWebState extends State<_TarjetaProductoWeb> {
                   ),
                   child: isHero ? _buildHeroLayout() : _buildRegularLayout(),
                 ),
-                // INDICADOR DE CANTIDAD DE FOTOS (PUNTO 13)
                 if (listaFotos.length > 1)
                   Positioned(
                     top: 16, left: 16,
@@ -1335,7 +1485,6 @@ class _TarjetaProductoWebState extends State<_TarjetaProductoWeb> {
                       ),
                     ),
                   ),
-                // BOTÓN DE FAVORITOS (PUNTO 12)
                 Positioned(
                   top: 16, right: 16,
                   child: GestureDetector(

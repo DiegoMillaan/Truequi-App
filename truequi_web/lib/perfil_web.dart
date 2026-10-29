@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
+import 'package:web/web.dart' as web;
 
 import 'services/google_auth_service.dart';
 import 'home_web.dart';
@@ -268,7 +269,12 @@ class _PerfilWebState extends State<PerfilWeb> with SingleTickerProviderStateMix
   }
 
   Future<void> _cerrarSesion() async {
-    try { await GoogleAuthService().signOut(); } catch (_) {}
+    try {
+      web.window.localStorage.removeItem('truequi_usuario_sesion');
+      await GoogleAuthService().signOut();
+    } catch (e) {
+      debugPrint('Limpiando sesión: $e');
+    }
     if (!mounted) return;
     Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const HomeWeb()), (route) => false);
   }
