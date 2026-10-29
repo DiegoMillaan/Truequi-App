@@ -179,18 +179,97 @@ def actualizar_perfil(event, context):
 
 def calificar_usuario(event, context):
     try:
-        body = json.loads(event['body'])
-        correo, nueva_estrellas = body.get('correo'), float(body.get('estrellas', 5.0))
-        user = tabla_usuarios.get_item(Key={'correo': str(correo)}).get('Item', {})
-        total, promedio = int(user.get('totalCalificaciones', 0)), float(user.get('promedio', 5.0))
+        body = json.loads(event.get('body', '{}'))
+        tipo_accion = body.get('tipo', 'calificacion')
+
+        # 1. SI ES UNA DENUNCIA DE PERFIL PÚBLICO
+        if tipo_accion == 'denuncia':
+            correo_denunciado = str(body.get('correoDenunciado', '')).strip()
+            motivo = str(body.get('motivo', 'Conducta inapropiada')).strip()
+            detalles = str(body.get('detalles', '')).strip()[:500]
+            denunciante = str(body.get('denunciante', 'Anónimo')).strip()
+
+            if not correo_denunciado:
+                return respuesta(400, {"error": "Falta el correo del perfil a denunciar."})
+
+            user = tabla_usuarios.get_item(Key={'correo': correo_denunciado}).get('Item', {'correo': correo_denunciado})
+            denuncias = user.get('denunciasRecibidas', [])
+            if not isinstance(denuncias, list):
+                denuncias = []
+
+            denuncias.append({
+                'id': str(uuid.uuid4()),
+                'denunciante': denunciante,
+                'motivo': motivo,
+                'detalles': detalles,
+                'fecha': datetime.now(timezone.utc).isoformat()
+            })
+
+            tabla_usuarios.update_item(
+                Key={'correo': correo_denunciado},
+                UpdateExpression="SET denunciasRecibidas = :d",
+                ExpressionAttributeValues={':d': denuncias}
+            )
+            return respuesta(200, {"message": "Denuncia registrada correctamente para revisión."})
+
+        # 2. SI ES UNA CALIFICACIÓN CON COMENTARIO PÚBLICO (MUTUA)
+        correo = str(body.get('correo', '')).strip()
+        if not correo:
+            return respuesta(400, {"error": "Correo requerido."})
+
+        nueva_estrellas = float(body.get('estrellas', 5.0))
+        comentario = str(body.get('comentario', '')).strip()[:400]
+        autor_nombre = str(body.get('autorNombre', 'Usuario UAQ')).strip()
+        autor_correo = str(body.get('autorCorreo', '')).strip()
+        mensaje_id = body.get('mensajeId')
+        rol_calificador = body.get('rolCalificador') # 'remitente' o 'destinatario'
+
+        user = tabla_usuarios.get_item(Key={'correo': correo}).get('Item', {})
+        total = int(user.get('totalCalificaciones', 0))
+        promedio = float(user.get('promedio', 5.0))
+        resenas = user.get('resenas', [])
+        if not isinstance(resenas, list):
+            resenas = []
+
         nuevo_total = total + 1
         nuevo_promedio = ((promedio * total) + nueva_estrellas) / nuevo_total
+
+        if comentario:
+            nueva_resena = {
+                'id': str(uuid.uuid4()),
+                'autorNombre': autor_nombre,
+                'autorCorreo': autor_correo,
+                'estrellas': str(round(nueva_estrellas, 1)),
+                'comentario': comentario,
+                'fecha': datetime.now(timezone.utc).isoformat()
+            }
+            resenas.insert(0, nueva_resena)
+            resenas = resenas[:50]  # Guardamos las 50 reseñas más recientes
+
         tabla_usuarios.update_item(
-            Key={'correo': str(correo)},
-            UpdateExpression="SET promedio = :p, totalCalificaciones = :t",
-            ExpressionAttributeValues={':p': str(round(nuevo_promedio, 1)), ':t': nuevo_total}
+            Key={'correo': correo},
+            UpdateExpression="SET promedio = :p, totalCalificaciones = :t, resenas = :r",
+            ExpressionAttributeValues={
+                ':p': str(round(nuevo_promedio, 1)),
+                ':t': nuevo_total,
+                ':r': resenas
+            }
         )
-        return respuesta(200, {"message": "Calificación guardada"})
+
+        # Marcar en el mensaje que esta parte ya calificó para evitar duplicados
+        if mensaje_id and rol_calificador in ['remitente', 'destinatario']:
+            campo_marca = 'calificadoPorRemitente' if rol_calificador == 'remitente' else 'calificadoPorDestinatario'
+            tabla_mensajes.update_item(
+                Key={'id': str(mensaje_id)},
+                UpdateExpression=f"SET {campo_marca} = :val",
+                ExpressionAttributeValues={':val': True}
+            )
+
+        return respuesta(200, {
+            "message": "Calificación y reseña guardadas",
+            "promedio": str(round(nuevo_promedio, 1)),
+            "totalCalificaciones": nuevo_total
+        })
     except Exception as e:
         return respuesta(500, {"error": str(e)})
 
