@@ -82,15 +82,22 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
     'Huimilpan',
   ];
 
-  static const List<String> _palabrasIlicitas = [
-    'droga', 'marihuana', 'weed', 'cocaína', 'cocaina', 'metanfetamina', 'cristal',
-    'fentanilo', 'lsd', 'vape', 'vaper', 'wax', 'thc', 'cbd',
-    'arma', 'pistola', 'revolver', 'rifle', 'escopeta', 'municiones', 'balas',
-    'taser', 'explosivo', 'pirotecnia',
-    'clonazepam', 'rivotril', 'alprazolam', 'xanax', 'receta medica',
-    'hackeo', 'cuenta robada', 'tarjetas clonadas', 'billetes falsos', 'ine falsa',
-    'factura falsa', 'prostitucion', 'escort', 'contenido adulto', 'onlyfans',
-    'pirateria', 'animales exoticos'
+  // Raíces léxicas base: al normalizar el texto, cada raíz captura plurales,
+  // derivados y evasiones con números o símbolos (ej. 'droga' atrapa 'dr0g4z3s').
+  static const List<String> _raicesIlicitas = [
+    'drog', 'marihuan', 'weed', 'cocain', 'metanfetamin', 'fentanil',
+    'lsd', 'vape', 'wax', 'thc', 'cbd', 'extasis', 'mdma', 'ketamin', 'heroina',
+    'arma', 'pistol', 'revolver', 'rifle', 'escopet', 'municion', 'explosiv', 'pirotecni', 'taser',
+    'clonazepam', 'rivotril', 'alprazolam', 'xanax', 'medicament', 'pastill', 'receta medic',
+    'hack', 'clonad', 'billetes fals', 'ine fals', 'factura fals', 'pirateri',
+    'prostitu', 'escort', 'onlyfans', 'porno', 'erotic', 'sexual', 'acompanant',
+    'trafico de especie', 'mascota prohibid', 'animal exotic', 'animal salvaj',
+    'pene', 'vagin', 'vulv', 'clitoris', 'tetas', 'nalg', 'culo'
+  ];
+
+  // Palabras cortas que requieren coincidencia de palabra exacta para no dar falsos positivos
+  static const List<String> _palabrasExactasIlicitas = [
+    'arma', 'armas', 'bala', 'balas', 'lsd', 'thc', 'cbd', 'wax', 'sexo', 'ano', 'cristal', 'polvo', 'piedra', 'hielo', 'beso', 'besos', 'lengua', 'pechos', 'senos', 'trasero', 'medicina'
   ];
 
   @override
@@ -275,12 +282,52 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
     }
   }
 
-  String? _detectarContenidoIlicito(String titulo, String descripcion) {
-    final texto = '$titulo $descripcion'.toLowerCase();
-    for (final palabra in _palabrasIlicitas) {
-      final reg = RegExp(r'\b' + RegExp.escape(palabra) + r'\b', caseSensitive: false);
-      if (reg.hasMatch(texto) || texto.contains(palabra)) {
-        return palabra;
+  String _normalizarTextoModeracion(String input) {
+    String t = input.toLowerCase();
+    // 1. Quitar acentos
+    const conAcento = 'áàäâéèëêíìïîóòöôúùüûñ';
+    const sinAcento = 'aaaaeeeeiiiioooouuuun';
+    for (int i = 0; i < conAcento.length; i++) {
+      t = t.replaceAll(conAcento[i], sinAcento[i]);
+    }
+    // 2. Convertir Leetspeak (números/símbolos usados como letras)
+    t = t
+        .replaceAll('4', 'a')
+        .replaceAll('@', 'a')
+        .replaceAll('3', 'e')
+        .replaceAll('1', 'i')
+        .replaceAll('!', 'i')
+        .replaceAll('0', 'o')
+        .replaceAll('5', 's')
+        .replaceAll('\$', 's')
+        .replaceAll('7', 't');
+    // 3. Eliminar símbolos usados para separar letras (ej. d.r.o.g.a -> droga)
+    t = t.replaceAll(RegExp(r'[\.\-\_\*\+\/\\|]'), '');
+    // 4. Reducir letras repetidas (ej. drooogaaa -> droga)
+    t = t.replaceAllMapped(RegExp(r'([a-z])\1+'), (m) => m.group(1)!);
+    return t;
+  }
+
+  Map<String, String>? _detectarContenidoIlicito(String titulo, String descripcion) {
+    final campos = {'el título': titulo, 'la descripción': descripcion};
+
+    for (final entrada in campos.entries) {
+      final textoOriginal = entrada.value.toLowerCase();
+      final textoNormalizado = _normalizarTextoModeracion(entrada.value);
+
+      // 1. Revisar palabras exactas en original y normalizado
+      for (final exacta in _palabrasExactasIlicitas) {
+        final reg = RegExp(r'\b' + RegExp.escape(exacta) + r'\b', caseSensitive: false);
+        if (reg.hasMatch(textoOriginal) || reg.hasMatch(textoNormalizado)) {
+          return {'campo': entrada.key, 'termino': exacta};
+        }
+      }
+
+      // 2. Revisar raíces léxicas sobre el texto normalizado
+      for (final raiz in _raicesIlicitas) {
+        if (textoNormalizado.contains(raiz)) {
+          return {'campo': entrada.key, 'termino': raiz};
+        }
       }
     }
     return null;
@@ -663,11 +710,11 @@ class _HomeWebState extends State<HomeWeb> with TickerProviderStateMixin {
                 return;
               }
 
-              final palabraProhibida = _detectarContenidoIlicito(titulo, descripcion);
-              if (palabraProhibida != null) {
+              final deteccion = _detectarContenidoIlicito(titulo, descripcion);
+              if (deteccion != null) {
                 _mostrarAlertaLiquid(
                   this.context,
-                  'Publicación bloqueada por seguridad: No se permiten artículos ni servicios ilícitos ("$palabraProhibida").',
+                  'Publicación bloqueada: Se detectó contenido prohibido en ${deteccion['campo']} ("${deteccion['termino']}").',
                   tipo: 'error',
                 );
                 return;
