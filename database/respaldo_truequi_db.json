@@ -1,0 +1,2251 @@
+{
+  "fecha_respaldo": "2026-11-10T22:20:38.542312+00:00",
+  "tablas": {
+    "Usuarios": [
+      {
+        "nombre": "Diego Millan Morales",
+        "correo": "diego42@gmail.com"
+      },
+      {
+        "correo": "dmillan12@alumnos.uaq.mx",
+        "promedio": "5.0",
+        "foto": "https://truequi-images-dm2026.s3.amazonaws.com/41cc4ee5-aece-4114-8061-b0f32d67ac81.jpg",
+        "totalCalificaciones": 1
+      },
+      {
+        "correo": "ximero16522@gmail.com",
+        "truequesCompletados": 1
+      },
+      {
+        "correo": "puerquitoman7@gmail.com",
+        "nombre": "Josue Lara Hurtado",
+        "promedio": "5.0",
+        "truequesCompletados": 0,
+        "totalCalificaciones": 0,
+        "fotoUrl": "https://lh3.googleusercontent.com/a/ACg8ocKjTHQ-cS-JdO54IeWwc-AEftNxDql-Cclh_Mevfv3nvCMSsw=s96-c",
+        "favoritos": []
+      },
+      {
+        "nombre": "Julio Alejandro Villeda Maldonado",
+        "correo": "witchet43@gmail.com",
+        "promedio": "5.0",
+        "totalCalificaciones": 0,
+        "truequesCompletados": 0,
+        "fotoUrl": "https://truequi-images-dm2026.s3.amazonaws.com/0db78110-9f0f-4040-8b12-5cc7af6d911b.jpg",
+        "favoritos": []
+      },
+      {
+        "nombre": "XIMENA RODRIGUEZ OCHOA",
+        "correo": "xrodriguez11@alumnos.uaq.mx",
+        "promedio": "3.5",
+        "truequesCompletados": 1,
+        "totalCalificaciones": 2,
+        "fotoUrl": "https://truequi-images-dm2026.s3.amazonaws.com/ab9fb03f-9afb-4eb1-aa7f-7735c074160a.jpg",
+        "foto": "https://truequi-images-dm2026.s3.amazonaws.com/ab9fb03f-9afb-4eb1-aa7f-7735c074160a.jpg",
+        "favoritos": []
+      },
+      {
+        "correo": "revisor@truequi.com",
+        "promedio": "5.0",
+        "truequesCompletados": 0,
+        "favoritos": [
+          "750fdd87-2079-41e7-9622-2da69fdf7b63"
+        ],
+        "totalCalificaciones": 0
+      },
+      {
+        "correo": "admin@gmail.com",
+        "nombre": "Admin Truequi",
+        "promedio": "5.0",
+        "password": "12345",
+        "foto": "https://ui-avatars.com/api/?name=Admin+Truequi&background=6B42E0&color=fff",
+        "totalCalificaciones": 0
+      },
+      {
+        "nombre": "Diego Millan",
+        "correo": "diegomillan999@gmail.com",
+        "promedio": "4.3",
+        "foto": "https://truequi-images-dm2026.s3.amazonaws.com/7f28db99-d585-4e7b-824b-039f49f98c0c.jpeg",
+        "totalCalificaciones": 3,
+        "truequesCompletados": 1
+      },
+      {
+        "nombre": "Joseph",
+        "correo": "josephtoriz.22@gmail.com",
+        "promedio": "2.3",
+        "denunciasRecibidas": [
+          {
+            "denunciante": "Usuario Comunidad UAQ",
+            "detalles": "Quiere estafar a las personas.",
+            "fecha": "2026-10-29T17:48:33.609749+00:00",
+            "id": "79fd8877-dee5-463d-aa20-142f4e8a1a9c",
+            "motivo": "Intento de fraude o estafa"
+          },
+          {
+            "denunciante": "Usuario Comunidad UAQ",
+            "detalles": "No quiso llegar donde vivo a las 12 pm de un martes, y si confirmo el trueque",
+            "fecha": "2026-10-29T21:58:44.732615+00:00",
+            "id": "c1afa31b-c4c3-4575-bb5f-352b8caca66c",
+            "motivo": "Incumplimiento en el punto de encuentro"
+          },
+          {
+            "denunciante": "Usuario Comunidad UAQ",
+            "detalles": "es un sticker impreso",
+            "fecha": "2026-10-29T22:05:52.109067+00:00",
+            "id": "785329a5-2d1a-4c61-804e-91198433f2f5",
+            "motivo": "Intento de fraude o estafa"
+          }
+        ],
+        "totalCalificaciones": 3,
+        "truequesCompletados": 1,
+        "foto": "https://truequi-images-dm2026.s3.amazonaws.com/b6c95948-14c5-4268-8996-c7a5b5c983a2.jpg",
+        "favoritos": [
+          "f3f841b9-eb1c-4533-ac15-26a15010a391",
+          "0764387b-2a39-4000-b917-fe0066be6bd2",
+          "6805c23c-1733-4eb6-82df-c35efd211707"
+        ],
+        "resenas": [
+          {
+            "autorCorreo": "xrodriguez11@alumnos.uaq.mx",
+            "autorNombre": "XIMENA RODRIGUEZ OCHOA",
+            "comentario": "Los dinosaurios no existen",
+            "estrellas": "4.0",
+            "fecha": "2026-10-29T22:07:45.880129+00:00",
+            "id": "f2a52179-5a62-46e2-8d9e-0b702b99c74b"
+          },
+          {
+            "autorCorreo": "diego41@gmail.com",
+            "autorNombre": "diego41",
+            "comentario": "Fue un buen intercambio solo que era muy intenso y queria mi instagram, cuidado chicas.",
+            "estrellas": "2.0",
+            "fecha": "2026-10-29T06:04:30.183154+00:00",
+            "id": "d03e6e11-6455-48ab-8d4b-db3247f179fc"
+          }
+        ]
+      },
+      {
+        "correo": "diego41@gmail.com",
+        "nombre": "diego41",
+        "promedio": "3.8",
+        "denunciasRecibidas": [
+          {
+            "denunciante": "Usuario Móvil Truequi",
+            "detalles": "El libro es pirata",
+            "fecha": "2026-10-29T17:52:04.741801+00:00",
+            "id": "8bdf977c-733d-44cd-b3f9-de8d6783f063",
+            "motivo": "Intento de fraude o estafa"
+          }
+        ],
+        "truequesCompletados": 2,
+        "totalCalificaciones": 5,
+        "foto": "https://truequi-images-dm2026.s3.amazonaws.com/27b7fe19-87dd-409e-9a38-016b115afbe6.jpg",
+        "favoritos": [
+          "850c81dc-a964-4886-a8a6-9d104dd81bde",
+          "cff09c5b-c2f9-42a5-aff5-7911150e44cf",
+          "c6d9af94-3614-41f3-b0b4-d4e0b612ffef"
+        ],
+        "resenas": [
+          {
+            "autorCorreo": "josephtoriz.22@gmail.com",
+            "autorNombre": "Joseph",
+            "comentario": "En persona es irrespetuoso, aunque si se completo el trueque",
+            "estrellas": "3.0",
+            "fecha": "2026-10-29T06:03:49.134206+00:00",
+            "id": "a4fe2811-6103-4b77-9757-1386d0215acd"
+          }
+        ]
+      },
+      {
+        "nombre": "MAXIMILIANO ESQUIVEL SOSA",
+        "correo": "mesquivel22@alumnos.uaq.mx",
+        "promedio": "5.0",
+        "truequesCompletados": 0,
+        "totalCalificaciones": 0,
+        "fotoUrl": "https://lh3.googleusercontent.com/a/ACg8ocJaUEzmzlMC2_Aqd6v5EXJYEsEDIM7QNWh4EEhs6qRO3T5o1g=s96-c",
+        "favoritos": [
+          "6805c23c-1733-4eb6-82df-c35efd211707",
+          "cff09c5b-c2f9-42a5-aff5-7911150e44cf"
+        ]
+      }
+    ],
+    "Productos": [
+      {
+        "imagenUrl": "https://truequi-images-dm2026.s3.amazonaws.com/60c00fb4-e3f6-4530-82c5-2f3c6a138310.jpg",
+        "estadoModeracion": "Aprobado",
+        "vendedorNombre": "diego41",
+        "categoria": "Arte y Papelería",
+        "titulo": "Bilbia de Marilyn Manson",
+        "estado": "Disponible",
+        "imagenesUrls": [
+          "https://truequi-images-dm2026.s3.amazonaws.com/60c00fb4-e3f6-4530-82c5-2f3c6a138310.jpg",
+          "https://truequi-images-dm2026.s3.amazonaws.com/68e14cce-5770-4e58-bbde-7396ea24c2c6.jpg"
+        ],
+        "descripcion": "Busco a cambio el libro de la bibliografia de marilyn manson.",
+        "municipio": "Santiago de Querétaro",
+        "id": "60331002-d1fc-4b43-a342-0255dfa68812",
+        "fechaCreacion": "2026-10-29T21:45:18.289381+00:00",
+        "precio": "5000",
+        "vendedorId": "diego41@gmail.com"
+      },
+      {
+        "imagenUrl": "https://truequi-images-dm2026.s3.amazonaws.com/3982a35c-85c2-402c-aa66-58515d7c5e93.jpg",
+        "estadoModeracion": "Aprobado",
+        "vendedorNombre": "josephtoriz.22",
+        "titulo": "Samsung S24 Base 128 GB",
+        "categoria": "Electrónica y Cómputo",
+        "estado": "Disponible",
+        "imagenesUrls": [
+          "https://truequi-images-dm2026.s3.amazonaws.com/3982a35c-85c2-402c-aa66-58515d7c5e93.jpg",
+          "https://truequi-images-dm2026.s3.amazonaws.com/7aa4f7f6-5776-4ea0-a2da-b252a823b973.jpg",
+          "https://truequi-images-dm2026.s3.amazonaws.com/a8e43877-a29e-4938-8b5d-81c55034f968.jpg",
+          "https://truequi-images-dm2026.s3.amazonaws.com/e2f367d6-4a5b-4bc1-bb06-6ba26e33db9e.jpg",
+          "https://truequi-images-dm2026.s3.amazonaws.com/ff7a5d59-5beb-4ca4-826a-9367951a1f7f.jpg"
+        ],
+        "descripcion": "Busco un iphone de la misma gama y año",
+        "municipio": "Santiago de Querétaro",
+        "id": "cff09c5b-c2f9-42a5-aff5-7911150e44cf",
+        "precio": "7000.0",
+        "fechaCreacion": "2026-10-28T17:53:39.453959+00:00",
+        "vendedorId": "josephtoriz.22@gmail.com"
+      },
+      {
+        "imagenUrl": "https://truequi-images-dm2026.s3.amazonaws.com/53f636ea-9df6-4dd7-aa4e-7460402876ee.jpg",
+        "estadoModeracion": "Aprobado",
+        "vendedorNombre": "josephtoriz.22",
+        "titulo": "Juguete FNAF",
+        "categoria": "Juguetes y Juegos",
+        "estado": "Disponible",
+        "imagenesUrls": [
+          "https://truequi-images-dm2026.s3.amazonaws.com/53f636ea-9df6-4dd7-aa4e-7460402876ee.jpg"
+        ],
+        "descripcion": "Juguete de acción de FNAF Golden Freddy. Busco un juguete de Marvel",
+        "municipio": "Santiago de Querétaro",
+        "id": "95334beb-2d91-4f57-a02e-321a5c2c6065",
+        "precio": "500.0",
+        "fechaCreacion": "2026-10-29T21:59:53.206779+00:00",
+        "vendedorId": "josephtoriz.22@gmail.com"
+      },
+      {
+        "imagenUrl": "https://truequi-images-dm2026.s3.amazonaws.com/0898ae3a-5b6a-4d8b-9f2c-c71090524e98.jpg",
+        "vendedorNombre": "diego41",
+        "estadoModeracion": "Aprobado",
+        "categoria": "Electrónica y Cómputo",
+        "titulo": "Samasung s20 fe Usado",
+        "estado": "Disponible",
+        "imagenesUrls": [
+          "https://truequi-images-dm2026.s3.amazonaws.com/0898ae3a-5b6a-4d8b-9f2c-c71090524e98.jpg",
+          "https://truequi-images-dm2026.s3.amazonaws.com/1739153d-1531-4a42-9881-c3329180b474.jpg"
+        ],
+        "descripcion": "Busco un iphone 13 a cambio.",
+        "municipio": "Santiago de Querétaro",
+        "id": "51ada49c-9272-4a6f-b647-456f90c33b13",
+        "precio": "5000",
+        "fechaCreacion": "2026-10-26T01:00:55.381962+00:00",
+        "vendedorId": "diego41@gmail.com"
+      },
+      {
+        "descripcion": "Busco Disco de Marilyn Manson a cambio el que sea.",
+        "imagenUrl": "https://truequi-images-dm2026.s3.amazonaws.com/af9694ea-2683-4003-ada0-be6ef8f1778b.jpeg",
+        "ubicacion": "Querétaro",
+        "vendedorNombre": "Diego Millan",
+        "titulo": "Thriller de Michael Jackosn NUEVO",
+        "id": "750fdd87-2079-41e7-9622-2da69fdf7b63",
+        "categoria": "Arte y Papelería",
+        "estado": "Disponible",
+        "fechaCreacion": "2026-10-11T20:33:25.862945+00:00",
+        "precio": "150.0",
+        "vendedorId": "diegomillan999@gmail.com"
+      },
+      {
+        "imagenUrl": "https://truequi-images-dm2026.s3.amazonaws.com/fdf206bf-3942-4d90-81f9-4bdf518d64a1.jpg",
+        "vendedorNombre": "diego41",
+        "estadoModeracion": "Aprobado",
+        "categoria": "Libros y Estudio",
+        "titulo": "Libro para Aprender SQL",
+        "estado": "Disponible",
+        "imagenesUrls": [
+          "https://truequi-images-dm2026.s3.amazonaws.com/fdf206bf-3942-4d90-81f9-4bdf518d64a1.jpg",
+          "https://truequi-images-dm2026.s3.amazonaws.com/9e2c3b48-e8dc-4825-91c3-d975f8cba8f4.jpeg"
+        ],
+        "descripcion": "Busco un libro sobre redes o telecomunicaciones a cambio.",
+        "municipio": "Santiago de Querétaro",
+        "id": "63560c96-f76e-4641-886a-224e01935d48",
+        "precio": "500",
+        "fechaCreacion": "2026-10-29T04:30:53.848444+00:00",
+        "vendedorId": "diego41@gmail.com"
+      },
+      {
+        "descripcion": "Busco un Samsung usado de s24 para arriba.",
+        "imagenUrl": "https://truequi-images-dm2026.s3.amazonaws.com/77831440-99da-4900-ac7e-b327677610b4.jpg",
+        "ubicacion": "Querétaro",
+        "vendedorNombre": "diego41",
+        "categoria": "Electrónica",
+        "titulo": "IPhone 15 pro max",
+        "id": "4d542b5a-8571-43a4-b249-4416ad8b8902",
+        "fechaCreacion": "2026-10-11T19:59:33.270396+00:00",
+        "precio": "20000.0",
+        "estado": "Completado",
+        "vendedorId": "diego41@gmail.com"
+      },
+      {
+        "imagenUrl": "https://truequi-images-dm2026.s3.amazonaws.com/1f66954f-99cb-4137-8d39-d69a33ce391d.jpeg",
+        "vendedorNombre": "diego41",
+        "estadoModeracion": "Aprobado",
+        "titulo": "Recuadro al OLEO de Michael Jackson",
+        "categoria": "Arte y Papelería",
+        "estado": "Completado",
+        "imagenesUrls": [
+          "https://truequi-images-dm2026.s3.amazonaws.com/1f66954f-99cb-4137-8d39-d69a33ce391d.jpeg",
+          "https://truequi-images-dm2026.s3.amazonaws.com/92b5b074-5192-4638-82ff-c997e8d5d2a0.jpeg",
+          "https://truequi-images-dm2026.s3.amazonaws.com/e158abc8-9e57-41f5-971d-da7d67ab5496.jpeg",
+          "https://truequi-images-dm2026.s3.amazonaws.com/577626d7-90f4-4027-8d7e-95274a85d415.jpeg"
+        ],
+        "descripcion": "Busco otra pintura a cambio la que sea.",
+        "municipio": "Santiago de Querétaro",
+        "id": "bebbee87-dad2-4027-8f8b-635746f25aa2",
+        "fechaCreacion": "2026-10-29T05:55:05.702291+00:00",
+        "precio": "1500",
+        "vendedorId": "diego41@gmail.com"
+      },
+      {
+        "descripcion": "Busco otra pintura a cambio o un libro interesante.",
+        "imagenUrl": "https://truequi-images-dm2026.s3.amazonaws.com/b3122179-11fe-42f2-b29f-10ab092d3620.jpeg",
+        "ubicacion": "Querétaro",
+        "vendedorNombre": "dmillan12",
+        "categoria": "Arte y Papelería",
+        "titulo": "Recuadro de la Luna al oleo",
+        "id": "e1e7db43-33fe-4543-ac9a-46703f6d0f64",
+        "estado": "Disponible",
+        "precio": "500.0",
+        "fechaCreacion": "2026-10-11T19:57:31.198580+00:00",
+        "vendedorId": "dmillan12@alumnos.uaq.mx"
+      },
+      {
+        "imagenUrl": "https://truequi-images-dm2026.s3.amazonaws.com/4846af98-30e2-4c18-979e-3e03555ee5b7.jpg",
+        "estadoModeracion": "Aprobado",
+        "vendedorNombre": "diegomillan999",
+        "categoria": "Arte y Papelería",
+        "titulo": "Recuadro de abeja",
+        "estado": "Completado",
+        "imagenesUrls": [
+          "https://truequi-images-dm2026.s3.amazonaws.com/4846af98-30e2-4c18-979e-3e03555ee5b7.jpg",
+          "https://truequi-images-dm2026.s3.amazonaws.com/8127581b-bb21-4846-a773-8bfb3ec7046c.jpg"
+        ],
+        "descripcion": "Una pintura al oleo",
+        "municipio": "Santiago de Querétaro",
+        "id": "2c2f198b-b4bc-479a-a5b8-8d6fde136af2",
+        "precio": "100.0",
+        "fechaCreacion": "2026-10-30T04:32:17.586064+00:00",
+        "vendedorId": "diegomillan999@gmail.com"
+      },
+      {
+        "descripcion": "Busco un iPhone 17 a cambio",
+        "imagenUrl": "https://truequi-images-dm2026.s3.amazonaws.com/b72f1b11-27bf-4ef4-9797-0422667be35b.jpg",
+        "ubicacion": "Querétaro",
+        "vendedorNombre": "diego41",
+        "categoria": "Electrónica",
+        "titulo": "Samsung s24 Ultra 128 gb",
+        "id": "f3f841b9-eb1c-4533-ac15-26a15010a391",
+        "precio": "24000.0",
+        "fechaCreacion": "2026-10-14T23:18:51.542199+00:00",
+        "estado": "Disponible",
+        "vendedorId": "diego41@gmail.com"
+      },
+      {
+        "descripcion": "Busco un termo para tomar agua a cambio.",
+        "imagenUrl": "https://truequi-images-dm2026.s3.amazonaws.com/ee5bacfa-08eb-4e11-a250-7850afdfb48c.jpeg",
+        "ubicacion": "Querétaro",
+        "vendedorNombre": "Diego Millan",
+        "categoria": "Hogar y Muebles",
+        "titulo": "Taza NUEVA",
+        "id": "07c30c2a-ec9f-4ebf-b34f-6710a342b60b",
+        "fechaCreacion": "2026-10-11T20:34:19.718888+00:00",
+        "precio": "100.0",
+        "estado": "Completado",
+        "vendedorId": "diegomillan999@gmail.com"
+      },
+      {
+        "descripcion": "Busco un mouse silencioso",
+        "imagenUrl": "https://truequi-images-dm2026.s3.amazonaws.com/4174a12d-1444-4bdc-9619-0c24d6db10d5.jpg",
+        "ubicacion": "Querétaro",
+        "vendedorNombre": "diego41",
+        "categoria": "Hogar y Cocina",
+        "titulo": "Termo para agua nuevo",
+        "id": "e92f8526-1903-4f5b-b2bc-df3d790e1b8e",
+        "precio": "100.0",
+        "estado": "Completado",
+        "fechaCreacion": "2026-10-14T23:17:15.711131+00:00",
+        "vendedorId": "diego41@gmail.com"
+      },
+      {
+        "descripcion": "Busco una xbox one series X o S",
+        "imagenUrl": "https://truequi-images-dm2026.s3.amazonaws.com/e30d0020-810a-4ee9-ab6c-0b29fd58903a.jpg",
+        "vendedorNombre": "diego41",
+        "ubicacion": "Querétaro",
+        "categoria": "Electrónica",
+        "titulo": "IPhone 20 pro max",
+        "id": "4ca470a3-83f0-465c-9d94-36334601323e",
+        "fechaCreacion": "2026-10-15T02:59:35.741798+00:00",
+        "estado": "Completado",
+        "precio": "40000.0",
+        "vendedorId": "diego41@gmail.com"
+      },
+      {
+        "imagenUrl": "https://truequi-images-dm2026.s3.amazonaws.com/6635da36-edaa-415d-b8da-8e37ac6bbdc2.jpg",
+        "vendedorNombre": "Joseph",
+        "estadoModeracion": "Aprobado",
+        "categoria": "Juguetes y Juegos",
+        "titulo": "Spiderman Marvel Legends",
+        "estado": "Disponible",
+        "imagenesUrls": [
+          "https://truequi-images-dm2026.s3.amazonaws.com/6635da36-edaa-415d-b8da-8e37ac6bbdc2.jpg"
+        ],
+        "descripcion": "Juguete de acción de Spiderman. Busco un juguete de Hulk de la misma linea \"Marvel Legends\"",
+        "municipio": "El Marqués",
+        "id": "c6d9af94-3614-41f3-b0b4-d4e0b612ffef",
+        "fechaCreacion": "2026-10-29T21:44:57.099216+00:00",
+        "precio": "700",
+        "vendedorId": "josephtoriz.22@gmail.com"
+      },
+      {
+        "imagenUrl": "https://truequi-images-dm2026.s3.amazonaws.com/eccfb59b-7c91-41cb-b25a-8b8fdf14c45f.jpg",
+        "vendedorNombre": "diego41",
+        "estadoModeracion": "Aprobado",
+        "titulo": "Xbox Series X USADA",
+        "categoria": "Electrónica y Cómputo",
+        "estado": "Disponible",
+        "imagenesUrls": [
+          "https://truequi-images-dm2026.s3.amazonaws.com/eccfb59b-7c91-41cb-b25a-8b8fdf14c45f.jpg",
+          "https://truequi-images-dm2026.s3.amazonaws.com/4f61d868-ae8d-49bf-99c9-644aa0677a31.jpg",
+          "https://truequi-images-dm2026.s3.amazonaws.com/f797c429-e387-477d-a09c-d5115e1287b6.jpg"
+        ],
+        "descripcion": "Busco un play station pro de 1tb a cambio.",
+        "municipio": "Santiago de Querétaro",
+        "id": "6805c23c-1733-4eb6-82df-c35efd211707",
+        "precio": "15000",
+        "fechaCreacion": "2026-10-29T04:28:57.514672+00:00",
+        "vendedorId": "diego41@gmail.com"
+      }
+    ],
+    "Mensajes": [
+      {
+        "remitente": "diego41@gmail.com",
+        "conversacionId": "bebbee87-dad2-4027-8f8b-635746f25aa2_diego41@gmail.com_josephtoriz.22@gmail.com",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "Recuadro al OLEO de Michael Jackson",
+        "id": "6139992e-7f86-4580-9535-fd449ae97bb2",
+        "estado": "Pendiente",
+        "productoId": "bebbee87-dad2-4027-8f8b-635746f25aa2",
+        "contenido": "y tambien lo de denunciar, ya es posible",
+        "fecha": "2026-10-29T06:00:58.298866+00:00"
+      },
+      {
+        "conversacionId": "e1e7db43-33fe-4543-ac9a-46703f6d0f64_dmillan12@alumnos.uaq.mx_revisor@truequi.com",
+        "remitente": "revisor@truequi.com",
+        "destinatario": "dmillan12@alumnos.uaq.mx",
+        "productoTitulo": "Recuadro de la Luna al oleo",
+        "id": "bd0cac85-248f-4354-8dc7-f8ea24320ac5",
+        "productoId": "e1e7db43-33fe-4543-ac9a-46703f6d0f64",
+        "fecha": "2026-10-15T02:48:26.125180+00:00",
+        "contenido": "revisor@truequi.com",
+        "estado": "Pendiente"
+      },
+      {
+        "remitente": "revisor@truequi.com",
+        "conversacionId": "da81a40f-8526-4e7d-9c01-b6db3239328b_josephtoriz.22@gmail.com_revisor@truequi.com",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "Ofrezco lapicera de dinosaurios",
+        "id": "a613474f-0952-4c66-80bb-a494185c2ca8",
+        "estado": "Aceptado",
+        "productoId": "da81a40f-8526-4e7d-9c01-b6db3239328b",
+        "fecha": "2026-10-15T05:09:10.111751+00:00",
+        "pinValidacion": "9043",
+        "contenido": "revisor@truequi.com"
+      },
+      {
+        "conversacionId": "377a8d3f-e164-4f55-849a-8aca2757b13c_diegomillan999@gmail.com_josephtoriz.22@gmail.com",
+        "remitente": "diegomillan999@gmail.com",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "Cargador Samsung 25W",
+        "id": "d9d8b666-77c3-477a-a4de-72039d3a319c",
+        "productoId": "377a8d3f-e164-4f55-849a-8aca2757b13c",
+        "fecha": "2026-10-15T02:52:47.983308+00:00",
+        "contenido": "funciona",
+        "estado": "Completado"
+      },
+      {
+        "remitente": "ximero16522@gmail.com",
+        "conversacionId": "8194ad7e-c81d-4fda-8807-94d8624dfce3_ximero16522@gmail.com_xrodriguez11@alumnos.uaq.mx",
+        "destinatario": "xrodriguez11@alumnos.uaq.mx",
+        "productoTitulo": "Motorola g4",
+        "id": "ca42025a-1a1f-4be3-8b1c-dc8c2a15b652",
+        "fecha": "2026-11-07T05:06:48.258808+00:00",
+        "estado": "Pendiente",
+        "contenido": "te ofrezco el teclado",
+        "productoId": "8194ad7e-c81d-4fda-8807-94d8624dfce3"
+      },
+      {
+        "remitente": "josephtoriz.22@gmail.com",
+        "conversacionId": "377a8d3f-e164-4f55-849a-8aca2757b13c_diegomillan999@gmail.com_josephtoriz.22@gmail.com",
+        "destinatario": "diegomillan999@gmail.com",
+        "productoTitulo": "Cargador Samsung 25W",
+        "id": "e9f58557-23af-40ba-b911-119a59e600e9",
+        "productoId": "377a8d3f-e164-4f55-849a-8aca2757b13c",
+        "fecha": "2026-10-15T02:52:50.149913+00:00",
+        "estado": "Completado",
+        "contenido": "va"
+      },
+      {
+        "conversacionId": "2375d467-71d3-436a-afc0-a12bf213b342_diego41@gmail.com_revisor@truequi.com",
+        "remitente": "revisor@truequi.com",
+        "destinatario": "diego41@gmail.com",
+        "productoTitulo": "Stickers de conejo",
+        "id": "ea78ee32-156f-4068-9b17-80131d612508",
+        "pinValidacion": "6327",
+        "productoId": "2375d467-71d3-436a-afc0-a12bf213b342",
+        "contenido": "revisor@truequi.com",
+        "estado": "Aceptado",
+        "fecha": "2026-10-14T02:59:07.179754+00:00"
+      },
+      {
+        "remitente": "josephtoriz.22@gmail.com",
+        "conversacionId": "f3f841b9-eb1c-4533-ac15-26a15010a391_diego41@gmail.com_josephtoriz.22@gmail.com",
+        "destinatario": "diego41@gmail.com",
+        "productoTitulo": "Samsung s24 Ultra 128 gb",
+        "id": "e31ca825-acdc-42eb-808d-21ba7f345c5a",
+        "estado": "Pendiente",
+        "productoId": "f3f841b9-eb1c-4533-ac15-26a15010a391",
+        "fecha": "2026-10-15T01:45:23.086943+00:00",
+        "contenido": "Hola"
+      },
+      {
+        "remitente": "diego41@gmail.com",
+        "conversacionId": "bebbee87-dad2-4027-8f8b-635746f25aa2_diego41@gmail.com_josephtoriz.22@gmail.com",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "Recuadro al OLEO de Michael Jackson",
+        "id": "b3b75ba3-67b0-46d4-9188-00f1a4b7f28b",
+        "contenido": "hhhmmm luego me dices bien como porque no te entiendo",
+        "productoId": "bebbee87-dad2-4027-8f8b-635746f25aa2",
+        "estado": "Pendiente",
+        "fecha": "2026-10-29T06:01:44.095047+00:00"
+      },
+      {
+        "conversacionId": "da81a40f-8526-4e7d-9c01-b6db3239328b_josephtoriz.22@gmail.com_xrodriguez11@alumnos.uaq.mx",
+        "remitente": "xrodriguez11@alumnos.uaq.mx",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "Ofrezco lapicera de dinosaurios",
+        "id": "531af149-5e8f-4b98-af65-64b67bbc7948",
+        "productoId": "da81a40f-8526-4e7d-9c01-b6db3239328b",
+        "fecha": "2026-10-15T18:41:59.355531+00:00",
+        "estado": "Aceptado",
+        "contenido": "ah bueno"
+      },
+      {
+        "conversacionId": "4ca470a3-83f0-465c-9d94-36334601323e_diego41@gmail.com_josephtoriz.22@gmail.com",
+        "remitente": "diego41@gmail.com",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "IPhone 20 pro max",
+        "id": "7300374f-315d-4e72-b4ff-6f8b06089883",
+        "contenido": "Hola",
+        "fecha": "2026-10-15T03:01:32.730977+00:00",
+        "productoId": "4ca470a3-83f0-465c-9d94-36334601323e",
+        "estado": "Pendiente"
+      },
+      {
+        "remitente": "diegomillan999@gmail.com",
+        "conversacionId": "377a8d3f-e164-4f55-849a-8aca2757b13c_diegomillan999@gmail.com_josephtoriz.22@gmail.com",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "Cargador Samsung 25W",
+        "id": "baf585d9-6bf8-4e11-bad1-f8db382dc239",
+        "estado": "Completado",
+        "contenido": "es que estoy tomando leche, y ya ahorita voy a la computadora",
+        "productoId": "377a8d3f-e164-4f55-849a-8aca2757b13c",
+        "fecha": "2026-10-15T02:54:12.207239+00:00"
+      },
+      {
+        "remitente": "diego41@gmail.com",
+        "conversacionId": "bebbee87-dad2-4027-8f8b-635746f25aa2_diego41@gmail.com_josephtoriz.22@gmail.com",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "Recuadro al OLEO de Michael Jackson",
+        "id": "ab48ecb1-48d3-4c56-97fd-f51fde66742e",
+        "contenido": "pero hagamos lo del trueque, se supone que tambien me puedes calificar",
+        "fecha": "2026-10-29T06:01:55.816014+00:00",
+        "productoId": "bebbee87-dad2-4027-8f8b-635746f25aa2",
+        "estado": "Pendiente"
+      },
+      {
+        "remitente": "diegomillan999@gmail.com",
+        "conversacionId": "377a8d3f-e164-4f55-849a-8aca2757b13c_diegomillan999@gmail.com_josephtoriz.22@gmail.com",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "Cargador Samsung 25W",
+        "id": "9a690e51-d777-49dd-9098-c2b061806db9",
+        "productoId": "377a8d3f-e164-4f55-849a-8aca2757b13c",
+        "fecha": "2026-10-15T02:53:33.581270+00:00",
+        "contenido": "nada más que deberías de que cuando se acabe el trueque el chat ya no deje mandar mensaje",
+        "estado": "Completado"
+      },
+      {
+        "conversacionId": "da81a40f-8526-4e7d-9c01-b6db3239328b_josephtoriz.22@gmail.com_xrodriguez11@alumnos.uaq.mx",
+        "remitente": "xrodriguez11@alumnos.uaq.mx",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "Ofrezco lapicera de dinosaurios",
+        "id": "ff526fa8-70be-4d89-bf47-3f063dc62aae",
+        "contenido": "sí funciona",
+        "estado": "Aceptado",
+        "productoId": "da81a40f-8526-4e7d-9c01-b6db3239328b",
+        "fecha": "2026-10-15T18:40:15.356989+00:00"
+      },
+      {
+        "conversacionId": "e92f8526-1903-4f5b-b2bc-df3d790e1b8e_diego41@gmail.com_revisor@truequi.com",
+        "remitente": "revisor@truequi.com",
+        "destinatario": "diego41@gmail.com",
+        "productoTitulo": "Termo para agua nuevo",
+        "id": "8dab0058-f727-4b64-a81a-3dd68c3b9168",
+        "estado": "Pendiente",
+        "productoId": "e92f8526-1903-4f5b-b2bc-df3d790e1b8e",
+        "fecha": "2026-10-15T02:24:17.319120+00:00",
+        "contenido": "revisor@truequi.com"
+      },
+      {
+        "remitente": "diego41@gmail.com",
+        "conversacionId": "e1e7db43-33fe-4543-ac9a-46703f6d0f64_diego41@gmail.com_dmillan12@alumnos.uaq.mx",
+        "destinatario": "dmillan12@alumnos.uaq.mx",
+        "productoTitulo": "Recuadro de la Luna al oleo",
+        "id": "5fbbe74f-9c44-4b34-b16f-3d2713cf1856",
+        "contenido": "Si, te la puedo mandar o nos podemos ver en persona.",
+        "fecha": "2026-10-11T20:01:04.916567+00:00",
+        "estado": "Pendiente",
+        "productoId": "e1e7db43-33fe-4543-ac9a-46703f6d0f64"
+      },
+      {
+        "conversacionId": "da81a40f-8526-4e7d-9c01-b6db3239328b_diego41@gmail.com_josephtoriz.22@gmail.com",
+        "remitente": "diego41@gmail.com",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "Ofrezco lapicera de dinosaurios",
+        "id": "1c67d47b-9dae-4085-9fbf-1fac1fde1842",
+        "estado": "Aceptado",
+        "contenido": "Yo tengo una lapicera más grande t",
+        "fecha": "2026-10-13T17:30:06.703030+00:00",
+        "productoId": "da81a40f-8526-4e7d-9c01-b6db3239328b",
+        "pinValidacion": "5132"
+      },
+      {
+        "conversacionId": "377a8d3f-e164-4f55-849a-8aca2757b13c_diegomillan999@gmail.com_josephtoriz.22@gmail.com",
+        "remitente": "josephtoriz.22@gmail.com",
+        "destinatario": "diegomillan999@gmail.com",
+        "productoTitulo": "Cargador Samsung 25W",
+        "id": "760450f1-d33a-446f-bace-655a3f00fc81",
+        "contenido": "hola",
+        "estado": "Aceptado",
+        "fecha": "2026-10-15T02:51:19.404123+00:00",
+        "productoId": "377a8d3f-e164-4f55-849a-8aca2757b13c"
+      },
+      {
+        "conversacionId": "bebbee87-dad2-4027-8f8b-635746f25aa2_diego41@gmail.com_josephtoriz.22@gmail.com",
+        "remitente": "josephtoriz.22@gmail.com",
+        "destinatario": "diego41@gmail.com",
+        "productoTitulo": "Recuadro al OLEO de Michael Jackson",
+        "id": "2cb03753-aafd-40a0-bded-1dd53056b2ef",
+        "productoId": "bebbee87-dad2-4027-8f8b-635746f25aa2",
+        "contenido": "se ve bien la vdd",
+        "estado": "Pendiente",
+        "fecha": "2026-10-29T06:00:05.519931+00:00"
+      },
+      {
+        "conversacionId": "377a8d3f-e164-4f55-849a-8aca2757b13c_diegomillan999@gmail.com_josephtoriz.22@gmail.com",
+        "remitente": "diegomillan999@gmail.com",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "Cargador Samsung 25W",
+        "id": "a426e2d2-7881-4be3-a516-72f4541d9fac",
+        "productoId": "377a8d3f-e164-4f55-849a-8aca2757b13c",
+        "fecha": "2026-10-15T02:52:24.063864+00:00",
+        "contenido": "que yo haga una publicación desde web",
+        "estado": "Completado"
+      },
+      {
+        "conversacionId": "2375d467-71d3-436a-afc0-a12bf213b342_diego41@gmail.com_revisor@truequi.com",
+        "remitente": "revisor@truequi.com",
+        "destinatario": "diego41@gmail.com",
+        "productoTitulo": "Stickers de conejo",
+        "id": "e3f27537-4bca-4af0-9c21-ec5bff6cf7fd",
+        "fecha": "2026-10-15T02:50:10.922565+00:00",
+        "productoId": "2375d467-71d3-436a-afc0-a12bf213b342",
+        "estado": "Aceptado",
+        "contenido": "revisor@truequi.com"
+      },
+      {
+        "conversacionId": "da81a40f-8526-4e7d-9c01-b6db3239328b_josephtoriz.22@gmail.com_xrodriguez11@alumnos.uaq.mx",
+        "remitente": "xrodriguez11@alumnos.uaq.mx",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "Ofrezco lapicera de dinosaurios",
+        "id": "bd50468c-4260-4a08-9ca2-4bfd76c4938f",
+        "productoId": "da81a40f-8526-4e7d-9c01-b6db3239328b",
+        "estado": "Aceptado",
+        "fecha": "2026-10-15T18:40:26.969571+00:00",
+        "contenido": "para que lleguen"
+      },
+      {
+        "remitente": "diego42@gmail.com",
+        "conversacionId": "da81a40f-8526-4e7d-9c01-b6db3239328b_diego42@gmail.com_josephtoriz.22@gmail.com",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "Ofrezco lapicera de dinosaurios",
+        "id": "51b19060-7a60-4b30-bae5-0675db144a13",
+        "fecha": "2026-10-14T23:09:48.442160+00:00",
+        "contenido": "Hola, tengo lo que pides.",
+        "pinValidacion": "7551",
+        "estado": "Aceptado",
+        "productoId": "da81a40f-8526-4e7d-9c01-b6db3239328b"
+      },
+      {
+        "remitente": "diegomillan999@gmail.com",
+        "conversacionId": "4d542b5a-8571-43a4-b249-4416ad8b8902_diego41@gmail.com_diegomillan999@gmail.com",
+        "destinatario": "diego41@gmail.com",
+        "productoTitulo": "IPhone 15 pro max",
+        "id": "86c5c2d5-7510-476b-99a8-87a489ac1abf",
+        "productoId": "4d542b5a-8571-43a4-b249-4416ad8b8902",
+        "estado": "Pendiente",
+        "contenido": "🐇",
+        "fecha": "2026-10-12T01:30:07.734000+00:00"
+      },
+      {
+        "conversacionId": "f3f841b9-eb1c-4533-ac15-26a15010a391_diego41@gmail.com_revisor@truequi.com",
+        "remitente": "revisor@truequi.com",
+        "destinatario": "diego41@gmail.com",
+        "productoTitulo": "Samsung s24 Ultra 128 gb",
+        "id": "fa989c79-b29c-4e8f-87c8-76f2311e7bcb",
+        "estado": "Pendiente",
+        "productoId": "f3f841b9-eb1c-4533-ac15-26a15010a391",
+        "fecha": "2026-10-28T19:27:29.214155+00:00",
+        "contenido": "revisor@truequi.com"
+      },
+      {
+        "conversacionId": "377a8d3f-e164-4f55-849a-8aca2757b13c_diegomillan999@gmail.com_josephtoriz.22@gmail.com",
+        "remitente": "diegomillan999@gmail.com",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "Cargador Samsung 25W",
+        "id": "10a437f2-3bef-49fb-834c-d93fa8381189",
+        "productoId": "377a8d3f-e164-4f55-849a-8aca2757b13c",
+        "contenido": "y hacemos la prueba",
+        "fecha": "2026-10-15T02:54:16.670495+00:00",
+        "estado": "Completado"
+      },
+      {
+        "conversacionId": "4ca470a3-83f0-465c-9d94-36334601323e_diego41@gmail.com_josephtoriz.22@gmail.com",
+        "remitente": "josephtoriz.22@gmail.com",
+        "destinatario": "diego41@gmail.com",
+        "productoTitulo": "IPhone 20 pro max",
+        "id": "61dd28c8-04ff-43f3-a608-119bc43dbaa6",
+        "contenido": "si puedo",
+        "productoId": "4ca470a3-83f0-465c-9d94-36334601323e",
+        "estado": "Pendiente",
+        "fecha": "2026-10-15T03:01:48.368751+00:00"
+      },
+      {
+        "remitente": "diego41@gmail.com",
+        "conversacionId": "bebbee87-dad2-4027-8f8b-635746f25aa2_diego41@gmail.com_josephtoriz.22@gmail.com",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "Recuadro al OLEO de Michael Jackson",
+        "id": "6b887aa0-d7b0-4793-9f28-827247a1cdc5",
+        "productoId": "bebbee87-dad2-4027-8f8b-635746f25aa2",
+        "contenido": "puse ya lo de los comentarios",
+        "estado": "Pendiente",
+        "fecha": "2026-10-29T06:00:21.327602+00:00"
+      },
+      {
+        "remitente": "dmillan12@alumnos.uaq.mx",
+        "conversacionId": "e1e7db43-33fe-4543-ac9a-46703f6d0f64_diego41@gmail.com_dmillan12@alumnos.uaq.mx",
+        "destinatario": "diego41@gmail.com",
+        "productoTitulo": "Recuadro de la Luna al oleo",
+        "id": "eb9d9794-a386-49e6-87d4-dfc3df4c6e8c",
+        "estado": "Pendiente",
+        "fecha": "2026-10-11T20:00:44.186881+00:00",
+        "contenido": "Hola, me interesa es al oleo tambien?",
+        "productoId": "e1e7db43-33fe-4543-ac9a-46703f6d0f64"
+      },
+      {
+        "conversacionId": "4d542b5a-8571-43a4-b249-4416ad8b8902_diego41@gmail.com_diegomillan999@gmail.com",
+        "remitente": "diegomillan999@gmail.com",
+        "destinatario": "diego41@gmail.com",
+        "productoTitulo": "IPhone 15 pro max",
+        "id": "71fc810e-294b-497c-a7a2-c4fb08496dd2",
+        "pinValidacion": "7333",
+        "contenido": "HOLA. Yo tengo",
+        "estado": "Completado",
+        "productoId": "4d542b5a-8571-43a4-b249-4416ad8b8902",
+        "fecha": "2026-10-12T01:28:59.439326+00:00"
+      },
+      {
+        "conversacionId": "e92f8526-1903-4f5b-b2bc-df3d790e1b8e_diego41@gmail.com_revisor@truequi.com",
+        "remitente": "revisor@truequi.com",
+        "destinatario": "diego41@gmail.com",
+        "productoTitulo": "Termo para agua nuevo",
+        "id": "e7a51444-c0a8-44f5-959c-68119635bf47",
+        "contenido": "revisor@truequi.com",
+        "fecha": "2026-10-15T03:53:58.956131+00:00",
+        "estado": "Pendiente",
+        "productoId": "e92f8526-1903-4f5b-b2bc-df3d790e1b8e"
+      },
+      {
+        "conversacionId": "bebbee87-dad2-4027-8f8b-635746f25aa2_diego41@gmail.com_josephtoriz.22@gmail.com",
+        "remitente": "diego41@gmail.com",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "Recuadro al OLEO de Michael Jackson",
+        "id": "6200f001-7df9-4db8-b8f1-41082e2c4ce8",
+        "fecha": "2026-10-29T06:02:02.737994+00:00",
+        "estado": "Pendiente",
+        "contenido": "y dejar comentarios",
+        "productoId": "bebbee87-dad2-4027-8f8b-635746f25aa2"
+      },
+      {
+        "conversacionId": "da81a40f-8526-4e7d-9c01-b6db3239328b_josephtoriz.22@gmail.com_xrodriguez11@alumnos.uaq.mx",
+        "remitente": "xrodriguez11@alumnos.uaq.mx",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "Ofrezco lapicera de dinosaurios",
+        "id": "d12ada25-8198-4ffa-b338-e24afe14fd75",
+        "estado": "Aceptado",
+        "fecha": "2026-10-15T18:40:30.886340+00:00",
+        "contenido": "es normal?",
+        "productoId": "da81a40f-8526-4e7d-9c01-b6db3239328b"
+      },
+      {
+        "remitente": "josephtoriz.22@gmail.com",
+        "conversacionId": "377a8d3f-e164-4f55-849a-8aca2757b13c_diegomillan999@gmail.com_josephtoriz.22@gmail.com",
+        "destinatario": "diegomillan999@gmail.com",
+        "productoTitulo": "Cargador Samsung 25W",
+        "id": "3ceb1c4f-b9cf-4513-ba4d-ce544ea1c27e",
+        "estado": "Completado",
+        "fecha": "2026-10-15T02:54:23.645460+00:00",
+        "productoId": "377a8d3f-e164-4f55-849a-8aca2757b13c",
+        "contenido": "me avisas inge"
+      },
+      {
+        "conversacionId": "377a8d3f-e164-4f55-849a-8aca2757b13c_diegomillan999@gmail.com_josephtoriz.22@gmail.com",
+        "remitente": "diegomillan999@gmail.com",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "Cargador Samsung 25W",
+        "id": "a1bd8824-88b2-4235-96ea-146bbef6db29",
+        "estado": "Aceptado",
+        "contenido": "te doy el código?",
+        "fecha": "2026-10-15T02:51:34.423319+00:00",
+        "productoId": "377a8d3f-e164-4f55-849a-8aca2757b13c"
+      },
+      {
+        "conversacionId": "4d542b5a-8571-43a4-b249-4416ad8b8902_diego41@gmail.com_diegomillan999@gmail.com",
+        "remitente": "diego41@gmail.com",
+        "destinatario": "diegomillan999@gmail.com",
+        "productoTitulo": "IPhone 15 pro max",
+        "id": "9df7d2fa-3eeb-4ef5-8bf0-a0dbdac431ec",
+        "fecha": "2026-10-12T01:29:29.169225+00:00",
+        "contenido": "Que tienes",
+        "productoId": "4d542b5a-8571-43a4-b249-4416ad8b8902",
+        "estado": "Pendiente"
+      },
+      {
+        "remitente": "josephtoriz.22@gmail.com",
+        "conversacionId": "377a8d3f-e164-4f55-849a-8aca2757b13c_diegomillan999@gmail.com_josephtoriz.22@gmail.com",
+        "destinatario": "diegomillan999@gmail.com",
+        "productoTitulo": "Cargador Samsung 25W",
+        "id": "c6b5dd49-4a73-4f3f-905c-f08f680545d5",
+        "fecha": "2026-10-15T02:53:44.006298+00:00",
+        "productoId": "377a8d3f-e164-4f55-849a-8aca2757b13c",
+        "contenido": "lo hago ahorita?",
+        "estado": "Completado"
+      },
+      {
+        "conversacionId": "377a8d3f-e164-4f55-849a-8aca2757b13c_diegomillan999@gmail.com_josephtoriz.22@gmail.com",
+        "remitente": "diegomillan999@gmail.com",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "Cargador Samsung 25W",
+        "id": "3157783c-e061-4f7d-9fbd-cca96d9f2d42",
+        "productoId": "377a8d3f-e164-4f55-849a-8aca2757b13c",
+        "fecha": "2026-10-15T02:54:34.039323+00:00",
+        "contenido": "si",
+        "estado": "Completado"
+      },
+      {
+        "conversacionId": "e1e7db43-33fe-4543-ac9a-46703f6d0f64_diego41@gmail.com_dmillan12@alumnos.uaq.mx",
+        "remitente": "diego41@gmail.com",
+        "destinatario": "dmillan12@alumnos.uaq.mx",
+        "productoTitulo": "Recuadro de la Luna al oleo",
+        "id": "f4bdd1ab-bcad-49fd-ac69-e6e179e4574d",
+        "estado": "Pendiente",
+        "fecha": "2026-10-11T20:00:08.245181+00:00",
+        "contenido": "Hola, oye yo tengo una pintura de Michael Jackson.",
+        "productoId": "e1e7db43-33fe-4543-ac9a-46703f6d0f64"
+      },
+      {
+        "remitente": "diego41@gmail.com",
+        "conversacionId": "e92f8526-1903-4f5b-b2bc-df3d790e1b8e_diego41@gmail.com_xrodriguez11@alumnos.uaq.mx",
+        "destinatario": "xrodriguez11@alumnos.uaq.mx",
+        "productoTitulo": "Termo para agua nuevo",
+        "id": "3af7b249-1553-444f-9a2b-373b960a1203",
+        "fecha": "2026-10-15T21:53:48.802218+00:00",
+        "contenido": "si, acepto ese libro",
+        "estado": "Pendiente",
+        "productoId": "e92f8526-1903-4f5b-b2bc-df3d790e1b8e"
+      },
+      {
+        "conversacionId": "bebbee87-dad2-4027-8f8b-635746f25aa2_diego41@gmail.com_josephtoriz.22@gmail.com",
+        "remitente": "diego41@gmail.com",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "Recuadro al OLEO de Michael Jackson",
+        "id": "9470c652-8d9d-469c-8f32-96a40768b843",
+        "productoId": "bebbee87-dad2-4027-8f8b-635746f25aa2",
+        "fecha": "2026-10-29T06:02:16.296704+00:00",
+        "contenido": "ok, le voy a dar a aceptar",
+        "estado": "Pendiente"
+      },
+      {
+        "conversacionId": "bebbee87-dad2-4027-8f8b-635746f25aa2_diego41@gmail.com_josephtoriz.22@gmail.com",
+        "remitente": "josephtoriz.22@gmail.com",
+        "destinatario": "diego41@gmail.com",
+        "productoTitulo": "Recuadro al OLEO de Michael Jackson",
+        "id": "61514faa-f4f2-48e0-b6d2-6f4acbac7688",
+        "fecha": "2026-10-29T06:02:24.548042+00:00",
+        "productoId": "bebbee87-dad2-4027-8f8b-635746f25aa2",
+        "contenido": "oye pero estos cambios no estan en mobile, y tengo sueño jeje",
+        "estado": "Pendiente"
+      },
+      {
+        "remitente": "ximero16522@gmail.com",
+        "conversacionId": "8194ad7e-c81d-4fda-8807-94d8624dfce3_ximero16522@gmail.com_xrodriguez11@alumnos.uaq.mx",
+        "destinatario": "xrodriguez11@alumnos.uaq.mx",
+        "productoTitulo": "Motorola g4",
+        "id": "1d194f14-d0d9-4e80-90e1-059d15cdb413",
+        "estado": "Completado",
+        "contenido": "hola, me interesa",
+        "productoId": "8194ad7e-c81d-4fda-8807-94d8624dfce3",
+        "pinValidacion": "5593",
+        "fecha": "2026-11-07T05:06:44.203528+00:00"
+      },
+      {
+        "conversacionId": "da81a40f-8526-4e7d-9c01-b6db3239328b_josephtoriz.22@gmail.com_xrodriguez11@alumnos.uaq.mx",
+        "remitente": "josephtoriz.22@gmail.com",
+        "destinatario": "xrodriguez11@alumnos.uaq.mx",
+        "productoTitulo": "Ofrezco lapicera de dinosaurios",
+        "id": "a1ea2485-3b90-4120-96dc-abde469eb0f1",
+        "estado": "Aceptado",
+        "productoId": "da81a40f-8526-4e7d-9c01-b6db3239328b",
+        "contenido": "cuando ingrese el PIN, se cerrara el chat",
+        "fecha": "2026-10-15T18:41:06.854463+00:00"
+      },
+      {
+        "remitente": "diego41@gmail.com",
+        "conversacionId": "bebbee87-dad2-4027-8f8b-635746f25aa2_diego41@gmail.com_josephtoriz.22@gmail.com",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "Recuadro al OLEO de Michael Jackson",
+        "id": "7aad2df6-2ae2-4749-8aef-95deaa2fed5b",
+        "productoId": "bebbee87-dad2-4027-8f8b-635746f25aa2",
+        "estado": "Aceptado",
+        "fecha": "2026-10-29T06:03:06.581707+00:00",
+        "contenido": "blindada"
+      },
+      {
+        "conversacionId": "da81a40f-8526-4e7d-9c01-b6db3239328b_josephtoriz.22@gmail.com_revisor@truequi.com",
+        "remitente": "revisor@truequi.com",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "Ofrezco lapicera de dinosaurios",
+        "id": "3192717e-de75-49be-9aab-de9ae79eb212",
+        "fecha": "2026-10-15T05:37:52.365347+00:00",
+        "contenido": "revisor@truequi.com",
+        "estado": "Pendiente",
+        "productoId": "da81a40f-8526-4e7d-9c01-b6db3239328b"
+      },
+      {
+        "remitente": "josephtoriz.22@gmail.com",
+        "conversacionId": "da81a40f-8526-4e7d-9c01-b6db3239328b_josephtoriz.22@gmail.com_xrodriguez11@alumnos.uaq.mx",
+        "destinatario": "xrodriguez11@alumnos.uaq.mx",
+        "productoTitulo": "Ofrezco lapicera de dinosaurios",
+        "id": "abad4a30-ec9d-4f10-bc02-14e0852f9ac1",
+        "productoId": "da81a40f-8526-4e7d-9c01-b6db3239328b",
+        "contenido": "hola",
+        "fecha": "2026-10-15T18:40:04.986957+00:00",
+        "estado": "Aceptado"
+      },
+      {
+        "conversacionId": "4ca470a3-83f0-465c-9d94-36334601323e_diego41@gmail.com_josephtoriz.22@gmail.com",
+        "remitente": "diego41@gmail.com",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "IPhone 20 pro max",
+        "id": "4ca1006a-8b80-4b20-a915-5283c944cad2",
+        "contenido": "A ver voy a aceptar el trueque, tendria que darte el codigo en teoria",
+        "productoId": "4ca470a3-83f0-465c-9d94-36334601323e",
+        "fecha": "2026-10-15T03:02:29.357033+00:00",
+        "estado": "Pendiente"
+      },
+      {
+        "remitente": "revisor@truequi.com",
+        "conversacionId": "e1e7db43-33fe-4543-ac9a-46703f6d0f64_dmillan12@alumnos.uaq.mx_revisor@truequi.com",
+        "destinatario": "dmillan12@alumnos.uaq.mx",
+        "productoTitulo": "Recuadro de la Luna al oleo",
+        "id": "33dec7db-f473-4d63-9763-f788819a62d5",
+        "fecha": "2026-10-15T03:52:31.327068+00:00",
+        "contenido": "revisor@truequi.com",
+        "estado": "Pendiente",
+        "productoId": "e1e7db43-33fe-4543-ac9a-46703f6d0f64"
+      },
+      {
+        "conversacionId": "e92f8526-1903-4f5b-b2bc-df3d790e1b8e_diego41@gmail.com_xrodriguez11@alumnos.uaq.mx",
+        "remitente": "diego41@gmail.com",
+        "destinatario": "xrodriguez11@alumnos.uaq.mx",
+        "productoTitulo": "Termo para agua nuevo",
+        "id": "d255a813-dd59-49b8-a127-45b0975ee7e9",
+        "estado": "Pendiente",
+        "contenido": "Hola,que me ofreces",
+        "fecha": "2026-10-15T21:52:57.837466+00:00",
+        "productoId": "e92f8526-1903-4f5b-b2bc-df3d790e1b8e"
+      },
+      {
+        "remitente": "revisor@truequi.com",
+        "conversacionId": "da81a40f-8526-4e7d-9c01-b6db3239328b_josephtoriz.22@gmail.com_revisor@truequi.com",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "Ofrezco lapicera de dinosaurios",
+        "id": "9dae99c7-96db-4679-bcb4-8a5fe54b7e95",
+        "productoId": "da81a40f-8526-4e7d-9c01-b6db3239328b",
+        "fecha": "2026-10-15T05:30:41.322950+00:00",
+        "estado": "Pendiente",
+        "contenido": "revisor@truequi.com"
+      },
+      {
+        "conversacionId": "63560c96-f76e-4641-886a-224e01935d48_diego41@gmail.com_revisor@truequi.com",
+        "remitente": "revisor@truequi.com",
+        "destinatario": "diego41@gmail.com",
+        "productoTitulo": "Libro para Aprender SQL",
+        "id": "dd39bfc7-b119-4f84-8bdd-c17df68ffcc4",
+        "productoId": "63560c96-f76e-4641-886a-224e01935d48",
+        "contenido": "Hola, sigue disponible?",
+        "fecha": "2026-10-30T01:30:43.887539+00:00",
+        "estado": "Pendiente"
+      },
+      {
+        "remitente": "diego41@gmail.com",
+        "conversacionId": "e1e7db43-33fe-4543-ac9a-46703f6d0f64_diego41@gmail.com_dmillan12@alumnos.uaq.mx",
+        "destinatario": "dmillan12@alumnos.uaq.mx",
+        "productoTitulo": "Recuadro de la Luna al oleo",
+        "id": "a321de8b-a35e-46d0-b221-2015c97015fb",
+        "productoId": "e1e7db43-33fe-4543-ac9a-46703f6d0f64",
+        "estado": "Pendiente",
+        "contenido": "Hola",
+        "fecha": "2026-10-12T19:49:21.645254+00:00"
+      },
+      {
+        "remitente": "revisor@truequi.com",
+        "conversacionId": "e1e7db43-33fe-4543-ac9a-46703f6d0f64_dmillan12@alumnos.uaq.mx_revisor@truequi.com",
+        "destinatario": "dmillan12@alumnos.uaq.mx",
+        "productoTitulo": "Recuadro de la Luna al oleo",
+        "id": "09d48497-32ef-4bf0-8406-b8303fbb4ff5",
+        "fecha": "2026-10-15T03:52:17.218442+00:00",
+        "estado": "Pendiente",
+        "productoId": "e1e7db43-33fe-4543-ac9a-46703f6d0f64",
+        "contenido": "revisor@truequi.com"
+      },
+      {
+        "remitente": "josephtoriz.22@gmail.com",
+        "conversacionId": "4ca470a3-83f0-465c-9d94-36334601323e_diego41@gmail.com_josephtoriz.22@gmail.com",
+        "destinatario": "diego41@gmail.com",
+        "productoTitulo": "IPhone 20 pro max",
+        "id": "4f47426d-a588-483c-b555-7d2af431560a",
+        "contenido": "Hola, tengo una xbox s de 1T",
+        "fecha": "2026-10-15T03:01:06.659036+00:00",
+        "estado": "Completado",
+        "productoId": "4ca470a3-83f0-465c-9d94-36334601323e",
+        "pinValidacion": "2527",
+        "calificadoPorRemitente": true
+      },
+      {
+        "conversacionId": "4d542b5a-8571-43a4-b249-4416ad8b8902_diego41@gmail.com_diegomillan999@gmail.com",
+        "remitente": "diegomillan999@gmail.com",
+        "destinatario": "diego41@gmail.com",
+        "productoTitulo": "IPhone 15 pro max",
+        "id": "60ff7179-d1ed-4662-bccb-344d6b4b933c",
+        "fecha": "2026-10-12T01:30:02.223269+00:00",
+        "contenido": "o.o",
+        "productoId": "4d542b5a-8571-43a4-b249-4416ad8b8902",
+        "estado": "Pendiente"
+      },
+      {
+        "remitente": "diegomillan999@gmail.com",
+        "conversacionId": "377a8d3f-e164-4f55-849a-8aca2757b13c_diegomillan999@gmail.com_josephtoriz.22@gmail.com",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "Cargador Samsung 25W",
+        "id": "83434d77-032a-4acf-b2c9-01f6b2896307",
+        "contenido": "no veo los mensajes",
+        "estado": "Pendiente",
+        "productoId": "377a8d3f-e164-4f55-849a-8aca2757b13c",
+        "fecha": "2026-10-14T23:36:22.832598+00:00"
+      },
+      {
+        "conversacionId": "e92f8526-1903-4f5b-b2bc-df3d790e1b8e_diego41@gmail.com_revisor@truequi.com",
+        "remitente": "revisor@truequi.com",
+        "destinatario": "diego41@gmail.com",
+        "productoTitulo": "Termo para agua nuevo",
+        "id": "02101bcf-929c-45aa-8d22-777ed80aa22e",
+        "productoId": "e92f8526-1903-4f5b-b2bc-df3d790e1b8e",
+        "fecha": "2026-10-15T03:54:12.331597+00:00",
+        "contenido": "revisor@truequi.com",
+        "estado": "Pendiente"
+      },
+      {
+        "conversacionId": "f3f841b9-eb1c-4533-ac15-26a15010a391_diego41@gmail.com_josephtoriz.22@gmail.com",
+        "remitente": "josephtoriz.22@gmail.com",
+        "destinatario": "diego41@gmail.com",
+        "productoTitulo": "Samsung s24 Ultra 128 gb",
+        "id": "34f46375-1706-41a7-a499-708e5c63e988",
+        "fecha": "2026-10-14T23:36:19.326243+00:00",
+        "estado": "Pendiente",
+        "contenido": "Hola",
+        "productoId": "f3f841b9-eb1c-4533-ac15-26a15010a391"
+      },
+      {
+        "remitente": "diegomillan999@gmail.com",
+        "conversacionId": "07c30c2a-ec9f-4ebf-b34f-6710a342b60b_diego41@gmail.com_diegomillan999@gmail.com",
+        "destinatario": "diego41@gmail.com",
+        "productoTitulo": "Taza NUEVA",
+        "id": "ac722f51-f3fe-423f-ba42-cf93ce71b85c",
+        "productoId": "07c30c2a-ec9f-4ebf-b34f-6710a342b60b",
+        "contenido": "Donde te veo",
+        "estado": "Pendiente",
+        "fecha": "2026-10-12T19:51:29.815584+00:00"
+      },
+      {
+        "remitente": "josephtoriz.22@gmail.com",
+        "conversacionId": "cff09c5b-c2f9-42a5-aff5-7911150e44cf_josephtoriz.22@gmail.com_revisor@truequi.com",
+        "destinatario": "revisor@truequi.com",
+        "productoTitulo": "Samsung S24 Base 128 GB",
+        "id": "e096a0c5-b897-4ab9-9de8-d6469d571a4b",
+        "contenido": "hola",
+        "productoId": "cff09c5b-c2f9-42a5-aff5-7911150e44cf",
+        "estado": "Pendiente",
+        "fecha": "2026-10-29T05:18:39.927274+00:00"
+      },
+      {
+        "remitente": "josephtoriz.22@gmail.com",
+        "conversacionId": "f3f841b9-eb1c-4533-ac15-26a15010a391_diego41@gmail.com_josephtoriz.22@gmail.com",
+        "destinatario": "diego41@gmail.com",
+        "productoTitulo": "Samsung s24 Ultra 128 gb",
+        "id": "57085c88-837d-4ef7-b4cf-2602294bc479",
+        "estado": "Pendiente",
+        "fecha": "2026-10-14T23:35:49.156869+00:00",
+        "contenido": "Hola, tengo un iphone 17 igual de 128GB",
+        "productoId": "f3f841b9-eb1c-4533-ac15-26a15010a391"
+      },
+      {
+        "conversacionId": "e92f8526-1903-4f5b-b2bc-df3d790e1b8e_diego41@gmail.com_revisor@truequi.com",
+        "remitente": "revisor@truequi.com",
+        "destinatario": "diego41@gmail.com",
+        "productoTitulo": "Termo para agua nuevo",
+        "id": "5d4c02ef-d06b-40e5-ac7f-3d49ee0604d4",
+        "productoId": "e92f8526-1903-4f5b-b2bc-df3d790e1b8e",
+        "estado": "Pendiente",
+        "fecha": "2026-10-15T05:38:35.621235+00:00",
+        "contenido": "revisor@truequi.com"
+      },
+      {
+        "remitente": "diego41@gmail.com",
+        "conversacionId": "07c30c2a-ec9f-4ebf-b34f-6710a342b60b_diego41@gmail.com_diegomillan999@gmail.com",
+        "destinatario": "diegomillan999@gmail.com",
+        "productoTitulo": "Taza NUEVA",
+        "id": "12b5ce18-56e4-45c2-886a-376cd672ea31",
+        "estado": "Pendiente",
+        "fecha": "2026-10-12T19:51:40.418606+00:00",
+        "contenido": "En la fuente del centro, ve solo",
+        "productoId": "07c30c2a-ec9f-4ebf-b34f-6710a342b60b"
+      },
+      {
+        "conversacionId": "2375d467-71d3-436a-afc0-a12bf213b342_diego41@gmail.com_revisor@truequi.com",
+        "remitente": "revisor@truequi.com",
+        "destinatario": "diego41@gmail.com",
+        "productoTitulo": "Stickers de conejo",
+        "id": "c6293642-be0a-4f4f-86a4-c814ed8e9fc1",
+        "estado": "Aceptado",
+        "fecha": "2026-10-15T03:52:59.178664+00:00",
+        "contenido": "revisor@truequi.com",
+        "productoId": "2375d467-71d3-436a-afc0-a12bf213b342"
+      },
+      {
+        "conversacionId": "4ca470a3-83f0-465c-9d94-36334601323e_diego41@gmail.com_josephtoriz.22@gmail.com",
+        "remitente": "diego41@gmail.com",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "IPhone 20 pro max",
+        "id": "68bf8ded-a44f-43ae-b6a7-c1c4e923b5ab",
+        "fecha": "2026-10-15T03:01:27.074974+00:00",
+        "contenido": "Josep",
+        "productoId": "4ca470a3-83f0-465c-9d94-36334601323e",
+        "estado": "Pendiente"
+      },
+      {
+        "conversacionId": "377a8d3f-e164-4f55-849a-8aca2757b13c_diegomillan999@gmail.com_josephtoriz.22@gmail.com",
+        "remitente": "diegomillan999@gmail.com",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "Cargador Samsung 25W",
+        "id": "ecb6c0a9-e9e7-4112-8b86-66662ae95810",
+        "estado": "Completado",
+        "fecha": "2026-10-15T02:52:08.199678+00:00",
+        "productoId": "377a8d3f-e164-4f55-849a-8aca2757b13c",
+        "contenido": "oye pero sabes que prueba"
+      },
+      {
+        "remitente": "diego41@gmail.com",
+        "conversacionId": "e1e7db43-33fe-4543-ac9a-46703f6d0f64_diego41@gmail.com_dmillan12@alumnos.uaq.mx",
+        "destinatario": "dmillan12@alumnos.uaq.mx",
+        "productoTitulo": "Recuadro de la Luna al oleo",
+        "id": "931a9da2-4025-4f2b-8c99-572447e5c52b",
+        "fecha": "2026-10-12T19:49:40.758021+00:00",
+        "contenido": "hello",
+        "estado": "Pendiente",
+        "productoId": "e1e7db43-33fe-4543-ac9a-46703f6d0f64"
+      },
+      {
+        "remitente": "diego41@gmail.com",
+        "conversacionId": "bebbee87-dad2-4027-8f8b-635746f25aa2_diego41@gmail.com_josephtoriz.22@gmail.com",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "Recuadro al OLEO de Michael Jackson",
+        "id": "d37b6baa-342b-4d4e-b9a4-c20575d3badf",
+        "productoId": "bebbee87-dad2-4027-8f8b-635746f25aa2",
+        "estado": "Pendiente",
+        "contenido": "ya puedes darle al enter y se mandan",
+        "fecha": "2026-10-29T05:59:59.917361+00:00"
+      },
+      {
+        "remitente": "diegomillan999@gmail.com",
+        "conversacionId": "377a8d3f-e164-4f55-849a-8aca2757b13c_diegomillan999@gmail.com_josephtoriz.22@gmail.com",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "Cargador Samsung 25W",
+        "id": "60f71886-967c-4e66-b3d7-dc043f15cdbd",
+        "fecha": "2026-10-15T02:52:44.488394+00:00",
+        "estado": "Completado",
+        "contenido": "a ver si func",
+        "productoId": "377a8d3f-e164-4f55-849a-8aca2757b13c"
+      },
+      {
+        "conversacionId": "da81a40f-8526-4e7d-9c01-b6db3239328b_josephtoriz.22@gmail.com_xrodriguez11@alumnos.uaq.mx",
+        "remitente": "xrodriguez11@alumnos.uaq.mx",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "Ofrezco lapicera de dinosaurios",
+        "id": "d6416f68-7791-4eab-9201-63b24ba18edc",
+        "productoId": "da81a40f-8526-4e7d-9c01-b6db3239328b",
+        "estado": "Completado",
+        "fecha": "2026-10-15T18:38:39.315891+00:00",
+        "contenido": "hola",
+        "pinValidacion": "3016",
+        "calificadoPorRemitente": true
+      },
+      {
+        "conversacionId": "e92f8526-1903-4f5b-b2bc-df3d790e1b8e_diego41@gmail.com_xrodriguez11@alumnos.uaq.mx",
+        "remitente": "xrodriguez11@alumnos.uaq.mx",
+        "destinatario": "diego41@gmail.com",
+        "productoTitulo": "Termo para agua nuevo",
+        "id": "c9fc334c-d71e-448e-9604-470281bb4770",
+        "fecha": "2026-10-15T21:51:59.406727+00:00",
+        "estado": "Completado",
+        "contenido": "me interesa",
+        "productoId": "e92f8526-1903-4f5b-b2bc-df3d790e1b8e",
+        "pinValidacion": "4912"
+      },
+      {
+        "conversacionId": "63560c96-f76e-4641-886a-224e01935d48_diego41@gmail.com_revisor@truequi.com",
+        "remitente": "revisor@truequi.com",
+        "destinatario": "diego41@gmail.com",
+        "productoTitulo": "Libro para Aprender SQL",
+        "id": "63b214a6-8be8-4343-9ea9-4df6e12e7401",
+        "fecha": "2026-10-29T19:06:57.599678+00:00",
+        "contenido": "revisor@truequi.com",
+        "pinValidacion": "6526",
+        "estado": "Aceptado",
+        "productoId": "63560c96-f76e-4641-886a-224e01935d48"
+      },
+      {
+        "conversacionId": "2c2f198b-b4bc-479a-a5b8-8d6fde136af2_diego41@gmail.com_diegomillan999@gmail.com",
+        "remitente": "diego41@gmail.com",
+        "destinatario": "diegomillan999@gmail.com",
+        "calificadoPorDestinatario": true,
+        "productoTitulo": "Recuadro de abeja",
+        "id": "e684946d-08d6-4f7e-90d7-ae6b9b11a034",
+        "pinValidacion": "7334",
+        "fecha": "2026-10-30T04:33:41.349530+00:00",
+        "contenido": "Hola, tengo una pintura de Michael Jackson",
+        "estado": "Completado",
+        "productoId": "2c2f198b-b4bc-479a-a5b8-8d6fde136af2"
+      },
+      {
+        "remitente": "diego41@gmail.com",
+        "conversacionId": "bebbee87-dad2-4027-8f8b-635746f25aa2_diego41@gmail.com_josephtoriz.22@gmail.com",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "Recuadro al OLEO de Michael Jackson",
+        "id": "18ab02ba-67de-424d-ac2d-0e3f1b51625e",
+        "fecha": "2026-10-29T06:01:06.119193+00:00",
+        "estado": "Pendiente",
+        "contenido": "que tienen las categorias",
+        "productoId": "bebbee87-dad2-4027-8f8b-635746f25aa2"
+      },
+      {
+        "remitente": "revisor@truequi.com",
+        "conversacionId": "cff09c5b-c2f9-42a5-aff5-7911150e44cf_josephtoriz.22@gmail.com_revisor@truequi.com",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "Samsung S24 Base 128 GB",
+        "id": "a6b1c31a-46fe-4666-9412-c1de22edeff1",
+        "contenido": "Hola",
+        "productoId": "cff09c5b-c2f9-42a5-aff5-7911150e44cf",
+        "estado": "Pendiente",
+        "fecha": "2026-10-29T00:32:40.738400+00:00"
+      },
+      {
+        "remitente": "diegomillan999@gmail.com",
+        "conversacionId": "377a8d3f-e164-4f55-849a-8aca2757b13c_diegomillan999@gmail.com_josephtoriz.22@gmail.com",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "Cargador Samsung 25W",
+        "id": "530b4a35-70fc-4179-8cd8-3c7461a95f5e",
+        "fecha": "2026-10-15T02:52:40.833433+00:00",
+        "estado": "Completado",
+        "productoId": "377a8d3f-e164-4f55-849a-8aca2757b13c",
+        "contenido": "y tu me lo hagas desde el celular"
+      },
+      {
+        "conversacionId": "da81a40f-8526-4e7d-9c01-b6db3239328b_josephtoriz.22@gmail.com_xrodriguez11@alumnos.uaq.mx",
+        "remitente": "xrodriguez11@alumnos.uaq.mx",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "Ofrezco lapicera de dinosaurios",
+        "id": "ea382e1f-0bdd-4cb9-a5dd-a31eb55635bf",
+        "contenido": "sólo que no llegan",
+        "fecha": "2026-10-15T18:40:19.154153+00:00",
+        "productoId": "da81a40f-8526-4e7d-9c01-b6db3239328b",
+        "estado": "Aceptado"
+      },
+      {
+        "remitente": "diego41@gmail.com",
+        "conversacionId": "4ca470a3-83f0-465c-9d94-36334601323e_diego41@gmail.com_josephtoriz.22@gmail.com",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "IPhone 20 pro max",
+        "id": "2c8220a4-1d1b-4d03-85ad-515a62cb6dd6",
+        "contenido": "A ver damelo",
+        "fecha": "2026-10-15T03:03:03.274363+00:00",
+        "productoId": "4ca470a3-83f0-465c-9d94-36334601323e",
+        "estado": "Aceptado"
+      },
+      {
+        "conversacionId": "377a8d3f-e164-4f55-849a-8aca2757b13c_diegomillan999@gmail.com_josephtoriz.22@gmail.com",
+        "remitente": "diegomillan999@gmail.com",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "Cargador Samsung 25W",
+        "id": "a0d2cdac-e9a4-4e0e-836b-f05c1b14d533",
+        "productoId": "377a8d3f-e164-4f55-849a-8aca2757b13c",
+        "contenido": "pero dame chance, pero se ve bien",
+        "estado": "Completado",
+        "fecha": "2026-10-15T02:53:05.809949+00:00"
+      },
+      {
+        "remitente": "diego41@gmail.com",
+        "conversacionId": "bebbee87-dad2-4027-8f8b-635746f25aa2_diego41@gmail.com_josephtoriz.22@gmail.com",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "Recuadro al OLEO de Michael Jackson",
+        "id": "a5fe1228-5049-4ef7-8e7f-8b4742343177",
+        "productoId": "bebbee87-dad2-4027-8f8b-635746f25aa2",
+        "contenido": "y si le das en ver perfil ya es diferente el panel",
+        "estado": "Pendiente",
+        "fecha": "2026-10-29T06:00:33.860478+00:00"
+      },
+      {
+        "conversacionId": "377a8d3f-e164-4f55-849a-8aca2757b13c_diegomillan999@gmail.com_josephtoriz.22@gmail.com",
+        "remitente": "diegomillan999@gmail.com",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "Cargador Samsung 25W",
+        "id": "80bfd077-541f-4522-9688-990ce2cb50b4",
+        "fecha": "2026-10-14T23:36:14.299769+00:00",
+        "productoId": "377a8d3f-e164-4f55-849a-8aca2757b13c",
+        "estado": "Completado",
+        "pinValidacion": "8025",
+        "contenido": "josep"
+      },
+      {
+        "remitente": "diegomillan999@gmail.com",
+        "conversacionId": "07c30c2a-ec9f-4ebf-b34f-6710a342b60b_diego41@gmail.com_diegomillan999@gmail.com",
+        "destinatario": "diego41@gmail.com",
+        "productoTitulo": "Taza NUEVA",
+        "id": "44f5a3cc-9208-43d5-ac9d-55dda919ac0f",
+        "contenido": "Hola, me interesa",
+        "estado": "Pendiente",
+        "productoId": "07c30c2a-ec9f-4ebf-b34f-6710a342b60b",
+        "fecha": "2026-10-12T19:51:16.382220+00:00"
+      },
+      {
+        "conversacionId": "377a8d3f-e164-4f55-849a-8aca2757b13c_diegomillan999@gmail.com_josephtoriz.22@gmail.com",
+        "remitente": "josephtoriz.22@gmail.com",
+        "destinatario": "diegomillan999@gmail.com",
+        "productoTitulo": "Cargador Samsung 25W",
+        "id": "c0fa8924-904b-460c-aacb-4cf6de1f7eb0",
+        "estado": "Completado",
+        "contenido": "okay",
+        "productoId": "377a8d3f-e164-4f55-849a-8aca2757b13c",
+        "fecha": "2026-10-15T02:54:09.727925+00:00"
+      },
+      {
+        "remitente": "diego41@gmail.com",
+        "conversacionId": "bebbee87-dad2-4027-8f8b-635746f25aa2_diego41@gmail.com_josephtoriz.22@gmail.com",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "Recuadro al OLEO de Michael Jackson",
+        "id": "afc43702-bb8f-4a53-be01-211d76894c39",
+        "fecha": "2026-10-29T05:59:50.934273+00:00",
+        "contenido": "Josep, como la ves",
+        "estado": "Pendiente",
+        "productoId": "bebbee87-dad2-4027-8f8b-635746f25aa2"
+      },
+      {
+        "conversacionId": "07c30c2a-ec9f-4ebf-b34f-6710a342b60b_diego41@gmail.com_diegomillan999@gmail.com",
+        "remitente": "diego41@gmail.com",
+        "destinatario": "diegomillan999@gmail.com",
+        "productoTitulo": "Taza NUEVA",
+        "id": "3c7eef0d-6a52-45d4-8681-ad37db94db22",
+        "contenido": "Hola, tengo un termo de acero inoxidable",
+        "estado": "Completado",
+        "fecha": "2026-10-12T19:50:59.532269+00:00",
+        "productoId": "07c30c2a-ec9f-4ebf-b34f-6710a342b60b",
+        "pinValidacion": "7066"
+      },
+      {
+        "remitente": "xrodriguez11@alumnos.uaq.mx",
+        "conversacionId": "da81a40f-8526-4e7d-9c01-b6db3239328b_josephtoriz.22@gmail.com_xrodriguez11@alumnos.uaq.mx",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "Ofrezco lapicera de dinosaurios",
+        "id": "8c9d0421-339f-4120-b9cf-f3f33e6c317f",
+        "estado": "Aceptado",
+        "fecha": "2026-10-15T18:40:22.709486+00:00",
+        "contenido": "tengo que refrescar",
+        "productoId": "da81a40f-8526-4e7d-9c01-b6db3239328b"
+      },
+      {
+        "conversacionId": "da81a40f-8526-4e7d-9c01-b6db3239328b_diego42@gmail.com_josephtoriz.22@gmail.com",
+        "remitente": "diego42@gmail.com",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "Ofrezco lapicera de dinosaurios",
+        "id": "1ed20a70-db8d-4d64-aa87-1ae9af60f16c",
+        "productoId": "da81a40f-8526-4e7d-9c01-b6db3239328b",
+        "estado": "Pendiente",
+        "fecha": "2026-10-14T23:10:09.011901+00:00",
+        "contenido": "Josep"
+      },
+      {
+        "remitente": "josephtoriz.22@gmail.com",
+        "conversacionId": "377a8d3f-e164-4f55-849a-8aca2757b13c_diegomillan999@gmail.com_josephtoriz.22@gmail.com",
+        "destinatario": "diegomillan999@gmail.com",
+        "productoTitulo": "Cargador Samsung 25W",
+        "id": "205ca6cd-ec68-4404-9e9f-60d0177132dd",
+        "estado": "Aceptado",
+        "fecha": "2026-10-15T02:51:40.584147+00:00",
+        "contenido": "dámelo",
+        "productoId": "377a8d3f-e164-4f55-849a-8aca2757b13c"
+      },
+      {
+        "conversacionId": "4ca470a3-83f0-465c-9d94-36334601323e_diego41@gmail.com_josephtoriz.22@gmail.com",
+        "remitente": "diego41@gmail.com",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "IPhone 20 pro max",
+        "id": "c9bcf453-32fc-4618-b9fc-3bb9c02e6146",
+        "productoId": "4ca470a3-83f0-465c-9d94-36334601323e",
+        "fecha": "2026-10-15T03:02:48.423424+00:00",
+        "contenido": "Ya",
+        "estado": "Aceptado"
+      },
+      {
+        "conversacionId": "e1e7db43-33fe-4543-ac9a-46703f6d0f64_dmillan12@alumnos.uaq.mx_revisor@truequi.com",
+        "remitente": "revisor@truequi.com",
+        "destinatario": "dmillan12@alumnos.uaq.mx",
+        "productoTitulo": "Recuadro de la Luna al oleo",
+        "id": "e1c603ad-5a74-4ec2-8261-73e5e43510c7",
+        "productoId": "e1e7db43-33fe-4543-ac9a-46703f6d0f64",
+        "estado": "Pendiente",
+        "fecha": "2026-10-15T03:52:05.120457+00:00",
+        "contenido": "revisor@truequi.com"
+      },
+      {
+        "remitente": "diegomillan999@gmail.com",
+        "conversacionId": "377a8d3f-e164-4f55-849a-8aca2757b13c_diegomillan999@gmail.com_josephtoriz.22@gmail.com",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "Cargador Samsung 25W",
+        "id": "74bc3e4c-d383-44ca-97d4-d90ec2610664",
+        "contenido": "hola",
+        "fecha": "2026-10-14T23:37:02.060269+00:00",
+        "productoId": "377a8d3f-e164-4f55-849a-8aca2757b13c",
+        "estado": "Pendiente"
+      },
+      {
+        "conversacionId": "2375d467-71d3-436a-afc0-a12bf213b342_diego41@gmail.com_revisor@truequi.com",
+        "remitente": "revisor@truequi.com",
+        "destinatario": "diego41@gmail.com",
+        "productoTitulo": "Stickers de conejo",
+        "id": "e4840a68-50cd-40b9-97f3-f0030d9d3570",
+        "fecha": "2026-10-14T03:14:00.027997+00:00",
+        "estado": "Pendiente",
+        "productoId": "2375d467-71d3-436a-afc0-a12bf213b342",
+        "contenido": "revisor@truequi.com"
+      },
+      {
+        "conversacionId": "2c2f198b-b4bc-479a-a5b8-8d6fde136af2_diego41@gmail.com_diegomillan999@gmail.com",
+        "remitente": "diego41@gmail.com",
+        "destinatario": "diegomillan999@gmail.com",
+        "productoTitulo": "Recuadro de abeja",
+        "id": "73a54ffc-32a5-444b-a779-ea0808b77e3d",
+        "fecha": "2026-10-30T04:34:09.423541+00:00",
+        "contenido": "7334",
+        "estado": "Aceptado",
+        "productoId": "2c2f198b-b4bc-479a-a5b8-8d6fde136af2"
+      },
+      {
+        "remitente": "revisor@truequi.com",
+        "conversacionId": "cff09c5b-c2f9-42a5-aff5-7911150e44cf_josephtoriz.22@gmail.com_revisor@truequi.com",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "Samsung S24 Base 128 GB",
+        "id": "85dc5dc6-aea3-4528-86ee-608fe4d67d08",
+        "productoId": "cff09c5b-c2f9-42a5-aff5-7911150e44cf",
+        "fecha": "2026-10-29T00:09:56.843725+00:00",
+        "contenido": "Hola, ¿sigue disponible?",
+        "estado": "Pendiente"
+      },
+      {
+        "remitente": "diego41@gmail.com",
+        "conversacionId": "bebbee87-dad2-4027-8f8b-635746f25aa2_diego41@gmail.com_josephtoriz.22@gmail.com",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "Recuadro al OLEO de Michael Jackson",
+        "id": "3fa6aec8-6594-4983-905a-e660dead517f",
+        "estado": "Aceptado",
+        "contenido": "pasame el codigo",
+        "fecha": "2026-10-29T06:02:39.831428+00:00",
+        "productoId": "bebbee87-dad2-4027-8f8b-635746f25aa2"
+      },
+      {
+        "conversacionId": "2c2f198b-b4bc-479a-a5b8-8d6fde136af2_diego41@gmail.com_diegomillan999@gmail.com",
+        "remitente": "diegomillan999@gmail.com",
+        "destinatario": "diego41@gmail.com",
+        "productoTitulo": "Recuadro de abeja",
+        "id": "64f94df2-148c-4553-b0d5-803dd58f677e",
+        "productoId": "2c2f198b-b4bc-479a-a5b8-8d6fde136af2",
+        "contenido": "Dale, me interesa",
+        "estado": "Pendiente",
+        "fecha": "2026-10-30T04:33:53.263063+00:00"
+      },
+      {
+        "remitente": "xrodriguez11@alumnos.uaq.mx",
+        "conversacionId": "da81a40f-8526-4e7d-9c01-b6db3239328b_josephtoriz.22@gmail.com_xrodriguez11@alumnos.uaq.mx",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "Ofrezco lapicera de dinosaurios",
+        "id": "3fcffef0-e020-41e9-b761-0462a5947123",
+        "contenido": "está bien",
+        "productoId": "da81a40f-8526-4e7d-9c01-b6db3239328b",
+        "fecha": "2026-10-15T18:42:03.131148+00:00",
+        "estado": "Aceptado"
+      },
+      {
+        "conversacionId": "e92f8526-1903-4f5b-b2bc-df3d790e1b8e_diego41@gmail.com_revisor@truequi.com",
+        "remitente": "revisor@truequi.com",
+        "destinatario": "diego41@gmail.com",
+        "productoTitulo": "Termo para agua nuevo",
+        "id": "7c26c58a-d91c-4254-9ffa-5dd8612d2d11",
+        "fecha": "2026-10-15T00:44:46.266877+00:00",
+        "estado": "Pendiente",
+        "productoId": "e92f8526-1903-4f5b-b2bc-df3d790e1b8e",
+        "contenido": "revisor@truequi.com"
+      },
+      {
+        "conversacionId": "63560c96-f76e-4641-886a-224e01935d48_diego41@gmail.com_revisor@truequi.com",
+        "remitente": "revisor@truequi.com",
+        "destinatario": "diego41@gmail.com",
+        "productoTitulo": "Libro para Aprender SQL",
+        "id": "8bd3e93d-4f3f-4b5a-9c5c-80bb4cb2859d",
+        "estado": "Pendiente",
+        "contenido": "Hola",
+        "fecha": "2026-10-30T01:10:18.463491+00:00",
+        "productoId": "63560c96-f76e-4641-886a-224e01935d48"
+      },
+      {
+        "conversacionId": "377a8d3f-e164-4f55-849a-8aca2757b13c_diegomillan999@gmail.com_josephtoriz.22@gmail.com",
+        "remitente": "josephtoriz.22@gmail.com",
+        "destinatario": "diegomillan999@gmail.com",
+        "productoTitulo": "Cargador Samsung 25W",
+        "id": "55b288a9-3a95-4e01-af34-a66bd139761a",
+        "productoId": "377a8d3f-e164-4f55-849a-8aca2757b13c",
+        "estado": "Aceptado",
+        "fecha": "2026-10-15T02:51:44.803603+00:00",
+        "contenido": "si veo"
+      },
+      {
+        "conversacionId": "bebbee87-dad2-4027-8f8b-635746f25aa2_diego41@gmail.com_josephtoriz.22@gmail.com",
+        "remitente": "josephtoriz.22@gmail.com",
+        "destinatario": "diego41@gmail.com",
+        "calificadoPorDestinatario": true,
+        "productoTitulo": "Recuadro al OLEO de Michael Jackson",
+        "id": "f41a3b23-c4ac-4f6b-8bb2-7d9f48a4bafd",
+        "pinValidacion": "2715",
+        "contenido": "Hola, tengo una pintura del sistema solar",
+        "productoId": "bebbee87-dad2-4027-8f8b-635746f25aa2",
+        "estado": "Completado",
+        "fecha": "2026-10-29T05:59:27.365736+00:00",
+        "calificadoPorRemitente": true
+      },
+      {
+        "conversacionId": "e92f8526-1903-4f5b-b2bc-df3d790e1b8e_diego41@gmail.com_revisor@truequi.com",
+        "remitente": "revisor@truequi.com",
+        "destinatario": "diego41@gmail.com",
+        "productoTitulo": "Termo para agua nuevo",
+        "id": "17ef8960-4b29-4d24-a051-a37a9096eccf",
+        "estado": "Pendiente",
+        "contenido": "revisor@truequi.com",
+        "productoId": "e92f8526-1903-4f5b-b2bc-df3d790e1b8e",
+        "fecha": "2026-10-15T02:44:03.245296+00:00"
+      },
+      {
+        "conversacionId": "4ca470a3-83f0-465c-9d94-36334601323e_diego41@gmail.com_josephtoriz.22@gmail.com",
+        "remitente": "diego41@gmail.com",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "IPhone 20 pro max",
+        "id": "ff707a52-b5db-44b1-80a1-8d0ea756aa0e",
+        "contenido": "Puedes ver mis mensajes",
+        "estado": "Pendiente",
+        "productoId": "4ca470a3-83f0-465c-9d94-36334601323e",
+        "fecha": "2026-10-15T03:01:40.974214+00:00"
+      },
+      {
+        "remitente": "josephtoriz.22@gmail.com",
+        "conversacionId": "4ca470a3-83f0-465c-9d94-36334601323e_diego41@gmail.com_josephtoriz.22@gmail.com",
+        "destinatario": "diego41@gmail.com",
+        "productoTitulo": "IPhone 20 pro max",
+        "id": "7551857a-dbe2-4ba0-a345-3519c70a7b39",
+        "productoId": "4ca470a3-83f0-465c-9d94-36334601323e",
+        "fecha": "2026-10-15T03:02:38.398511+00:00",
+        "estado": "Pendiente",
+        "contenido": "si"
+      },
+      {
+        "remitente": "josephtoriz.22@gmail.com",
+        "conversacionId": "da81a40f-8526-4e7d-9c01-b6db3239328b_josephtoriz.22@gmail.com_xrodriguez11@alumnos.uaq.mx",
+        "destinatario": "xrodriguez11@alumnos.uaq.mx",
+        "productoTitulo": "Ofrezco lapicera de dinosaurios",
+        "id": "b0ee6c08-0f3c-45e1-9c28-edda43a2fe7c",
+        "contenido": "xime, pasame el PIN",
+        "fecha": "2026-10-15T18:40:30.857766+00:00",
+        "estado": "Aceptado",
+        "productoId": "da81a40f-8526-4e7d-9c01-b6db3239328b"
+      },
+      {
+        "remitente": "josephtoriz.22@gmail.com",
+        "conversacionId": "4ca470a3-83f0-465c-9d94-36334601323e_diego41@gmail.com_josephtoriz.22@gmail.com",
+        "destinatario": "diego41@gmail.com",
+        "productoTitulo": "IPhone 20 pro max",
+        "id": "eb102d92-5c22-49a7-9eb4-92f448c4a33f",
+        "contenido": "si, tiempo real, no tengo que refrescar ni salirme",
+        "estado": "Pendiente",
+        "fecha": "2026-10-15T03:02:23.970131+00:00",
+        "productoId": "4ca470a3-83f0-465c-9d94-36334601323e"
+      },
+      {
+        "conversacionId": "da81a40f-8526-4e7d-9c01-b6db3239328b_josephtoriz.22@gmail.com_xrodriguez11@alumnos.uaq.mx",
+        "remitente": "xrodriguez11@alumnos.uaq.mx",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "Ofrezco lapicera de dinosaurios",
+        "id": "b09414a7-7cb9-4ba6-a96f-382adc56e763",
+        "productoId": "da81a40f-8526-4e7d-9c01-b6db3239328b",
+        "estado": "Aceptado",
+        "fecha": "2026-10-15T18:40:57.355825+00:00",
+        "contenido": "a ver deja salirme y me mandas otro"
+      },
+      {
+        "remitente": "diegomillan999@gmail.com",
+        "conversacionId": "377a8d3f-e164-4f55-849a-8aca2757b13c_diegomillan999@gmail.com_josephtoriz.22@gmail.com",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "Cargador Samsung 25W",
+        "id": "ec1fd0e3-fc5e-443d-9df7-ce0c8310951e",
+        "contenido": "yosep",
+        "productoId": "377a8d3f-e164-4f55-849a-8aca2757b13c",
+        "fecha": "2026-10-15T02:51:13.391188+00:00",
+        "estado": "Aceptado"
+      },
+      {
+        "remitente": "revisor@truequi.com",
+        "conversacionId": "f3f841b9-eb1c-4533-ac15-26a15010a391_diego41@gmail.com_revisor@truequi.com",
+        "destinatario": "diego41@gmail.com",
+        "productoTitulo": "Samsung s24 Ultra 128 gb",
+        "id": "88f361f9-0fe2-4ea7-8dd4-2fcb83614f42",
+        "estado": "Pendiente",
+        "productoId": "f3f841b9-eb1c-4533-ac15-26a15010a391",
+        "fecha": "2026-10-15T05:33:34.536149+00:00",
+        "contenido": "revisor@truequi.com"
+      },
+      {
+        "remitente": "diegomillan999@gmail.com",
+        "conversacionId": "377a8d3f-e164-4f55-849a-8aca2757b13c_diegomillan999@gmail.com_josephtoriz.22@gmail.com",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "Cargador Samsung 25W",
+        "id": "148d6768-7635-44af-91f0-c1fb42219692",
+        "fecha": "2026-10-15T02:51:45.985868+00:00",
+        "estado": "Aceptado",
+        "contenido": "8025",
+        "productoId": "377a8d3f-e164-4f55-849a-8aca2757b13c"
+      },
+      {
+        "remitente": "diegomillan999@gmail.com",
+        "conversacionId": "377a8d3f-e164-4f55-849a-8aca2757b13c_diegomillan999@gmail.com_josephtoriz.22@gmail.com",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "Cargador Samsung 25W",
+        "id": "4c7d3c8c-3b53-4c80-b059-9cb73fb129f2",
+        "productoId": "377a8d3f-e164-4f55-849a-8aca2757b13c",
+        "contenido": "no me salen",
+        "fecha": "2026-10-14T23:36:27.043069+00:00",
+        "estado": "Pendiente"
+      },
+      {
+        "remitente": "diego41@gmail.com",
+        "conversacionId": "4d542b5a-8571-43a4-b249-4416ad8b8902_diego41@gmail.com_diegomillan999@gmail.com",
+        "destinatario": "diegomillan999@gmail.com",
+        "productoTitulo": "IPhone 15 pro max",
+        "id": "5962e2b2-78d9-4875-8340-9a9805621fa2",
+        "fecha": "2026-10-12T01:30:28.180435+00:00",
+        "contenido": "bueno acepto",
+        "productoId": "4d542b5a-8571-43a4-b249-4416ad8b8902",
+        "estado": "Pendiente"
+      },
+      {
+        "conversacionId": "0764387b-2a39-4000-b917-fe0066be6bd2_diego41@gmail.com_josephtoriz.22@gmail.com",
+        "remitente": "josephtoriz.22@gmail.com",
+        "destinatario": "diego41@gmail.com",
+        "productoTitulo": "Libro para aprender SQL desde cero",
+        "id": "b182a87d-5106-4b2d-be2a-39f1b4cbd3c1",
+        "estado": "Pendiente",
+        "productoId": "0764387b-2a39-4000-b917-fe0066be6bd2",
+        "contenido": "Hola, tengo un libro de redes",
+        "fecha": "2026-10-15T21:51:39.466764+00:00"
+      },
+      {
+        "conversacionId": "4ca470a3-83f0-465c-9d94-36334601323e_diego41@gmail.com_josephtoriz.22@gmail.com",
+        "remitente": "josephtoriz.22@gmail.com",
+        "destinatario": "diego41@gmail.com",
+        "productoTitulo": "IPhone 20 pro max",
+        "id": "55f92007-3427-41a5-b59b-cf4913c2a6aa",
+        "estado": "Aceptado",
+        "contenido": "2527",
+        "productoId": "4ca470a3-83f0-465c-9d94-36334601323e",
+        "fecha": "2026-10-15T03:03:09.991794+00:00"
+      },
+      {
+        "remitente": "diegomillan999@gmail.com",
+        "conversacionId": "4d542b5a-8571-43a4-b249-4416ad8b8902_diego41@gmail.com_diegomillan999@gmail.com",
+        "destinatario": "diego41@gmail.com",
+        "productoTitulo": "IPhone 15 pro max",
+        "id": "6d755626-7fb3-42db-afcc-0f9a1ac2fd2c",
+        "productoId": "4d542b5a-8571-43a4-b249-4416ad8b8902",
+        "contenido": "Un deste",
+        "estado": "Pendiente",
+        "fecha": "2026-10-12T01:29:35.218022+00:00"
+      },
+      {
+        "remitente": "diego41@gmail.com",
+        "conversacionId": "4ca470a3-83f0-465c-9d94-36334601323e_diego41@gmail.com_josephtoriz.22@gmail.com",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "IPhone 20 pro max",
+        "id": "3d2798f3-45a3-45ed-bc96-822ce6be05a3",
+        "estado": "Pendiente",
+        "contenido": "en tiempo real y todo",
+        "productoId": "4ca470a3-83f0-465c-9d94-36334601323e",
+        "fecha": "2026-10-15T03:02:02.262476+00:00"
+      },
+      {
+        "remitente": "josephtoriz.22@gmail.com",
+        "conversacionId": "da81a40f-8526-4e7d-9c01-b6db3239328b_josephtoriz.22@gmail.com_xrodriguez11@alumnos.uaq.mx",
+        "destinatario": "xrodriguez11@alumnos.uaq.mx",
+        "productoTitulo": "Ofrezco lapicera de dinosaurios",
+        "id": "4b88a5f4-984b-4157-8322-7e72843f3972",
+        "estado": "Aceptado",
+        "contenido": "se supone que se refresca automáticamente",
+        "productoId": "da81a40f-8526-4e7d-9c01-b6db3239328b",
+        "fecha": "2026-10-15T18:40:43.906902+00:00"
+      },
+      {
+        "remitente": "diegomillan999@gmail.com",
+        "conversacionId": "377a8d3f-e164-4f55-849a-8aca2757b13c_diegomillan999@gmail.com_josephtoriz.22@gmail.com",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "Cargador Samsung 25W",
+        "id": "0653a1ae-1b9b-49de-b376-f036e21b8fb6",
+        "productoId": "377a8d3f-e164-4f55-849a-8aca2757b13c",
+        "fecha": "2026-10-15T02:52:12.564668+00:00",
+        "contenido": "deberíamos de hacer",
+        "estado": "Completado"
+      },
+      {
+        "conversacionId": "377a8d3f-e164-4f55-849a-8aca2757b13c_diegomillan999@gmail.com_josephtoriz.22@gmail.com",
+        "remitente": "diegomillan999@gmail.com",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "Cargador Samsung 25W",
+        "id": "fc47ea04-682e-4350-9465-1f65a9b1c16d",
+        "productoId": "377a8d3f-e164-4f55-849a-8aca2757b13c",
+        "estado": "Aceptado",
+        "fecha": "2026-10-15T02:51:39.331218+00:00",
+        "contenido": "si ves mis mensajes"
+      },
+      {
+        "conversacionId": "e92f8526-1903-4f5b-b2bc-df3d790e1b8e_diego41@gmail.com_josephtoriz.22@gmail.com",
+        "remitente": "josephtoriz.22@gmail.com",
+        "destinatario": "diego41@gmail.com",
+        "productoTitulo": "Termo para agua nuevo",
+        "id": "73a52ae1-51c3-4f07-bcdc-bfd721a70b72",
+        "contenido": "Hola tengo un mouse",
+        "estado": "Pendiente",
+        "productoId": "e92f8526-1903-4f5b-b2bc-df3d790e1b8e",
+        "fecha": "2026-10-15T01:46:28.210941+00:00"
+      },
+      {
+        "conversacionId": "da81a40f-8526-4e7d-9c01-b6db3239328b_josephtoriz.22@gmail.com_xrodriguez11@alumnos.uaq.mx",
+        "remitente": "xrodriguez11@alumnos.uaq.mx",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "Ofrezco lapicera de dinosaurios",
+        "id": "26c6b043-ee74-4bd2-b33b-839d08901810",
+        "productoId": "da81a40f-8526-4e7d-9c01-b6db3239328b",
+        "contenido": "3016",
+        "fecha": "2026-10-15T18:40:43.887205+00:00",
+        "estado": "Aceptado"
+      },
+      {
+        "conversacionId": "e92f8526-1903-4f5b-b2bc-df3d790e1b8e_diego41@gmail.com_xrodriguez11@alumnos.uaq.mx",
+        "remitente": "xrodriguez11@alumnos.uaq.mx",
+        "destinatario": "diego41@gmail.com",
+        "productoTitulo": "Termo para agua nuevo",
+        "id": "2e46a173-a839-464f-bd8f-c0c5afde17d2",
+        "estado": "Pendiente",
+        "fecha": "2026-10-15T21:53:12.677278+00:00",
+        "contenido": "un libro",
+        "productoId": "e92f8526-1903-4f5b-b2bc-df3d790e1b8e"
+      },
+      {
+        "remitente": "revisor@truequi.com",
+        "conversacionId": "f3f841b9-eb1c-4533-ac15-26a15010a391_diego41@gmail.com_revisor@truequi.com",
+        "destinatario": "diego41@gmail.com",
+        "productoTitulo": "Samsung s24 Ultra 128 gb",
+        "id": "fdc6afc0-5550-4057-b15e-2e6fcf193dcb",
+        "fecha": "2026-10-15T05:34:02.387049+00:00",
+        "productoId": "f3f841b9-eb1c-4533-ac15-26a15010a391",
+        "contenido": "revisor@truequi.com",
+        "estado": "Pendiente"
+      },
+      {
+        "conversacionId": "e1e7db43-33fe-4543-ac9a-46703f6d0f64_diego41@gmail.com_dmillan12@alumnos.uaq.mx",
+        "remitente": "diego41@gmail.com",
+        "destinatario": "dmillan12@alumnos.uaq.mx",
+        "productoTitulo": "Recuadro de la Luna al oleo",
+        "id": "0cc51c68-8838-4392-911e-5f9cdad77ac6",
+        "fecha": "2026-10-12T19:48:29.523124+00:00",
+        "contenido": "Hola, tengo una pintura de la tierra, te interesa?",
+        "estado": "Pendiente",
+        "productoId": "e1e7db43-33fe-4543-ac9a-46703f6d0f64"
+      },
+      {
+        "conversacionId": "07c30c2a-ec9f-4ebf-b34f-6710a342b60b_diego41@gmail.com_diegomillan999@gmail.com",
+        "remitente": "diegomillan999@gmail.com",
+        "destinatario": "diego41@gmail.com",
+        "productoTitulo": "Taza NUEVA",
+        "id": "4ebb512b-b1ad-4135-a11e-30416a6bcc2b",
+        "estado": "Pendiente",
+        "productoId": "07c30c2a-ec9f-4ebf-b34f-6710a342b60b",
+        "contenido": "Va",
+        "fecha": "2026-10-12T19:51:52.686790+00:00"
+      },
+      {
+        "conversacionId": "377a8d3f-e164-4f55-849a-8aca2757b13c_diegomillan999@gmail.com_josephtoriz.22@gmail.com",
+        "remitente": "diegomillan999@gmail.com",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "Cargador Samsung 25W",
+        "id": "4e19ad2c-801d-4f59-b005-222612e6858c",
+        "fecha": "2026-10-15T02:50:50.453770+00:00",
+        "estado": "Aceptado",
+        "contenido": "Hola",
+        "productoId": "377a8d3f-e164-4f55-849a-8aca2757b13c"
+      },
+      {
+        "remitente": "josephtoriz.22@gmail.com",
+        "conversacionId": "4ca470a3-83f0-465c-9d94-36334601323e_diego41@gmail.com_josephtoriz.22@gmail.com",
+        "destinatario": "diego41@gmail.com",
+        "productoTitulo": "IPhone 20 pro max",
+        "id": "b607a938-d22e-4850-94c8-819d176ed7d6",
+        "estado": "Aceptado",
+        "contenido": "ya me lo dio",
+        "fecha": "2026-10-15T03:02:52.981114+00:00",
+        "productoId": "4ca470a3-83f0-465c-9d94-36334601323e"
+      },
+      {
+        "remitente": "josephtoriz.22@gmail.com",
+        "conversacionId": "bebbee87-dad2-4027-8f8b-635746f25aa2_diego41@gmail.com_josephtoriz.22@gmail.com",
+        "destinatario": "diego41@gmail.com",
+        "productoTitulo": "Recuadro al OLEO de Michael Jackson",
+        "id": "7ead60a6-d429-43a0-9d36-55730f275047",
+        "estado": "Aceptado",
+        "fecha": "2026-10-29T06:03:05.260863+00:00",
+        "contenido": "2715",
+        "productoId": "bebbee87-dad2-4027-8f8b-635746f25aa2"
+      },
+      {
+        "remitente": "josephtoriz.22@gmail.com",
+        "conversacionId": "bebbee87-dad2-4027-8f8b-635746f25aa2_diego41@gmail.com_josephtoriz.22@gmail.com",
+        "destinatario": "diego41@gmail.com",
+        "productoTitulo": "Recuadro al OLEO de Michael Jackson",
+        "id": "ef158db1-fa39-476f-87bc-843319a3ea47",
+        "productoId": "bebbee87-dad2-4027-8f8b-635746f25aa2",
+        "estado": "Pendiente",
+        "fecha": "2026-10-29T06:00:39.233521+00:00",
+        "contenido": "oye no cambiaste lo de las categorias"
+      },
+      {
+        "conversacionId": "bebbee87-dad2-4027-8f8b-635746f25aa2_diego41@gmail.com_josephtoriz.22@gmail.com",
+        "remitente": "diego41@gmail.com",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "Recuadro al OLEO de Michael Jackson",
+        "id": "4008b756-62af-499f-ae29-ae00a3b2d058",
+        "productoId": "bebbee87-dad2-4027-8f8b-635746f25aa2",
+        "fecha": "2026-10-29T06:03:01.289961+00:00",
+        "estado": "Aceptado",
+        "contenido": "en una blidada me miran pasear"
+      },
+      {
+        "conversacionId": "da81a40f-8526-4e7d-9c01-b6db3239328b_diego41@gmail.com_josephtoriz.22@gmail.com",
+        "remitente": "diego41@gmail.com",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "Ofrezco lapicera de dinosaurios",
+        "id": "88325858-3208-4667-a393-df586314ee37",
+        "estado": "Pendiente",
+        "fecha": "2026-10-14T23:15:59.154475+00:00",
+        "contenido": "Hola",
+        "productoId": "da81a40f-8526-4e7d-9c01-b6db3239328b"
+      },
+      {
+        "conversacionId": "8194ad7e-c81d-4fda-8807-94d8624dfce3_ximero16522@gmail.com_xrodriguez11@alumnos.uaq.mx",
+        "remitente": "xrodriguez11@alumnos.uaq.mx",
+        "destinatario": "ximero16522@gmail.com",
+        "productoTitulo": "Motorola g4",
+        "id": "90706077-1442-41f4-b8f7-81e2285c07bd",
+        "fecha": "2026-11-07T05:07:48.691463+00:00",
+        "productoId": "8194ad7e-c81d-4fda-8807-94d8624dfce3",
+        "contenido": "va, el teclado está bien",
+        "estado": "Pendiente"
+      },
+      {
+        "remitente": "revisor@truequi.com",
+        "conversacionId": "e92f8526-1903-4f5b-b2bc-df3d790e1b8e_diego41@gmail.com_revisor@truequi.com",
+        "destinatario": "diego41@gmail.com",
+        "productoTitulo": "Termo para agua nuevo",
+        "id": "048c7d5b-822a-4911-ac57-68b567cc09df",
+        "productoId": "e92f8526-1903-4f5b-b2bc-df3d790e1b8e",
+        "fecha": "2026-10-15T00:28:11.978517+00:00",
+        "contenido": "revisor@truequi.com",
+        "estado": "Pendiente"
+      },
+      {
+        "remitente": "revisor@truequi.com",
+        "conversacionId": "e1e7db43-33fe-4543-ac9a-46703f6d0f64_dmillan12@alumnos.uaq.mx_revisor@truequi.com",
+        "destinatario": "dmillan12@alumnos.uaq.mx",
+        "productoTitulo": "Recuadro de la Luna al oleo",
+        "id": "ead2d8e3-cbb5-4b15-a201-681b6eb29dbd",
+        "estado": "Pendiente",
+        "contenido": "revisor@truequi.com",
+        "fecha": "2026-10-14T02:57:50.273525+00:00",
+        "productoId": "e1e7db43-33fe-4543-ac9a-46703f6d0f64"
+      },
+      {
+        "conversacionId": "377a8d3f-e164-4f55-849a-8aca2757b13c_diegomillan999@gmail.com_josephtoriz.22@gmail.com",
+        "remitente": "josephtoriz.22@gmail.com",
+        "destinatario": "diegomillan999@gmail.com",
+        "productoTitulo": "Cargador Samsung 25W",
+        "id": "3147a82f-3d80-4006-8f77-03dbc1633c7c",
+        "productoId": "377a8d3f-e164-4f55-849a-8aca2757b13c",
+        "fecha": "2026-10-15T02:52:12.389996+00:00",
+        "contenido": "que te parece?",
+        "estado": "Completado"
+      },
+      {
+        "remitente": "revisor@truequi.com",
+        "conversacionId": "e1e7db43-33fe-4543-ac9a-46703f6d0f64_dmillan12@alumnos.uaq.mx_revisor@truequi.com",
+        "destinatario": "dmillan12@alumnos.uaq.mx",
+        "productoTitulo": "Recuadro de la Luna al oleo",
+        "id": "8c790410-2d89-4349-9205-d2805d906cba",
+        "productoId": "e1e7db43-33fe-4543-ac9a-46703f6d0f64",
+        "estado": "Pendiente",
+        "contenido": "revisor@truequi.com",
+        "fecha": "2026-10-14T16:01:31.558929+00:00"
+      },
+      {
+        "remitente": "xrodriguez11@alumnos.uaq.mx",
+        "conversacionId": "e92f8526-1903-4f5b-b2bc-df3d790e1b8e_diego41@gmail.com_xrodriguez11@alumnos.uaq.mx",
+        "destinatario": "diego41@gmail.com",
+        "productoTitulo": "Termo para agua nuevo",
+        "id": "b808cee5-ca7f-4fd6-a506-f79bad83f91a",
+        "estado": "Aceptado",
+        "productoId": "e92f8526-1903-4f5b-b2bc-df3d790e1b8e",
+        "contenido": "4912",
+        "fecha": "2026-10-15T21:54:25.365570+00:00"
+      },
+      {
+        "remitente": "diego41@gmail.com",
+        "conversacionId": "bebbee87-dad2-4027-8f8b-635746f25aa2_diego41@gmail.com_josephtoriz.22@gmail.com",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "Recuadro al OLEO de Michael Jackson",
+        "id": "8606c2f8-6fbc-49fc-8965-f826352e427a",
+        "estado": "Pendiente",
+        "contenido": "Hola amigo",
+        "productoId": "bebbee87-dad2-4027-8f8b-635746f25aa2",
+        "fecha": "2026-10-29T05:59:42.057824+00:00"
+      },
+      {
+        "remitente": "diegomillan999@gmail.com",
+        "conversacionId": "377a8d3f-e164-4f55-849a-8aca2757b13c_diegomillan999@gmail.com_josephtoriz.22@gmail.com",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "Cargador Samsung 25W",
+        "id": "bd2deff6-aec4-4954-8795-07fb771c46e9",
+        "productoId": "377a8d3f-e164-4f55-849a-8aca2757b13c",
+        "fecha": "2026-10-15T02:53:59.415085+00:00",
+        "contenido": "estaría bien",
+        "estado": "Completado"
+      },
+      {
+        "conversacionId": "4d542b5a-8571-43a4-b249-4416ad8b8902_diego41@gmail.com_diegomillan999@gmail.com",
+        "remitente": "diego41@gmail.com",
+        "destinatario": "diegomillan999@gmail.com",
+        "productoTitulo": "IPhone 15 pro max",
+        "id": "1118c61c-3641-4f31-a43d-82f5f37c8dff",
+        "contenido": "Te voy a reportar",
+        "estado": "Pendiente",
+        "fecha": "2026-10-12T01:29:44.091813+00:00",
+        "productoId": "4d542b5a-8571-43a4-b249-4416ad8b8902"
+      },
+      {
+        "conversacionId": "e92f8526-1903-4f5b-b2bc-df3d790e1b8e_diego41@gmail.com_revisor@truequi.com",
+        "remitente": "revisor@truequi.com",
+        "destinatario": "diego41@gmail.com",
+        "productoTitulo": "Termo para agua nuevo",
+        "id": "f985e396-cb75-4f77-a5b1-244ba3b3b74c",
+        "estado": "Pendiente",
+        "contenido": "revisor@truequi.com",
+        "productoId": "e92f8526-1903-4f5b-b2bc-df3d790e1b8e",
+        "fecha": "2026-10-15T00:28:23.301403+00:00"
+      },
+      {
+        "conversacionId": "377a8d3f-e164-4f55-849a-8aca2757b13c_diegomillan999@gmail.com_josephtoriz.22@gmail.com",
+        "remitente": "diegomillan999@gmail.com",
+        "destinatario": "josephtoriz.22@gmail.com",
+        "productoTitulo": "Cargador Samsung 25W",
+        "id": "9b3f29e6-358d-45f7-9932-177797262693",
+        "estado": "Aceptado",
+        "contenido": "yosep",
+        "productoId": "377a8d3f-e164-4f55-849a-8aca2757b13c",
+        "fecha": "2026-10-15T02:51:06.342720+00:00"
+      },
+      {
+        "conversacionId": "4d542b5a-8571-43a4-b249-4416ad8b8902_diego41@gmail.com_diegomillan999@gmail.com",
+        "remitente": "diegomillan999@gmail.com",
+        "destinatario": "diego41@gmail.com",
+        "productoTitulo": "IPhone 15 pro max",
+        "id": "7de15476-6810-4e3c-8ab7-d1b0d2867a1a",
+        "estado": "Aceptado",
+        "fecha": "2026-10-12T01:30:43.528533+00:00",
+        "productoId": "4d542b5a-8571-43a4-b249-4416ad8b8902",
+        "contenido": "7333"
+      },
+      {
+        "conversacionId": "bebbee87-dad2-4027-8f8b-635746f25aa2_diego41@gmail.com_josephtoriz.22@gmail.com",
+        "remitente": "josephtoriz.22@gmail.com",
+        "destinatario": "diego41@gmail.com",
+        "productoTitulo": "Recuadro al OLEO de Michael Jackson",
+        "id": "f8e931a5-bf00-4ce2-84e6-3e32b4926905",
+        "productoId": "bebbee87-dad2-4027-8f8b-635746f25aa2",
+        "contenido": "para que se deslicen",
+        "estado": "Pendiente",
+        "fecha": "2026-10-29T06:01:20.857232+00:00"
+      },
+      {
+        "conversacionId": "e92f8526-1903-4f5b-b2bc-df3d790e1b8e_diego41@gmail.com_revisor@truequi.com",
+        "remitente": "revisor@truequi.com",
+        "destinatario": "diego41@gmail.com",
+        "productoTitulo": "Termo para agua nuevo",
+        "id": "31b3377a-645a-47ba-bc5a-83ef2499b23e",
+        "fecha": "2026-10-15T02:23:06.268016+00:00",
+        "contenido": "revisor@truequi.com",
+        "productoId": "e92f8526-1903-4f5b-b2bc-df3d790e1b8e",
+        "estado": "Pendiente"
+      }
+    ]
+  },
+  "mysql_t_user": [
+    {
+      "ID_USER": 37,
+      "USERNAME": "diego.millan@uaq.mx",
+      "PASSWORD": "password_super_seguro",
+      "ROL": "Administrador"
+    },
+    {
+      "ID_USER": 38,
+      "USERNAME": "truequi2@gmail.com",
+      "PASSWORD": "123098",
+      "ROL": "Usuario"
+    },
+    {
+      "ID_USER": 39,
+      "USERNAME": "diegomillan999@gmail.com",
+      "PASSWORD": "Tonycar411010",
+      "ROL": "Usuario"
+    },
+    {
+      "ID_USER": 40,
+      "USERNAME": "ximero123@gmail.com",
+      "PASSWORD": "ximero16522",
+      "ROL": "Usuario"
+    },
+    {
+      "ID_USER": 41,
+      "USERNAME": "adrianmillan999@gmail.com",
+      "PASSWORD": "Adrian12345",
+      "ROL": "Usuario"
+    },
+    {
+      "ID_USER": 42,
+      "USERNAME": "testuser@example.com",
+      "PASSWORD": "password123",
+      "ROL": "Usuario"
+    },
+    {
+      "ID_USER": 43,
+      "USERNAME": "a@a.com",
+      "PASSWORD": "123456",
+      "ROL": "Usuario"
+    },
+    {
+      "ID_USER": 44,
+      "USERNAME": "diego@gmail.com",
+      "PASSWORD": "123456",
+      "ROL": "Usuario"
+    },
+    {
+      "ID_USER": 45,
+      "USERNAME": "testuser_unique_999@gmail.com",
+      "PASSWORD": "password123",
+      "ROL": "Usuario"
+    },
+    {
+      "ID_USER": 46,
+      "USERNAME": "johndoe@example.com",
+      "PASSWORD": "Password123!",
+      "ROL": "Usuario"
+    },
+    {
+      "ID_USER": 47,
+      "USERNAME": "234@gmsil.com",
+      "PASSWORD": "274747",
+      "ROL": "Usuario"
+    },
+    {
+      "ID_USER": 48,
+      "USERNAME": "124@gnail.com",
+      "PASSWORD": "1234444",
+      "ROL": "Usuario"
+    },
+    {
+      "ID_USER": 49,
+      "USERNAME": "diegomillan1@gmail.com",
+      "PASSWORD": "123456",
+      "ROL": "Usuario"
+    },
+    {
+      "ID_USER": 50,
+      "USERNAME": "diego1@gmail.com",
+      "PASSWORD": "123456",
+      "ROL": "Usuario"
+    },
+    {
+      "ID_USER": 51,
+      "USERNAME": "testuser_truequi_1@gmail.com",
+      "PASSWORD": "Password123!",
+      "ROL": "Usuario"
+    },
+    {
+      "ID_USER": 52,
+      "USERNAME": "revisor@truequi.com",
+      "PASSWORD": "Google123",
+      "ROL": "Usuario"
+    },
+    {
+      "ID_USER": 53,
+      "USERNAME": "Diego9@gmail.com",
+      "PASSWORD": "123456",
+      "ROL": "Usuario"
+    },
+    {
+      "ID_USER": 54,
+      "USERNAME": "profe@gmail.com",
+      "PASSWORD": "123456",
+      "ROL": "Usuario"
+    },
+    {
+      "ID_USER": 55,
+      "USERNAME": "efrerer@gmail.com",
+      "PASSWORD": "ererer",
+      "ROL": "Usuario"
+    },
+    {
+      "ID_USER": 56,
+      "USERNAME": "diego12@gmail.com",
+      "PASSWORD": "123456",
+      "ROL": "Usuario"
+    },
+    {
+      "ID_USER": 57,
+      "USERNAME": "diego41@gmail.com",
+      "PASSWORD": "123456",
+      "ROL": "Usuario"
+    },
+    {
+      "ID_USER": 58,
+      "USERNAME": "Vanessa.llrvn@gmail.com",
+      "PASSWORD": "ParaRat402",
+      "ROL": "Usuario"
+    },
+    {
+      "ID_USER": 59,
+      "USERNAME": "Quinterov450@gmail.com",
+      "PASSWORD": "250817",
+      "ROL": "Usuario"
+    },
+    {
+      "ID_USER": 60,
+      "USERNAME": "vanessadobles02@gmail.com",
+      "PASSWORD": "250817",
+      "ROL": "Usuario"
+    },
+    {
+      "ID_USER": 61,
+      "USERNAME": "vanessa41@gmail.com",
+      "PASSWORD": "123456",
+      "ROL": "Usuario"
+    },
+    {
+      "ID_USER": 62,
+      "USERNAME": "vanessa42@gmail.com",
+      "PASSWORD": "123456",
+      "ROL": "Usuario"
+    },
+    {
+      "ID_USER": 63,
+      "USERNAME": "toris11@gmail.com",
+      "PASSWORD": "123456",
+      "ROL": "Usuario"
+    },
+    {
+      "ID_USER": 64,
+      "USERNAME": "josep41@gmail.com",
+      "PASSWORD": "123456",
+      "ROL": "Usuario"
+    },
+    {
+      "ID_USER": 65,
+      "USERNAME": "josep1@gmail.com",
+      "PASSWORD": "123456",
+      "ROL": "Usuario"
+    },
+    {
+      "ID_USER": 66,
+      "USERNAME": "diego42@gmail.com",
+      "PASSWORD": "123456",
+      "ROL": "Usuario"
+    }
+  ]
+}

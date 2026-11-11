@@ -3,12 +3,24 @@ import json
 import uuid
 import os
 import sys
+import hashlib
 from datetime import datetime, timezone
 from decimal import Decimal
 
-# Configuración de AWS DynamoDB
+try:
+    import pymysql
+except ImportError:
+    print("Falta la librería pymysql. Instálala ejecutando: pip install pymysql cryptography")
+    sys.exit(1)
+
+try:
+    import bcrypt
+    TIENE_BCRYPT = True
+except ImportError:
+    TIENE_BCRYPT = False
+
 REGION = 'us-east-1'
-TABLAS = {
+TABLAS_DYNAMO = {
     'Usuarios': 'correo',
     'Productos': 'id',
     'Mensajes': 'id'
@@ -17,25 +29,84 @@ ARCHIVO_BACKUP_DEFECTO = 'respaldo_truequi_db.json'
 
 dynamodb = boto3.resource('dynamodb', region_name=REGION)
 
-# Serializador para manejar objetos Decimal de DynamoDB al guardar en JSON
+
+def cargar_variables_env():
+    """Busca y carga automáticamente el archivo .env del proyecto sin requerir librerías externas."""
+    rutas_posibles = [
+        '.env',
+        '../.env',
+        'backend/.env',
+        'backend/services/auth/.env',
+        '../backend/services/auth/.env'
+    ]
+    for ruta in rutas_posibles:
+        if os.path.exists(ruta):
+            with open(ruta, 'r', encoding='utf-8') as f:
+                for linea in f:
+                    linea = linea.strip()
+                    if linea and not linea.startswith('#') and '=' in linea:
+                        clave, valor = linea.split('=', 1)
+                        os.environ.setdefault(clave.strip(), valor.strip().strip('"').strip("'"))
+            print(f" Credenciales MySQL cargadas desde: {ruta}")
+            return
+    print("ℹNo se encontró archivo .env local, usando variables de entorno del sistema.")
+
+
+cargar_variables_env()
+
+DB_HOST = os.environ.get('DB_HOST', 'truequi-db.c0rqa2akcsq3.us-east-1.rds.amazonaws.com')
+DB_USER = os.environ.get('DB_USER', 'admin')
+DB_PASSWORD = os.environ.get('DB_PASS') or os.environ.get('DB_PASSWORD', 'Tonycar411010')
+DB_NAME = os.environ.get('DB_NAME', 'truequi_bd')
+DB_PORT = int(os.environ.get('DB_PORT', 3306))
+
+
+def obtener_conexion_mysql():
+    if not DB_HOST or not DB_USER or not DB_NAME:
+        raise ValueError(
+            "Faltan las variables DB_HOST, DB_USER, DB_PASSWORD o DB_NAME en tu archivo .env "
+            "para conectar con la tabla T_USER en MySQL."
+        )
+    return pymysql.connect(
+        host=DB_HOST,
+        user=DB_USER,
+        password=DB_PASSWORD,
+        database=DB_NAME,
+        port=DB_PORT,
+        cursorclass=pymysql.cursors.DictCursor,
+        autocommit=True
+    )
+
+
+def generar_hash_seed(password_plano, formato_referencia=None):
+    """Genera el hash compatible con el formato que use tu tabla T_USER."""
+    if formato_referencia and formato_referencia.startswith('$2'):
+        if TIENE_BCRYPT:
+            return bcrypt.hashpw(password_plano.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    if TIENE_BCRYPT:
+        return bcrypt.hashpw(password_plano.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    return hashlib.sha256(password_plano.encode('utf-8')).hexdigest()
+
+
 class DecimalEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, Decimal):
             return float(obj) if obj % 1 > 0 else int(obj)
+        if isinstance(obj, datetime):
+            return obj.isoformat()
         return super(DecimalEncoder, self).default(obj)
 
 
-# =====================================================================
-# 1. RESPALDAR BASE DE DATOS (PARA RECUPERACIÓN POSTERIOR)
-# =====================================================================
 def hacer_backup(nombre_archivo=ARCHIVO_BACKUP_DEFECTO):
-    print(f"\n📦 Iniciando respaldo completo de DynamoDB en '{nombre_archivo}'...")
+    print(f"\n Iniciando respaldo completo (DynamoDB + MySQL) en '{nombre_archivo}'...")
     datos_respaldo = {
         "fecha_respaldo": datetime.now(timezone.utc).isoformat(),
-        "tablas": {}
+        "tablas": {},
+        "mysql_t_user": []
     }
 
-    for nombre_tabla in TABLAS.keys():
+    # 1.1 Respaldar DynamoDB
+    for nombre_tabla in TABLAS_DYNAMO.keys():
         try:
             tabla = dynamodb.Table(nombre_tabla)
             items = []
@@ -47,85 +118,158 @@ def hacer_backup(nombre_archivo=ARCHIVO_BACKUP_DEFECTO):
                 items.extend(response.get('Items', []))
 
             datos_respaldo["tablas"][nombre_tabla] = items
-            print(f"  ✔️ Tabla '{nombre_tabla}': {len(items)} registros respaldados.")
+            print(f"  [DynamoDB] Tabla '{nombre_tabla}': {len(items)} registros respaldados.")
         except Exception as e:
-            print(f"  ❌ Error al respaldar '{nombre_tabla}': {e}")
+            print(f"  [DynamoDB] Error al respaldar '{nombre_tabla}': {e}")
+
+    # 1.2 Respaldar MySQL (T_USER)
+    try:
+        conn = obtener_conexion_mysql()
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT ID_USER, USERNAME, PASSWORD, ROL FROM T_USER")
+            usuarios_mysql = cursor.fetchall()
+            datos_respaldo["mysql_t_user"] = usuarios_mysql
+            print(f"  [MySQL RDS] Tabla 'T_USER': {len(usuarios_mysql)} cuentas de acceso respaldadas.")
+        conn.close()
+    except Exception as e:
+        print(f"  [MySQL RDS] Error al respaldar 'T_USER': {e}")
 
     with open(nombre_archivo, 'w', encoding='utf-8') as f:
         json.dump(datos_respaldo, f, cls=DecimalEncoder, ensure_ascii=False, indent=2)
 
-    print(f"✅ Respaldo guardado exitosamente en: {os.path.abspath(nombre_archivo)}\n")
+    print(f" Respaldo guardado exitosamente en: {os.path.abspath(nombre_archivo)}\n")
 
 
-# =====================================================================
-# 2. LIMPIEZA DE BASE DE DATOS (CON BACKUP AUTOMÁTICO DE SEGURIDAD)
-# =====================================================================
 def limpiar_base_de_datos(hacer_respaldo_previo=True):
     if hacer_respaldo_previo:
-        print("🛡️ Realizando respaldo automático antes de limpiar por seguridad...")
+        print(" Realizando respaldo automático antes de limpiar por seguridad...")
         hacer_backup(ARCHIVO_BACKUP_DEFECTO)
 
-    print("🧹 Limpiando todas las tablas de Truequi en AWS DynamoDB...")
-    for nombre_tabla, llave_primaria in TABLAS.items():
+    print("🧹 Limpiando todas las tablas en AWS DynamoDB y MySQL RDS...")
+
+    # 2.1 Vaciar tablas de DynamoDB (incluyendo paginación completa)
+    for nombre_tabla, llave_primaria in TABLAS_DYNAMO.items():
         try:
             tabla = dynamodb.Table(nombre_tabla)
-            scan = tabla.scan()
-            items = scan.get('Items', [])
+            items = []
+            response = tabla.scan()
+            items.extend(response.get('Items', []))
+            while 'LastEvaluatedKey' in response:
+                response = tabla.scan(ExclusiveStartKey=response['LastEvaluatedKey'])
+                items.extend(response.get('Items', []))
 
             if not items:
-                print(f"  ℹ️ Tabla '{nombre_tabla}' ya estaba vacía.")
+                print(f"  [DynamoDB] Tabla '{nombre_tabla}' ya estaba vacía.")
                 continue
 
             with tabla.batch_writer() as batch:
                 for item in items:
                     batch.delete_item(Key={llave_primaria: item[llave_primaria]})
 
-            print(f"  🗑️ Tabla '{nombre_tabla}' vaciada ({len(items)} registros eliminados).")
+            print(f"  [DynamoDB] Tabla '{nombre_tabla}' vaciada ({len(items)} registros eliminados).")
         except Exception as e:
-            print(f"  ❌ Error limpiando '{nombre_tabla}': {e}")
+            print(f"  [DynamoDB] Error limpiando '{nombre_tabla}': {e}")
 
-    print("✅ ¡Base de datos completamente limpia (en cero)!\n")
+    # 2.2 Vaciar tabla T_USER en MySQL (usando SP_B para activar el trigger de bitácora)
+    try:
+        conn = obtener_conexion_mysql()
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT ID_USER, USERNAME FROM T_USER")
+            usuarios_mysql = cursor.fetchall()
+
+            if not usuarios_mysql:
+                print("  [MySQL RDS] Tabla 'T_USER' ya estaba vacía.")
+            else:
+                for u in usuarios_mysql:
+                    try:
+                        cursor.callproc('SP_B', (u['ID_USER'],))
+                    except Exception:
+                        cursor.execute("DELETE FROM T_USER WHERE ID_USER = %s", (u['ID_USER'],))
+                print(f" [MySQL RDS] Tabla 'T_USER' vaciada ({len(usuarios_mysql)} cuentas eliminadas y registradas en bitácora).")
+        conn.close()
+    except Exception as e:
+        print(f" [MySQL RDS] Error limpiando 'T_USER': {e}")
+
+    print("Base de datos completamente limpia.\n")
 
 
-# =====================================================================
-# 3. RECUPERACIÓN / RESTAURACIÓN (DESDE EL ARCHIVO DE RESPALDO)
-# =====================================================================
 def recuperar_base_de_datos(nombre_archivo=ARCHIVO_BACKUP_DEFECTO):
     if not os.path.exists(nombre_archivo):
-        print(f"\n❌ No se encontró el archivo de respaldo '{nombre_archivo}'.")
+        print(f"\n No se encontró el archivo de respaldo '{nombre_archivo}'.")
         return
 
-    print(f"\n♻️ Restaurando base de datos desde '{nombre_archivo}'...")
-    # Primero limpiamos sin sobrescribir el backup para dejar el estado exacto
+    print(f"\n Restaurando base de datos desde '{nombre_archivo}'...")
     limpiar_base_de_datos(hacer_respaldo_previo=False)
 
     with open(nombre_archivo, 'r', encoding='utf-8') as f:
         datos_respaldo = json.load(f, parse_float=Decimal)
 
+    # 3.1 Restaurar DynamoDB
     tablas_data = datos_respaldo.get("tablas", {})
-
     for nombre_tabla, items in tablas_data.items():
-        if nombre_tabla not in TABLAS:
+        if nombre_tabla not in TABLAS_DYNAMO:
             continue
         try:
             tabla = dynamodb.Table(nombre_tabla)
             with tabla.batch_writer() as batch:
                 for item in items:
                     batch.put_item(Item=item)
-            print(f"  ✔️ Tabla '{nombre_tabla}': {len(items)} registros recuperados.")
+            print(f" [DynamoDB] Tabla '{nombre_tabla}': {len(items)} registros recuperados.")
         except Exception as e:
-            print(f"  ❌ Error restaurando '{nombre_tabla}': {e}")
+            print(f" [DynamoDB] Error restaurando '{nombre_tabla}': {e}")
 
-    print(f"✅ ¡Recuperación completada! Todo volvió al estado del {datos_respaldo.get('fecha_respaldo')}.\n")
+    # 3.2 Restaurar MySQL (T_USER con sus contraseñas y hashes exactos)
+    usuarios_mysql = datos_respaldo.get("mysql_t_user", [])
+    if usuarios_mysql:
+        try:
+            conn = obtener_conexion_mysql()
+            with conn.cursor() as cursor:
+                for u in usuarios_mysql:
+                    cursor.callproc('SP_A', (u['USERNAME'], u['PASSWORD'], u.get('ROL', 'Usuario')))
+            conn.close()
+            print(f" [MySQL RDS] Tabla 'T_USER': {len(usuarios_mysql)} cuentas de acceso recuperadas.")
+        except Exception as e:
+            print(f" [MySQL RDS] Error restaurando 'T_USER': {e}")
+
+    print(f"¡Recuperación completada! Todo volvió al estado del {datos_respaldo.get('fecha_respaldo')}.\n")
 
 
-# =====================================================================
-# 4. SEED BASE (CARGAR DATOS PREDETERMINADOS PARA DEMOSTRACIÓN)
-# =====================================================================
 def cargar_seed_base():
-    print("\n🌱 Cargando SEED BASE predeterminado en DynamoDB...")
+    print("\n Cargando SEED BASE predeterminado en MySQL y DynamoDB...")
 
-    # 4.1 Usuarios predeterminados
+    # Detectar formato de hash del respaldo si existe para que el login del Seed funcione
+    formato_hash_ref = None
+    if os.path.exists(ARCHIVO_BACKUP_DEFECTO):
+        try:
+            with open(ARCHIVO_BACKUP_DEFECTO, 'r', encoding='utf-8') as f:
+                respaldo_previo = json.load(f)
+                lista_u = respaldo_previo.get("mysql_t_user", [])
+                if lista_u:
+                    formato_hash_ref = lista_u[0].get("PASSWORD", "")
+        except Exception:
+            pass
+
+    password_seed_hash = generar_hash_seed("123456", formato_hash_ref)
+
+    # 4.1 Usuarios predeterminados en MySQL (T_USER)
+    cuentas_seed = [
+        ('admin@gmail.com', password_seed_hash, 'Admin'),
+        ('diegomillan999@gmail.com', password_seed_hash, 'Usuario'),
+        ('jlara08@alumnos.uaq.mx', password_seed_hash, 'Usuario')
+    ]
+    try:
+        conn = obtener_conexion_mysql()
+        with conn.cursor() as cursor:
+            for correo, pwd_hash, rol in cuentas_seed:
+                cursor.execute("SELECT ID_USER FROM T_USER WHERE USERNAME = %s", (correo,))
+                if not cursor.fetchone():
+                    cursor.callproc('SP_A', (correo, pwd_hash, rol))
+        conn.close()
+        print(f"  [MySQL RDS] {len(cuentas_seed)} cuentas creadas en 'T_USER' (Contraseña semilla: 123456).")
+    except Exception as e:
+        print(f"  [MySQL RDS] Error cargando cuentas semilla en 'T_USER': {e}")
+
+    # 4.2 Perfiles predeterminados en DynamoDB (Usuarios)
     tabla_usuarios = dynamodb.Table('Usuarios')
     usuarios_seed = [
         {
@@ -177,9 +321,9 @@ def cargar_seed_base():
 
     for u in usuarios_seed:
         tabla_usuarios.put_item(Item=u)
-    print(f"  ✔️ {len(usuarios_seed)} usuarios base cargados.")
+    print(f"  [DynamoDB] {len(usuarios_seed)} perfiles de usuario cargados en 'Usuarios'.")
 
-    # 4.2 Productos predeterminados (con las categorías exactas de HomeWeb)
+    # 4.3 Productos predeterminados
     tabla_productos = dynamodb.Table('Productos')
     id_prod_casio = "prod-seed-casio-001"
     productos_seed = [
@@ -251,9 +395,9 @@ def cargar_seed_base():
 
     for p in productos_seed:
         tabla_productos.put_item(Item=p)
-    print(f"  ✔️ {len(productos_seed)} productos semilla cargados.")
+    print(f" [DynamoDB] {len(productos_seed)} productos semilla cargados en 'Productos'.")
 
-    # 4.3 Propuesta de mensaje inicial
+    # 4.4 Propuesta de mensaje inicial
     tabla_mensajes = dynamodb.Table('Mensajes')
     participantes = sorted(["admin@gmail.com", "diegomillan999@gmail.com"])
     conversacion_id = f"{id_prod_casio}_{participantes[0]}_{participantes[1]}"
@@ -270,20 +414,17 @@ def cargar_seed_base():
         'estado': 'Pendiente'
     }
     tabla_mensajes.put_item(Item=mensaje_seed)
-    print("  ✔️ 1 negociación de prueba cargada en 'Mensajes'.")
-    print("✅ ¡Catálogo Seed Base listo para demostración!\n")
+    print("  [DynamoDB] 1 negociación de prueba cargada en 'Mensajes'.")
+    print("¡Catálogo Seed Base listo!\n")
 
 
-# =====================================================================
-# MENÚ INTERACTIVO Y COMANDOS RÁPIDOS PARA DEMOSTRACIÓN
-# =====================================================================
 def mostrar_menu():
     while True:
         print("=====================================================")
-        print("   🛠️  GESTOR DE BASE DE DATOS TRUEQUI (AWS DYNAMODB)  ")
+        print("   GESTOR DE BASE DE DATOS TRUEQUI (DYNAMODB + MYSQL)")
         print("=====================================================")
         print("  1. [BACKUP]  Guardar respaldo actual en JSON")
-        print("  2. [CLEAN]   Limpiar toda la base de datos (dejar en 0)")
+        print("  2. [CLEAN]   Limpiar TODA la base de datos (dejar en 0)")
         print("  3. [SEED]    Cargar datos predeterminados (Seed Base)")
         print("  4. [RESTORE] Recuperar lo que se tenía desde el Backup")
         print("  5. Salir")
